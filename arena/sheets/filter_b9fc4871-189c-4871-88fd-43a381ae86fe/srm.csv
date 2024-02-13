@@ -1,0 +1,21 @@
+EXECUTIONID,ABSTRACTIONID,ACTIONID,ARENAID,SHEETID,SYSTEMID,VARIANTID,ADAPTERID,X,Y,TYPE,VALUE,RAWVALUE,VALUETYPE,LASTMODIFIED,EXECUTIONTIME
+77649059-a950-4cde-a0a0-3d541dbd0138,ab,filter,execute,testFromJson_84f261b6-4fe5-47cc-8172-975c41d3b011,oracle,oracle,oracle,0,0,value,null,null,,2023-04-24T14:34:20.752Z,0
+77649059-a950-4cde-a0a0-3d541dbd0138,ab,filter,execute,all,f0c2fc7f-e0ee-401c-bbc6-7750d34a8e35,original,0,-1,-1,loader.classes_loaded,24,,,2023-04-24T14:34:20.441Z,0
+77649059-a950-4cde-a0a0-3d541dbd0138,ab,filter,execute,testFromJson_1dd1b351-3320-4780-b580-762918897acb,oracle,oracle,oracle,0,0,value,null,null,,2023-04-24T14:34:20.774Z,0
+77649059-a950-4cde-a0a0-3d541dbd0138,ab,filter,execute,all,122d2a79-9b46-46cc-8f3f-46debd988b0f,original,0,-1,-1,loader.artifacts,12,,,2023-04-24T14:34:20.768Z,0
+77649059-a950-4cde-a0a0-3d541dbd0138,ab,filter,execute,testFromJson_a665a58a-62e8-428b-ba50-6b3360c4c9cf,oracle,oracle,oracle,0,0,value,null,null,,2023-04-24T14:34:20.768Z,0
+77649059-a950-4cde-a0a0-3d541dbd0138,ab,filter,execute,all,f0c2fc7f-e0ee-401c-bbc6-7750d34a8e35,original,0,-1,-1,loader.artifacts,176,,,2023-04-24T14:34:20.441Z,0
+77649059-a950-4cde-a0a0-3d541dbd0138,ab,filter,execute,all,8e311826-e117-40ba-a1d3-883c3b75f9e2,original,0,-1,-1,loader.artifacts,30,,,2023-04-24T14:34:21.762Z,0
+77649059-a950-4cde-a0a0-3d541dbd0138,ab,filter,execute,testFromJson_1dd1b351-3320-4780-b580-762918897acb,1dd1b351-3320-4780-b580-762918897acb,original,0,0,0,value,{"name":"Jane Doe"},{"name":"Jane Doe"},java.util.Map,2023-04-24T14:34:20.773Z,5506313
+77649059-a950-4cde-a0a0-3d541dbd0138,ab,filter,execute,testFromJson_122d2a79-9b46-46cc-8f3f-46debd988b0f,oracle,oracle,oracle,0,0,value,null,null,,2023-04-24T14:34:20.755Z,0
+77649059-a950-4cde-a0a0-3d541dbd0138,ab,filter,execute,testFromJson_84f261b6-4fe5-47cc-8172-975c41d3b011,84f261b6-4fe5-47cc-8172-975c41d3b011,original,0,0,0,value,{"name":"Jane Doe"},{"name":"Jane Doe"},java.util.Map,2023-04-24T14:34:20.722Z,317171179
+77649059-a950-4cde-a0a0-3d541dbd0138,ab,filter,execute,all,84f261b6-4fe5-47cc-8172-975c41d3b011,original,0,-1,-1,loader.artifacts,13,,,2023-04-24T14:34:20.761Z,0
+77649059-a950-4cde-a0a0-3d541dbd0138,ab,filter,execute,testFromJson_122d2a79-9b46-46cc-8f3f-46debd988b0f,122d2a79-9b46-46cc-8f3f-46debd988b0f,original,0,0,0,value,{"name":"Jane Doe"},{"name":"Jane Doe"},java.util.Map,2023-04-24T14:34:20.755Z,34207317
+77649059-a950-4cde-a0a0-3d541dbd0138,ab,filter,execute,all,a665a58a-62e8-428b-ba50-6b3360c4c9cf,original,0,-1,-1,loader.artifacts,247,,,2023-04-24T14:34:20.784Z,0
+77649059-a950-4cde-a0a0-3d541dbd0138,ab,filter,execute,all,8e311826-e117-40ba-a1d3-883c3b75f9e2,original,0,-1,-1,loader.classes_loaded,24,,,2023-04-24T14:34:21.762Z,0
+77649059-a950-4cde-a0a0-3d541dbd0138,ab,filter,execute,all,122d2a79-9b46-46cc-8f3f-46debd988b0f,original,0,-1,-1,loader.classes_loaded,15,,,2023-04-24T14:34:20.768Z,0
+77649059-a950-4cde-a0a0-3d541dbd0138,ab,filter,execute,testFromJson_a665a58a-62e8-428b-ba50-6b3360c4c9cf,a665a58a-62e8-428b-ba50-6b3360c4c9cf,original,0,0,0,value,{"name":"Jane Doe"},{"name":"Jane Doe"},java.util.Map,2023-04-24T14:34:20.768Z,12721659
+77649059-a950-4cde-a0a0-3d541dbd0138,ab,filter,execute,all,a665a58a-62e8-428b-ba50-6b3360c4c9cf,original,0,-1,-1,loader.classes_loaded,19,,,2023-04-24T14:34:20.784Z,0
+77649059-a950-4cde-a0a0-3d541dbd0138,ab,filter,execute,all,1dd1b351-3320-4780-b580-762918897acb,original,0,-1,-1,loader.artifacts,68,,,2023-04-24T14:34:20.790Z,0
+77649059-a950-4cde-a0a0-3d541dbd0138,ab,filter,execute,all,1dd1b351-3320-4780-b580-762918897acb,original,0,-1,-1,loader.classes_loaded,29,,,2023-04-24T14:34:20.789Z,0
+77649059-a950-4cde-a0a0-3d541dbd0138,ab,filter,execute,all,84f261b6-4fe5-47cc-8172-975c41d3b011,original,0,-1,-1,loader.classes_loaded,18,,,2023-04-24T14:34:20.761Z,0

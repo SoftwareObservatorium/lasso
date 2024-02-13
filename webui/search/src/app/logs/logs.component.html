@@ -1,0 +1,10 @@
+<mat-card>
+    <mat-card-content>
+        <mat-list>
+            <mat-list-item *ngFor="let log of logResponse">{{log}}</mat-list-item>
+        </mat-list>
+    </mat-card-content>
+    <mat-card-actions>
+        <button mat-button (click)="getLog()"><mat-icon>refresh</mat-icon>Refresh</button>
+    </mat-card-actions>
+</mat-card>

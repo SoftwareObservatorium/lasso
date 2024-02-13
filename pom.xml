@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>de.uni-mannheim.swt.lasso</groupId>
+    <artifactId>lasso-modules</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>lasso modules</name>
+    <description>Parent of all lasso modules</description>
+
+    <licenses>
+        <license>
+            <name>GPL 3.0 License</name>
+            <url>https://www.gnu.org/licenses/gpl-3.0.txt</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>mkessel</id>
+            <name>Marcus Kessel</name>
+            <email>marcus.kessel@uni-mannheim.de</email>
+            <organization>Chair of Software Engineering / University of Mannheim</organization>
+            <organizationUrl>https://www.wim.uni-mannheim.de/atkinson/</organizationUrl>
+        </developer>
+    </developers>
+
+    <repositories>
+        <repository>
+            <id>swtwebnexus</id>
+            <url>https://swtweb.informatik.uni-mannheim.de/nexus/repository/maven-public/</url>
+        </repository>
+    </repositories>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>swtwebnexus</id>
+            <url>https://swtweb.informatik.uni-mannheim.de/nexus/repository/maven-snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <jdk.version>11</jdk.version>
+
+        <maven.compiler.plugin.version>3.10.1</maven.compiler.plugin.version>
+        <maven.surefire.plugin.version>2.22.1</maven.surefire.plugin.version>
+
+        <slf4j.version>1.7.30</slf4j.version>
+        <logback.version>1.2.3</logback.version>
+        <junit.version>4.13.1</junit.version>
+        <junit.jupiter.version>5.6.3</junit.jupiter.version>
+        <junit.jupiter.platform.version>1.6.3</junit.jupiter.platform.version>
+        <commons.lang.version>3.11</commons.lang.version>
+        <commons.io.version>2.8.0</commons.io.version>
+        <commons.collections.version>4.4</commons.collections.version>
+        <commons.codec.version>1.15</commons.codec.version>
+        <commons.math.version>3.6.1</commons.math.version>
+        <commons.text.version>1.9</commons.text.version>
+        <jackson.version>2.11.3</jackson.version>
+        <spring.boot.version>2.7.17</spring.boot.version>
+        <spring.version>5.3.30</spring.version>
+        <aether.version>1.1.0</aether.version>
+        <maven.version>3.3.9</maven.version>
+        <jacoco.version>0.8.10</jacoco.version>
+        <groovy.version>3.0.19</groovy.version>
+        <lucene.version>8.7.0</lucene.version>
+        <solrj.version>8.11.1</solrj.version>
+        <gmavenplus.version>1.11.0</gmavenplus.version>
+        <ignite.version>2.14.0</ignite.version>
+        <!-- spring boot must use version required by ignite -->
+        <h2.version>1.4.197</h2.version>
+
+        <tablesaw.version>0.43.1</tablesaw.version>
+        <joinery.version>1.10</joinery.version>
+
+        <javaparser.version>3.16.3</javaparser.version>
+
+        <guava.version>30.0-jre</guava.version>
+
+        <poi.version>5.0.0</poi.version>
+        <gson.version>2.10.1</gson.version>
+    </properties>
+
+    <modules>
+        <!-- third-party -->
+        <module>evosuite-maven-plugin</module>
+        <module>randoop-maven-plugin</module>
+        <module>lasso-maven-extension</module>
+        <!-- ranking (SOCORA, hybrid non-dominated sorting) -->
+        <module>ranking</module>
+        <!-- indexer -->
+        <module>crawler</module>
+        <module>analyzer</module>
+        <module>index-maven-plugin</module>
+        <!-- core -->
+        <module>core</module>
+        <module>lql</module>
+        <module>datasource-maven</module>
+        <module>sandbox</module>
+        <module>lsl</module>
+        <module>benchmarks</module>
+        <module>gai</module>
+        <module>engine</module>
+        <module>arena-support</module>
+        <module>arena</module>
+        <module>worker</module>
+        <module>frontend</module>
+        <module>webui</module>
+        <module>service</module>
+        <module>lasso-llm</module>
+    </modules>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <!-- JUnit 5 requires Surefire version 2.22.1 or higher -->
+                <plugin>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>${maven.surefire.plugin.version}</version>
+                    <configuration>
+                        <excludes>
+                            <exclude>**/*IntegrationTest.java</exclude>
+                        </excludes>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${maven.compiler.plugin.version}</version>
+                    <configuration>
+                        <release>${jdk.version}</release>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
+        <plugins>
+            <!-- Licensing -->
+            <plugin>
+                <groupId>com.mycila</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <version>4.3</version>
+                <configuration>
+                    <properties>
+                        <year>2024</year>
+                    </properties>
+                    <licenseSets>
+                        <licenseSet>
+                            <header>etc/header_gpl3.txt</header>
+                            <includes>
+                                <include>**/src/main/java/**</include>
+                                <include>**/src/test/java/**</include>
+                                <include>**/src/**/*.ts</include>
+                            </includes>
+                            <excludes>
+                                <exclude>evosuite-maven-plugin/**</exclude>
+                                <exclude>randoop-maven-plugin/**</exclude>
+                            </excludes>
+                        </licenseSet>
+                    </licenseSets>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

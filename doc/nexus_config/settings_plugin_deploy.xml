@@ -1,0 +1,49 @@
+<settings>
+
+    <servers>
+        <server>
+            <id>lasso_quickstart_nexus</id>
+            <username>admin</username>
+            <password>fa74f329-91de-41ef-bf60-1ebbdaa8a1f3</password>
+        </server>
+    </servers>
+
+    <profiles>
+        <profile>
+            <id>lasso-nexus</id>
+            <repositories>
+                <repository>
+                    <id>lasso_quickstart_nexus</id>
+                    <url>http://localhost:8081/repository/maven-public/</url>
+                    <snapshots>
+                        <enabled>true</enabled>
+                        <updatePolicy>daily</updatePolicy>
+                    </snapshots>
+                    <releases>
+                        <enabled>true</enabled>
+                        <updatePolicy>never</updatePolicy>
+                    </releases>
+                </repository>
+            </repositories>
+            <!-- custom plugins -->
+            <pluginRepositories>
+                <pluginRepository>
+                    <id>lasso_quickstart_nexus</id>
+                    <url>http://localhost:8081/repository/maven-public/</url>
+                    <snapshots>
+                        <enabled>true</enabled>
+                        <updatePolicy>daily</updatePolicy>
+                    </snapshots>
+                    <releases>
+                        <enabled>true</enabled>
+                        <updatePolicy>never</updatePolicy>
+                    </releases>
+                </pluginRepository>
+            </pluginRepositories>
+        </profile>
+    </profiles>
+    <activeProfiles>
+        <!--make the profile active all the time -->
+        <activeProfile>lasso-nexus</activeProfile>
+    </activeProfiles>
+</settings>

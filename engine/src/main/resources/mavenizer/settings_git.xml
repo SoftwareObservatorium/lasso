@@ -1,0 +1,58 @@
+<settings>
+
+    <servers>
+        <server>
+            <id>${repoId}</id>
+            <username>${repoUser}</username>
+            <password>${repoPass}</password>
+        </server>
+    </servers>
+
+<!--    <mirrors>-->
+<!--        <mirror>-->
+<!--            <id>${repoId}</id>-->
+<!--            <name>LASSO internal repository</name>-->
+<!--            <url>${repoUrl}</url>-->
+<!--            <mirrorOf>*</mirrorOf>-->
+<!--        </mirror>-->
+<!--    </mirrors>-->
+
+    <profiles>
+        <profile>
+            <id>lasso-nexus</id>
+            <repositories>
+                <repository>
+                    <id>${repoId}</id>
+                    <url>${repoUrl}</url>
+                    <snapshots>
+                        <enabled>true</enabled>
+                        <updatePolicy>daily</updatePolicy>
+                    </snapshots>
+                    <releases>
+                        <enabled>true</enabled>
+                        <updatePolicy>never</updatePolicy>
+                    </releases>
+                </repository>
+            </repositories>
+            <!-- custom plugins -->
+            <pluginRepositories>
+                <pluginRepository>
+                    <id>${repoId}</id>
+                    <url>${repoUrl}</url>
+                    <snapshots>
+                        <enabled>true</enabled>
+                        <updatePolicy>daily</updatePolicy>
+                    </snapshots>
+                    <releases>
+                        <enabled>true</enabled>
+                        <updatePolicy>never</updatePolicy>
+                    </releases>
+                </pluginRepository>
+            </pluginRepositories>
+        </profile>
+    </profiles>
+    <activeProfiles>
+        <!--make the profile active all the time -->
+        <activeProfile>lasso-nexus</activeProfile>
+    </activeProfiles>
+</settings>

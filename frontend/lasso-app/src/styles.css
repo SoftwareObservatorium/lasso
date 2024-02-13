@@ -1,0 +1,6 @@
+/* You can add global styles to this file, and also import other style files */
+@import "~ngx-smart-modal/ngx-smart-modal";
+
+@import "~prismjs/plugins/toolbar/prism-toolbar.css";
+@import "~prismjs/plugins/line-numbers/prism-line-numbers.css";
+@import "~prismjs/themes/prism-okaidia";

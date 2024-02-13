@@ -1,0 +1,25 @@
+<div class="container" *ngIf="report">
+    <div class="row">
+            <div class="col-12">
+                    <h4>Implementation '{{implementationId}}'</h4>
+            </div>
+
+        <div class="col-12">
+                <div *ngIf="error" class="alert alert-danger mt-3 mb-0">{{error}}</div>
+        </div>
+
+        <div class="col-12">
+          <h5>{{abstractionId}}.{{implementationId}}.{{permId}}::{{reportId}}</h5>
+          <h5>{{executionId}}</h5>
+      </div>
+
+        <div class="col-12">
+            <pre class="line-numbers"><code class="language-javascript line-numbers">{{reportStr}}</code></pre>
+        </div>
+
+        <div class="col-12" *ngIf="report.trace">
+            <h5>Trace Viewer</h5>
+            <pre class="line-numbers"><code class="language-javascript line-numbers">{{report.trace}}</code></pre>
+        </div>
+    </div>
+</div>

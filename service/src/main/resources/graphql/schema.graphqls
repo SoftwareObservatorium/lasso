@@ -1,0 +1,28 @@
+type Query {
+    # get available records
+    observationRecords(q: ObservationQuery): [ObservationRecord]
+
+    # get all available record types
+    getRecordTypes(q: ObservationQuery): [String]
+}
+
+type Sentence {
+    text: String
+}
+
+input ObservationQuery {
+    executionId: String
+    systemId: String
+    type: String
+}
+
+type ObservationRecord {
+    x: Int
+    y: Int
+    value: String
+    type: String
+
+    executionId: String
+    systemId: String
+    adapter: String
+}

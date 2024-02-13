@@ -1,0 +1,11 @@
+<settings>
+
+    <mirrors>
+        <mirror>
+            <id>internal-repository</id>
+            <name>LASSO internal repository</name>
+            <url>http://swt-mkessel.informatik.uni-mannheim.de:8081/repository/maven-public/</url>
+            <mirrorOf>*</mirrorOf>
+        </mirror>
+    </mirrors>
+</settings>

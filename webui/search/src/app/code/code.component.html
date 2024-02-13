@@ -1,0 +1,120 @@
+<div class="grid-container">
+    <h1 class="mat-h1">Code Search</h1>
+    <mat-card class="lql-editor-card">
+      <mat-card-header>
+        <mat-card-title>Interface Signature</mat-card-title>
+        <mat-card-subtitle>Specify your Interface in LQL</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-actions>
+        <button mat-button>Clear</button>
+      </mat-card-actions>
+      <mat-card-content style="height: 100%">
+          <ngx-monaco-editor style="height: 100%" [options]="editorOptions" [(ngModel)]="code" (onInit)="onInit($event)"></ngx-monaco-editor>
+      </mat-card-content>
+    </mat-card>
+    <br>
+
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Sequence Sheets</mat-card-title>
+        <mat-card-subtitle>Specify one or more Sequence Sheets</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+          <mat-tab-group dynamicHeight [(selectedIndex)]="selectedSheetIndex" (selectedTabChange)="sheetChanged($event)">
+              <mat-tab *ngFor="let sheet of sheets; let idIndex = index" label="{{sheet}}">
+                  <hot-table hotId="hot_{{idIndex}}" [settings]="createHotSettings()"></hot-table>
+              </mat-tab>
+            </mat-tab-group>
+      </mat-card-content>
+      <mat-card-actions align="start">
+        <button mat-button (click)="onAddRow()">Add Row</button>
+        <button mat-button (click)="onAddCol()">Add Column</button>
+        <button mat-button (click)="onAddSheet()">New Sheet</button>
+        <button mat-button (click)="fileInput.click()">Load</button>
+        <input hidden (change)="readSheet($event)" #fileInput type="file" id="file">
+        <button mat-button (click)="onExport()">Save</button>
+        <!-- <button mat-button (click)="onGenerateSequences()">Generate LSL</button> -->
+      </mat-card-actions>
+    </mat-card>
+    <br>
+
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Settings</mat-card-title>
+        <mat-card-subtitle>Fine-tune parameters</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+          <div>
+              <button mat-button (click)="accordion.openAll()">Expand All</button>
+              <button mat-button (click)="accordion.closeAll()">Collapse All</button>
+            </div>
+            <mat-accordion multi>
+              <mat-expansion-panel>
+                <mat-expansion-panel-header>
+                  <mat-panel-title>
+                    Filters
+                  </mat-panel-title>
+                  <mat-panel-description>
+                    Add your filters 
+                    <!-- <mat-icon>account_circle</mat-icon>-->
+                  </mat-panel-description>
+                </mat-expansion-panel-header>
+            
+                <mat-form-field>
+                  <mat-label>Filter</mat-label>
+                  <input matInput [(ngModel)]="filter">
+                </mat-form-field>
+            
+                <button mat-raised-button color="primary" (click)="addFilter()">Add</button>
+
+                <mat-divider></mat-divider>
+                <mat-list>
+                  <mat-list-item *ngFor="let filter of filters">
+                    <h3 matListItemTitle>{{filter}}</h3>
+                  </mat-list-item>
+                </mat-list>
+                
+            
+              </mat-expansion-panel>
+
+              <mat-expansion-panel>
+                  <mat-expansion-panel-header>
+                    <mat-panel-title>
+                      Corpus
+                    </mat-panel-title>
+                    <mat-panel-description>
+                      Set your data source settings
+                      <!-- <mat-icon>account_circle</mat-icon>-->
+                    </mat-panel-description>
+                  </mat-expansion-panel-header>
+
+                  <mat-form-field *ngIf="datasourceResponse">
+                    <mat-label>Datasource</mat-label>
+                    <mat-select [(ngModel)]="datasource" (selectionChange)="onSetDatasource($event)">
+                      <mat-option *ngFor="let info of datasourceResponse.dataSources | keyvalue" [value]="info.value">{{info.key}}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+
+                  <mat-form-field>
+                      <mat-label>Rows</mat-label>
+                      <input matInput [(ngModel)]="rows">
+                  </mat-form-field>
+                  
+                  <mat-form-field>
+                      <mat-label>Strategy</mat-label>
+                      <mat-select [(ngModel)]="strategy">
+                          <mat-option *ngFor="let s of strategies" [value]="s">
+                          {{s}}
+                          </mat-option>
+                      </mat-select>
+                      </mat-form-field>
+              
+                </mat-expansion-panel>
+      
+            </mat-accordion>
+      </mat-card-content>
+      <mat-card-actions align="start">
+        <button mat-raised-button color="primary" (click)="onSearch()">Search</button>
+      </mat-card-actions>
+    </mat-card>
+</div>

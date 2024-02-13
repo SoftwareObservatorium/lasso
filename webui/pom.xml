@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>de.uni-mannheim.swt.lasso</groupId>
+        <artifactId>lasso-modules</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../</relativePath>
+    </parent>
+
+    <artifactId>webui</artifactId>
+    <packaging>jar</packaging>
+
+    <name>webui (gui)</name>
+    <description>lasso web ui</description>
+
+    <properties>
+        <frontend-maven-plugin.version>1.12.1</frontend-maven-plugin.version>
+        <npm.version>9.6.7</npm.version>
+	<node.version>v18.17.1</node.version>
+	<!-- either build or prod -->
+	<frontend.build>build</frontend.build>
+    </properties>
+
+    <licenses>
+        <license>
+            <name>GPL 3.0 License</name>
+            <url>https://www.gnu.org/licenses/gpl-3.0.txt</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>mkessel</id>
+            <name>Marcus Kessel</name>
+            <email>marcus.kessel@uni-mannheim.de</email>
+            <organization>Chair of Software Engineering / University of Mannheim</organization>
+            <organizationUrl>https://www.wim.uni-mannheim.de/atkinson/</organizationUrl>
+        </developer>
+    </developers>
+
+    <dependencies>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.github.eirslett</groupId>
+                <artifactId>frontend-maven-plugin</artifactId>
+                <version>${frontend-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>install node and npm</id>
+                        <goals>
+                            <goal>install-node-and-npm</goal>
+                        </goals>
+                        <configuration>
+                            <nodeVersion>${node.version}</nodeVersion>
+                            <npmVersion>${npm.version}</npmVersion>
+                            <workingDirectory>search/</workingDirectory>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>npm install</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>install --force</arguments>
+                            <workingDirectory>search/</workingDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>prod</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <configuration>
+				            <arguments>run ${frontend.build}</arguments>
+                            <workingDirectory>search/</workingDirectory>
+                        </configuration>
+                        <phase>generate-resources</phase>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+
+        <resources>
+            <resource>
+                <filtering>false</filtering>
+                <directory>search/dist/search</directory>
+            </resource>
+        </resources>
+    </build>
+
+</project>

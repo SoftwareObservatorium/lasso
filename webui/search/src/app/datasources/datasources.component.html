@@ -1,0 +1,26 @@
+<div class="grid-container">
+    <h1 class="mat-h1">LASSO Datasources (Executable Corpus)</h1>
+
+    <mat-accordion>
+      <ng-container *ngFor="let info of datasourceResponse.dataSources | keyvalue">
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              {{info.key}}
+            </mat-panel-title>
+            <mat-panel-description>
+              {{info.value.name}}
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+          <mat-list>
+            <mat-list-item>
+                <span matListItemTitle>{{info.value.description}}</span>
+            </mat-list-item>
+            <mat-list-item>
+                <a mat-list-item [href]="info.value.url" target="_blank">{{info.value.url}}</a>
+            </mat-list-item>
+          </mat-list>
+        </mat-expansion-panel>
+        </ng-container>
+    </mat-accordion>
+</div>

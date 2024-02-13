@@ -1,0 +1,47 @@
+<mat-card >
+    <mat-card-header>
+      <mat-card-title>Cluster Metrics</mat-card-title>
+      <mat-card-subtitle>There are '{{metricsResponse.totalNodes}}' nodes in your cluster with an average CPU load of {{metricsResponse.averageCpuLoad}}</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+        <table class="styled-table" *ngIf="metricsResponse">
+            <thead>
+              <tr>
+                <th scope="col">Key</th>
+                <th scope="col">Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let info of metricsResponse | keyvalue">
+                <th scope="row">{{info.key}}</th>
+                <th scope="row">{{info.value}}</th>
+              </tr>
+            </tbody>
+          </table>
+    </mat-card-content>
+  </mat-card>
+
+  <div *ngIf="nodesResponse">
+    <mat-card *ngFor="let node of nodesResponse.nodes; let i = index">
+        <mat-card-header>
+          <mat-card-title>Node</mat-card-title>
+          <mat-card-subtitle>{{node.id}}</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+            <table class="styled-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Key</th>
+                    <th scope="col">Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let info of node | keyvalue">
+                    <th scope="row">{{info.key}}</th>
+                    <th scope="row">{{info.value}}</th>
+                  </tr>
+                </tbody>
+              </table>
+        </mat-card-content>
+      </mat-card>
+  </div>

@@ -1,0 +1,1 @@
+{"id":"mbpp_563_extract_values","lql":"Problem {\n  extractValues(java.lang.String)-\u003ejava.util.ArrayList\u003cjava.lang.String\u003e\n}","sequences":[],"description":""}

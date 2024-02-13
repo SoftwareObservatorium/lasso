@@ -1,0 +1,24 @@
+<div class="grid-container">
+    <h1 class="mat-h1">LASSO Actions (LSL)</h1>
+
+    <mat-accordion>
+      <ng-container *ngFor="let actionInfo of infoResponse.actions | keyvalue">
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              {{actionInfo.key}} <mat-icon *ngIf="actionInfo.value.state != 'stable'">construction</mat-icon>
+            </mat-panel-title>
+            <mat-panel-description>
+              {{actionInfo.value.description}}
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+          <mat-list>
+            <mat-list-item *ngFor="let cField of actionInfo.value.configuration | keyvalue">
+                <span matListItemTitle>{{cField.key}} ({{cField.value.type}})</span>
+                <span matListItemLine>{{cField.value.description}} (optional = {{cField.value.optional}})</span>
+            </mat-list-item>
+          </mat-list>
+        </mat-expansion-panel>
+        </ng-container>
+    </mat-accordion>
+</div>

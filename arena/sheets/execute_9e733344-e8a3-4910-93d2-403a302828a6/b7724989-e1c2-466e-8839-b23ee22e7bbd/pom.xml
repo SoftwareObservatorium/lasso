@@ -1,0 +1,147 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>com.merobase.odisse.runtime</groupId>
+	<artifactId>b7724989-e1c2-466e-8839-b23ee22e7bbd</artifactId>
+	<version>2.0.0p3</version>
+	<packaging>jar</packaging>
+
+	<name>LASSO Candidate b7724989-e1c2-466e-8839-b23ee22e7bbd</name>
+	
+   <repositories>
+      <repository>
+         <id>swt100nexus-public</id>
+         <url>http://swt100.informatik.uni-mannheim.de:8081/repository/maven-public/</url>
+         <snapshots>
+             <enabled>true</enabled>
+             <updatePolicy>daily</updatePolicy>
+        </snapshots>
+        <releases>
+            <enabled>true</enabled>
+            <updatePolicy>never</updatePolicy>
+        </releases>
+      </repository>
+   </repositories>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<junit.version>4.12</junit.version>
+		<jacoco.version>0.8.5</jacoco.version>
+		<!-- take most recent one -->
+		<testrunner.version>1.0.0-SNAPSHOT</testrunner.version>
+		<surefire.plugin.version>2.19.1</surefire.plugin.version>
+		<candidate.bytecodename></candidate.bytecodename>
+	</properties>
+
+	<dependencies>
+	
+		<!-- Dependencies -->
+		<dependency><groupId>org.jbasics</groupId><artifactId>jbasics</artifactId><version>2.0.0p3</version><exclusions><exclusion><groupId>org.assertj</groupId><artifactId>*</artifactId></exclusion><exclusion><groupId>junit</groupId><artifactId>*</artifactId></exclusion><exclusion><groupId>org.mockito</groupId><artifactId>*</artifactId></exclusion><exclusion><groupId>org.easymock</groupId><artifactId>*</artifactId></exclusion><exclusion><groupId>org.powermock</groupId><artifactId>*</artifactId></exclusion><exclusion><groupId>org.hamcrest</groupId><artifactId>*</artifactId></exclusion></exclusions></dependency>
+<dependency><groupId>javax.persistence</groupId><artifactId>persistence-api</artifactId><version>1.0</version><exclusions><exclusion><groupId>org.assertj</groupId><artifactId>*</artifactId></exclusion><exclusion><groupId>junit</groupId><artifactId>*</artifactId></exclusion><exclusion><groupId>org.mockito</groupId><artifactId>*</artifactId></exclusion><exclusion><groupId>org.easymock</groupId><artifactId>*</artifactId></exclusion><exclusion><groupId>org.powermock</groupId><artifactId>*</artifactId></exclusion><exclusion><groupId>org.hamcrest</groupId><artifactId>*</artifactId></exclusion></exclusions></dependency>
+<dependency><groupId>javax.servlet</groupId><artifactId>servlet-api</artifactId><version>2.5</version><exclusions><exclusion><groupId>org.assertj</groupId><artifactId>*</artifactId></exclusion><exclusion><groupId>junit</groupId><artifactId>*</artifactId></exclusion><exclusion><groupId>org.mockito</groupId><artifactId>*</artifactId></exclusion><exclusion><groupId>org.easymock</groupId><artifactId>*</artifactId></exclusion><exclusion><groupId>org.powermock</groupId><artifactId>*</artifactId></exclusion><exclusion><groupId>org.hamcrest</groupId><artifactId>*</artifactId></exclusion></exclusions></dependency>
+<dependency><groupId>javax.jms</groupId><artifactId>jms-api</artifactId><version>1.1-rev-1</version><exclusions><exclusion><groupId>org.assertj</groupId><artifactId>*</artifactId></exclusion><exclusion><groupId>junit</groupId><artifactId>*</artifactId></exclusion><exclusion><groupId>org.mockito</groupId><artifactId>*</artifactId></exclusion><exclusion><groupId>org.easymock</groupId><artifactId>*</artifactId></exclusion><exclusion><groupId>org.powermock</groupId><artifactId>*</artifactId></exclusion><exclusion><groupId>org.hamcrest</groupId><artifactId>*</artifactId></exclusion></exclusions></dependency>
+<dependency><groupId>javax.xml.bind</groupId><artifactId>jaxb-api</artifactId><version>2.1</version><exclusions><exclusion><groupId>org.assertj</groupId><artifactId>*</artifactId></exclusion><exclusion><groupId>junit</groupId><artifactId>*</artifactId></exclusion><exclusion><groupId>org.mockito</groupId><artifactId>*</artifactId></exclusion><exclusion><groupId>org.easymock</groupId><artifactId>*</artifactId></exclusion><exclusion><groupId>org.powermock</groupId><artifactId>*</artifactId></exclusion><exclusion><groupId>org.hamcrest</groupId><artifactId>*</artifactId></exclusion></exclusions></dependency>
+<dependency><groupId>javax.ws.rs</groupId><artifactId>jsr311-api</artifactId><version>1.1.1</version><exclusions><exclusion><groupId>org.assertj</groupId><artifactId>*</artifactId></exclusion><exclusion><groupId>junit</groupId><artifactId>*</artifactId></exclusion><exclusion><groupId>org.mockito</groupId><artifactId>*</artifactId></exclusion><exclusion><groupId>org.easymock</groupId><artifactId>*</artifactId></exclusion><exclusion><groupId>org.powermock</groupId><artifactId>*</artifactId></exclusion><exclusion><groupId>org.hamcrest</groupId><artifactId>*</artifactId></exclusion></exclusions></dependency>
+<dependency><groupId>javax.mail</groupId><artifactId>mail</artifactId><version>1.4.5</version><exclusions><exclusion><groupId>org.assertj</groupId><artifactId>*</artifactId></exclusion><exclusion><groupId>junit</groupId><artifactId>*</artifactId></exclusion><exclusion><groupId>org.mockito</groupId><artifactId>*</artifactId></exclusion><exclusion><groupId>org.easymock</groupId><artifactId>*</artifactId></exclusion><exclusion><groupId>org.powermock</groupId><artifactId>*</artifactId></exclusion><exclusion><groupId>org.hamcrest</groupId><artifactId>*</artifactId></exclusion></exclusions></dependency>
+		
+		
+		<!-- Test Executor -->
+		<dependency>
+			<groupId>de.uni-mannheim.swt.lasso</groupId>
+        	<artifactId>arena-support</artifactId>
+        	<version>${testrunner.version}</version>
+		</dependency>
+	
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>${junit.version}</version>
+			<scope>test</scope>
+		</dependency>
+		
+		<!-- for matchers -->
+        <dependency>
+           <groupId>org.hamcrest</groupId>
+           <artifactId>hamcrest-library</artifactId>
+           <version>1.3</version>
+        <scope>test</scope>
+        </dependency>
+
+        <!-- in case we use evosuite tests -->
+        <dependency>
+          <groupId>org.evosuite</groupId>
+          <artifactId>evosuite-standalone-runtime</artifactId>
+          <version>1.0.6</version>
+          <scope>test</scope>
+        </dependency>
+
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.1</version>
+				<executions>
+					<execution>
+						<id>default-compile</id>
+						<phase>compile</phase>
+						<goals>
+							<goal>compile</goal>
+						</goals>
+						<configuration>
+							<source>1.8</source>
+							<target>1.8</target>
+						</configuration>
+					</execution>
+					<execution>
+						<id>default-testCompile</id>
+						<phase>test-compile</phase>
+						<goals>
+							<goal>testCompile</goal>
+						</goals>
+						<configuration>
+							<source>1.8</source>
+							<target>1.8</target>
+						</configuration>
+					</execution>
+				</executions>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+				</configuration>
+			</plugin>
+			<!-- from https://deors.wordpress.com/2014/07/04/individual-test-coverage-sonarqube-jacoco/ -->
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-surefire-plugin</artifactId>
+              <version>${surefire.plugin.version}</version>
+              <!-- make sure only JUnit4 Tests run, not TestNG etc. -->
+              <dependencies>
+                <dependency>
+                    <groupId>org.apache.maven.surefire</groupId>
+                    <artifactId>surefire-junit47</artifactId>
+                    <version>${surefire.plugin.version}</version>
+                 </dependency>
+              </dependencies>
+     		  <configuration>
+     		            <systemPropertyVariables>
+                            <bytecodename>${candidate.bytecodename}</bytecodename>
+                        </systemPropertyVariables>
+     		    <!-- use fork JVM for all tests with given memory constraints -->
+     		    <forkCount>1</forkCount>
+                <reuseForks>true</reuseForks>
+                <argLine>-Xmx256m</argLine>
+              <!-- same configuration as in the regular test execution goal -->
+      		  	<!-- new configuration needed for coverage per test -->
+      			<includes>
+                    <include>**/*Test.java</include>
+                    <!-- includes Randoop tests a la RegressionTest0 etc -->
+                    <include>**/*Test*.java</include>
+                </includes>
+     		  </configuration>
+   		  </plugin>
+		</plugins>
+	</build>
+</project>

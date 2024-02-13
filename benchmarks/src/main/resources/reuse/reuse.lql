@@ -1,0 +1,136 @@
+# compute cosine distance of vectors
+Cosine{
+    distance(double[],double[])->double
+}
+
+# vector structure
+Vector {
+    Vector(double[])
+    dot(Vector)->Vector
+    multiply(double)->double
+}
+
+# palindrome: longest one
+Palindrome {
+    longestPalindrome(java.lang.String)->java.lang.String
+}
+
+# is palindrom
+Palindrome {
+    isPalindrome(java.lang.String)->boolean
+}
+
+# radian to degree
+Math {
+    radianToDegree(double)->double
+}
+
+# get extension of given file
+Filename{
+    getExtension(java.lang.String)->java.lang.String
+}
+
+# get extension of given file
+Filename{
+    getExtension(java.io.File)->java.lang.String
+}
+
+# get base name between path and extension
+Filename{
+    getBasename(java.lang.String)->java.lang.String
+}
+
+# get base name between path and extension
+Filename{
+    getBasename(java.io.File)->java.lang.String
+}
+
+# directed graph structure
+DirectedGraph{
+    addNode(java.lang.Object)->boolean
+    addEdge(java.lang.Object,java.lang.Object)->boolean
+    getIncomingEdges(java.lang.Object)->java.util.Set
+}
+
+# string utilities - here casing
+String {
+    isLowerCase(java.lang.String)->boolean
+    isUpperCase(java.lang.String)->boolean
+    countWords(java.lang.String)->int
+    isCamelCase(java.lang.String)->boolean
+    isTitleCase(java.lang.String)->boolean
+}
+
+# find next prime number
+Prime {
+    next(int)->int
+    previous(int)->int
+}
+
+Hash {
+    sha256Hex(byte[])->java.lang.String
+}
+
+# node with node itself
+Node{
+    addChild(Node)->void
+    getParent()->Node
+    setParent(Node)->void
+    setData(java.lang.Object)->void
+    getData()->java.lang.Object
+}
+
+# with attribute map
+Node{
+    addChild(Node)->void
+    getParent()->Node
+    setParent(Node)->void
+    setAttributes(java.util.Map)->void
+}
+
+# min heap (binary tree)
+MinHeap{
+    MinHeap(int)
+    insert(int)->void
+    getMin()->int
+}
+
+# search and sort
+
+
+int computeGreatestCommonDivisor(int a, int b)
+int computeLeastCommonMultiple(int a, int b)
+
+# spearman
+Pearson{
+    coefficient(double[],double[])->double
+}
+
+Map{
+    toSortedMap(java.util.Map)->java.util.Map
+}
+Map{
+    toSortedMap(java.util.Map)->java.util.LinkedHashMap
+}
+
+# solve equations
+Algebra{
+    solve(double[][],double[][])->double[][]
+}
+
+# solve quadratic function ax+bx+c
+Quadratic {
+    solve(double,double,double)->double[]
+}
+
+$ {
+    transpose(double[][])->double[][]
+}
+
+# moving/rolling average
+
+MovingAverage {
+    MovingAverage(int)
+    update(double)->void
+    getAverage()->double
+}
