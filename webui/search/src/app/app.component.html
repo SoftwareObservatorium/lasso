@@ -1,0 +1,90 @@
+<mat-sidenav-container class="sidenav-container">
+  <mat-sidenav #drawer class="sidenav" fixedInViewport
+      [attr.role]="(isHandset$ | async) ? 'dialog' : 'navigation'"
+      [mode]="(isHandset$ | async) ? 'over' : 'side'"
+      [opened]="(isHandset$ | async) === false">
+    <mat-toolbar>Menu</mat-toolbar>
+    <mat-nav-list>
+      <div mat-subheader>Pipeline</div>
+      <mat-list-item>
+        <mat-icon matListItemIcon>home</mat-icon>
+        <a mat-list-item routerLink="home" #tooltip="matTooltip" matTooltip="Landing page">Home</a>
+      </mat-list-item>
+      <mat-list-item>
+        <mat-icon matListItemIcon>terminal</mat-icon>
+        <a mat-list-item routerLink="submit" #tooltip="matTooltip" matTooltip="Submit LSL Script">New Script</a>
+      </mat-list-item>
+      <mat-list-item>
+        <mat-icon matListItemIcon>code</mat-icon>
+        <a mat-list-item routerLink="scripts" #tooltip="matTooltip" matTooltip="View all scripts">My Scripts</a>
+      </mat-list-item>
+    </mat-nav-list>
+    <mat-divider></mat-divider>
+    <div mat-subheader>Corpus</div>
+    <mat-nav-list>
+      <mat-list-item>
+        <mat-icon matListItemIcon>search</mat-icon>
+        <a mat-list-item routerLink="code" #tooltip="matTooltip" matTooltip="Search Code">Code</a>
+      </mat-list-item>
+    </mat-nav-list>
+    <mat-divider></mat-divider>
+    <mat-nav-list>
+      <div mat-subheader>Documentation</div>
+      <mat-list-item>
+        <mat-icon matListItemIcon>task</mat-icon>
+        <a mat-list-item routerLink="actions" #tooltip="matTooltip" matTooltip="View all LSL actions">Actions</a>
+      </mat-list-item>
+      <mat-list-item>
+        <mat-icon matListItemIcon>dataset</mat-icon>
+        <a mat-list-item routerLink="datasources" #tooltip="matTooltip" matTooltip="View all datasources (executable corpus)">Datasources</a>
+      </mat-list-item>
+    </mat-nav-list>
+    <mat-divider></mat-divider>
+    <mat-nav-list *ngIf="currentUser">
+      <div mat-subheader>Account ({{currentUser.username}})</div>
+      <mat-list-item>
+        <mat-icon matListItemIcon>account_circle</mat-icon>
+        <a mat-list-item *ngIf="currentUser" routerLink="user/profile">Profile</a>
+      </mat-list-item>
+      <mat-list-item>
+        <mat-icon matListItemIcon>logout</mat-icon>
+        <a mat-list-item (click)="logout()">Logout</a>
+      </mat-list-item>
+    </mat-nav-list>
+    <mat-divider></mat-divider>
+    <mat-nav-list>
+      <div mat-subheader>Cluster</div>
+      <mat-list-item>
+        <mat-icon matListItemIcon>lan</mat-icon>
+        <a mat-list-item routerLink="grid/overview" #tooltip="matTooltip" matTooltip="View grid">Grid</a>
+      </mat-list-item>
+      <mat-list-item>
+        <mat-icon matListItemIcon>monitoring</mat-icon>
+        <a mat-list-item routerLink="grid/logs" #tooltip="matTooltip" matTooltip="View cluster logs">Logs</a>
+      </mat-list-item>
+      <mat-list-item>
+        <mat-icon matListItemIcon>folder</mat-icon>
+        <a mat-list-item routerLink="grid/dfs" #tooltip="matTooltip" matTooltip="Distributed File System">DFS</a>
+      </mat-list-item>
+    </mat-nav-list>
+  </mat-sidenav>
+  <mat-sidenav-content>
+    <mat-toolbar color="primary">
+      <button
+        type="button"
+        aria-label="Toggle sidenav"
+        mat-icon-button
+        (click)="drawer.toggle()"
+        *ngIf="isHandset$ | async">
+        <mat-icon aria-label="Side nav toggle icon">menu</mat-icon>
+      </button>
+      <span>LASSO Dashboard</span>
+    </mat-toolbar>
+    <!-- Add Content Here -->
+
+    <div class="content">
+      <router-outlet></router-outlet>
+    </div>
+
+  </mat-sidenav-content>
+</mat-sidenav-container>

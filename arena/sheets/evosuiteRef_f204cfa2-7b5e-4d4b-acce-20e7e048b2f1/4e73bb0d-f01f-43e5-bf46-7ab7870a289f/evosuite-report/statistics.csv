@@ -1,0 +1,2 @@
+configuration_id,TARGET_CLASS,criterion,Coverage,Total_Goals,Covered_Goals,Lines,Covered_Lines,LineCoverage,Statements_Executed,Total_Branches,Covered_Branches,BranchCoverage,CBranchCoverage,Total_Methods,Covered_Methods,Mutants,WeakMutationScore,MutationScore,Size,Result_Size,Length,Result_Length,Total_Time
+0,miniml.Stack,LINE;BRANCH;EXCEPTION;WEAKMUTATION;OUTPUT;METHOD;METHODNOEXCEPTION;CBRANCH,0.9097222222222222,87,84,6,13,1.0,1309297,10,10,1.0,1.0,6,6,27,0.8888888888888888,0.7407407407407407,11,14,34,125,125848

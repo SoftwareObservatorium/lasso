@@ -1,0 +1,25 @@
+{
+  "id": "quickstart",
+  "name": "quickstart corpus",
+  "description": "an example corpus",
+  "datasources": [
+    {
+      "type": "solr",
+      "id": "lasso_quickstart",
+      "host": "http://localhost:8983/solr/lasso_quickstart",
+      "user": "",
+      "pass": "",
+      "name": "LASSO Quickstart",
+      "description": "Code search index as part of quickstart guide"
+    }
+  ],
+  "artifactRepository": {
+    "id": "lasso_quickstart_nexus",
+    "name": "Quickstart nexus",
+    "url": "http://localhost:8081/repository/maven-public/",
+    "deploymentUrl": "http://localhost:8081/repository/lasso-deploy/",
+    "user": "admin",
+    "pass": "fa74f329-91de-41ef-bf60-1ebbdaa8a1f3",
+    "description": "quickstart repository of LASSO"
+  }
+}

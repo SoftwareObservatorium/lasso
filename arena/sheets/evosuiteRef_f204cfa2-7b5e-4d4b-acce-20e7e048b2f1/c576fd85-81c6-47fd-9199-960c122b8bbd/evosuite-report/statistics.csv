@@ -1,0 +1,2 @@
+configuration_id,TARGET_CLASS,criterion,Coverage,Total_Goals,Covered_Goals,Lines,Covered_Lines,LineCoverage,Statements_Executed,Total_Branches,Covered_Branches,BranchCoverage,CBranchCoverage,Total_Methods,Covered_Methods,Mutants,WeakMutationScore,MutationScore,Size,Result_Size,Length,Result_Length,Total_Time
+0,org.jbasics.parser.StateStack,LINE;BRANCH;EXCEPTION;WEAKMUTATION;OUTPUT;METHOD;METHODNOEXCEPTION;CBRANCH,0.9199058919803601,124,123,7,16,1.0,481604,14,14,1.0,1.0,7,7,47,0.9361702127659575,0.7446808510638298,15,26,43,261,129003

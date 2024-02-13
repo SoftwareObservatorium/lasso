@@ -1,0 +1,37 @@
+<div class="container">
+    <div class="row">
+            <div class="col-12">
+                    <h2>Available Actions in LASSO</h2>
+            </div>
+        <div class="col-12">
+                <div *ngIf="error" class="alert alert-danger mt-3 mb-0">{{error}}</div>
+        </div>
+        <div class="col-12">
+                        <table class="table table-hover" *ngIf="infoResponse">
+                            <thead class="thead-dark">
+                              <tr>
+                                <th scope="col">State</th>
+                                <th scope="col">Name</th>
+                                <th scope="col">Description</th>
+                                <th scope="col">Distributable</th>
+                                <th scope="col">Configuration</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr *ngFor="let actionInfo of infoResponse.actions | keyvalue">
+                                <th scope="row">{{actionInfo.value.state}}</th>
+                                <th scope="row">{{actionInfo.key}}</th>
+                                <td>{{actionInfo.value.description}}</td>
+                                <td>{{actionInfo.value.distributable}}</td>
+                                <td>
+                                    <ul *ngFor="let cField of actionInfo.value.configuration | keyvalue">
+                                        <li><var>{{cField.key}}</var> ({{cField.value.type}}) {{cField.value.description}} (optional = {{cField.value.optional}})</li>
+                                    </ul>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+        </div>
+    </div>
+
+</div>

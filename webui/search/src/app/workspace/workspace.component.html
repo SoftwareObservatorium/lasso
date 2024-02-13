@@ -1,0 +1,40 @@
+<mat-card>
+    <mat-card-header>
+      <mat-card-title>Workspace</mat-card-title>
+      <mat-card-subtitle>{{executionId}}</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-actions>
+        <mat-form-field>
+            <mat-label>File Patterns (ANT-like)</mat-label>
+            <input matInput [(ngModel)]="filePatterns">
+        </mat-form-field>
+        <button mat-button (click)="updateFiles()"><mat-icon>search</mat-icon>Show</button>
+    </mat-card-actions>
+    <mat-card-content>
+        <mat-divider></mat-divider>
+        <mat-tree [dataSource]="dataSource" [treeControl]="treeControl">
+            <!-- This is the tree node template for leaf nodes -->
+            <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding>
+              <!-- use a disabled button to provide padding for tree leaf -->
+              <button mat-icon-button disabled></button>
+              {{node.name}}
+              <button mat-button (click)="downloadFile(node.value)"><mat-icon>download</mat-icon>Raw</button>
+              <button mat-button (click)="downloadZIPFile(node.value)"><mat-icon>download</mat-icon>zip</button>
+            </mat-tree-node>
+            <!-- This is the tree node template for expandable nodes -->
+            <mat-tree-node *matTreeNodeDef="let node;when: hasChild" matTreeNodePadding>
+              <button mat-icon-button matTreeNodeToggle
+                      [attr.aria-label]="'Toggle ' + node.name">
+                <mat-icon class="mat-icon-rtl-mirror">
+                  {{treeControl.isExpanded(node) ? 'expand_more' : 'chevron_right'}}
+                </mat-icon>
+              </button>
+              {{node.name}}
+            </mat-tree-node>
+          </mat-tree>
+          <mat-divider></mat-divider>
+    </mat-card-content>
+    <mat-card-actions>
+        <button mat-button (click)="downloadWorkspaceZIP()"><mat-icon>download</mat-icon>zip</button>
+    </mat-card-actions>
+</mat-card>

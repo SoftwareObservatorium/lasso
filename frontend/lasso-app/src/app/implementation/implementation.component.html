@@ -1,0 +1,66 @@
+<div class="container" *ngIf="implementation">
+    <div class="row">
+            <div class="col-12">
+                    <h4>Implementation '{{implementation.id}}'</h4>
+                    <h5>Datasource '{{implementation.dataSource}}'</h5>
+            </div>
+
+            <div class="col-12" *ngIf="implementation.parentId">
+                <div class="btn-toolbar mb-3" role="toolbar" aria-label="Toolbar with button groups">
+                        <div class="btn-group mr-2" role="group" aria-label="First group">
+                          <a role="button" class="btn btn-primary" href="./datasource/{{implementation.dataSource}}/{{implementation.parentId}}">Open Owner Class</a>
+                       </div>
+                </div>
+            </div>
+
+        <div class="col-12">
+                <div *ngIf="error" class="alert alert-danger mt-3 mb-0">{{error}}</div>
+        </div>
+
+        <div class="col-12">
+          <h5>{{implementation.packagename}}.{{implementation.name}}::{{implementation.methodNames[0]}}</h5>
+          <h5>{{implementation.bytecodeName}}</h5>
+          <h6>{{implementation.groupId}}:{{implementation.artifactId}}:{{implementation.version}} <a target="_blank" href="https://search.maven.org/search?q=g:{{implementation.groupId}}%20AND%20a:{{implementation.artifactId}}%20AND%20v:{{implementation.version}}"><span class="badge badge-info">Maven Central</span></a></h6>
+      </div>
+
+        <div class="col-12">
+            <pre class="line-numbers"><code class="language-java line-numbers">{{implementation.content}}</code></pre>
+        </div>
+
+        <div class="col-12">
+          <h5>LASSO Implementation model</h5>
+        </div>
+        <div class="col-12">
+            <pre class="line-numbers"><code class="language-javascript line-numbers">{{json}}</code></pre>
+        </div>
+
+        <div class="col-12">
+          <h5>Solr Document (possibly filtered)</h5>
+        </div>
+        <div class="col-12">
+          <pre class="line-numbers"><code class="language-javascript line-numbers">{{jsonRaw}}</code></pre>
+      </div>
+
+        <!-- <div lass="col-12">
+            <div class="card">
+              <div class="card-body">
+                <h5 class="card-title">'{{implementation.name}}'</h5>
+                <table class="table table-hover">
+                  <thead class="thead-dark">
+                    <tr>
+                      <th scope="col">Key</th>
+                      <th scope="col">Value</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let entry of implementation | keyvalue">
+                      <th scope="row">{{entry.key}}</th>
+                      <th scope="row">{{entry.value}}</th>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div> -->
+    </div>
+</div>

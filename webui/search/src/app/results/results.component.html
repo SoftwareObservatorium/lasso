@@ -1,0 +1,275 @@
+<mat-progress-bar mode="query" *ngIf="isLoading"></mat-progress-bar>
+
+<mat-card *ngIf="!textualSearch">
+  <mat-card-header>
+    <mat-card-title>Results for LSL Pipeline</mat-card-title>
+    <mat-card-subtitle>{{executionId}}</mat-card-subtitle>
+  </mat-card-header>
+  <mat-card-actions>
+    <button mat-button (click)="onOpenScript()">
+      <mat-icon>code</mat-icon>
+      <span>View LSL Script</span>
+    </button>
+    <button mat-button (click)="onDatabase()">
+      <mat-icon>table</mat-icon>
+      <span>Database</span>
+    </button>
+  </mat-card-actions>
+  <mat-card-content *ngIf="oracle">
+    <h4>Oracle set to implementation '{{oracle.referenceImpl}}'</h4>
+
+    <mat-chip-listbox selectable multiple class="mat-mdc-chip-set-stacked" aria-label="Output Selection">
+      <mat-chip-option *ngFor="let o of oracle.manual; index as index;" (selectionChange)="onOutputSelectionChange($event, o, index)" color="accent">
+        {{formatOracleRow(o)}}
+      </mat-chip-option>
+    </mat-chip-listbox>
+  </mat-card-content>
+  <mat-card-actions *ngIf="oracle">
+    <button mat-button (click)="onFilterByOracleValues()">
+      <mat-icon>filter</mat-icon>
+      <span>Apply</span>
+    </button>
+  </mat-card-actions>
+</mat-card>
+
+<mat-card *ngIf="textualSearch">
+  <mat-card-header>
+    <mat-card-title>Results</mat-card-title>
+    <mat-card-subtitle>Text-based Search</mat-card-subtitle>
+  </mat-card-header>
+  <mat-card-content>
+    <pre class="line-numbers"><code class="language-java line-numbers">{{textualSearch.lql}}</code></pre>
+  </mat-card-content>
+  <mat-card-actions>
+  </mat-card-actions>
+</mat-card>
+
+<mat-divider></mat-divider>
+<br>
+
+<mat-paginator #paginator [length]="totalRows" [pageIndex]="currentPage" [pageSize]="pageSize"
+  [pageSizeOptions]="pageSizeOptions" (page)="pageChanged($event)" aria-label="Select page">
+</mat-paginator>
+
+<mat-divider></mat-divider>
+<br>
+
+<ng-container *ngFor="let impl of dataSource.data; index as index;">
+  <mat-card>
+    <mat-card-header>
+
+      <mat-card-title><div matBadge="{{impl.score}}" matBadgeOverlap="false">#{{(paginator.pageIndex * paginator.pageSize) + index + 1}} {{impl.packagename}}.{{impl.name}}</div></mat-card-title>
+      <mat-card-subtitle>{{impl.groupId}}:{{impl.artifactId}}:{{impl.version}}</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <mat-tab-group (selectedTabChange)="onTabChange($event, impl.id)">
+        <!-- <mat-tab label="Interface">
+          <mat-list>
+            <mat-list-item *ngFor="let m of impl.methods">
+              <span matListItemTitle><code><small>{{m}}</small></code></span>
+            </mat-list-item>
+          </mat-list>
+        </mat-tab> -->
+        <mat-tab label="Interface">
+          <div style="height: 200px;">
+            <pre class="line-numbers"><code class="language-java line-numbers">{{impl.lql}}</code></pre>
+          </div>
+        </mat-tab>
+        <mat-tab label="Code">
+          <div style="height: 400px;">
+            <pre class="line-numbers"><code class="language-java line-numbers">{{impl.content}}</code></pre>
+          </div>
+        </mat-tab>
+
+        <mat-tab label="Responses">
+          <!-- <table mat-table [dataSource]="getActuationSheetsFor(impl.id)">
+
+            <ng-container *ngFor="let disCol of getActuationSheetColumns(impl.id); let colIndex = index" matColumnDef="{{disCol}}">
+              <th mat-header-cell *matHeaderCellDef>{{getColumnName(disCol)}}</th>
+              <td mat-cell *matCellDef="let element">{{element[disCol]}}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="disclaimer">
+              <td mat-footer-cell *matFooterCellDef colspan="2">
+                <i>Format of first column: sequence sheet @ statement (x = 0 the response column, y = statement index)</i>
+              </td>
+            </ng-container>
+          
+            <tr mat-header-row *matHeaderRowDef="getActuationSheetColumns(impl.id); sticky: true"></tr>
+            <tr mat-row *matRowDef="let row; columns: getActuationSheetColumns(impl.id)"></tr>
+            <tr mat-footer-row *matFooterRowDef="['disclaimer']"></tr>
+          </table> -->
+
+          <ng-template matTabContent>
+            <table class="styled-table" [id]="'responses_' + impl.id">
+              <thead>
+                <tr>
+                  <th *ngFor="let c of getColumns(impl.id, 'value');">{{getColumnName(c)}} <button *ngIf="c != 'STATEMENT'" mat-button color="accent" matTooltip="Set as Oracle (Reference Implementation)" (click)="filterByOracle(impl, c)"><mat-icon>filter_vintage</mat-icon></button></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let o of actuationSheetFragments.get(getActuationKey(impl.id, 'value'));">
+                  <td *ngFor="let c of getColumns(impl.id, 'value');">{{o[c]}}</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <mat-divider></mat-divider>
+            <button mat-button (click)="downloadTable(impl, 'responses_' + impl.id)"><mat-icon>download</mat-icon>Sheet</button>
+            <mat-divider></mat-divider>
+            <br>
+          </ng-template>
+          
+        </mat-tab>
+
+        <mat-tab label="Operations">
+          <ng-template matTabContent>
+            <table class="styled-table" [id]="'operations_' + impl.id">
+              <thead>
+                <tr>
+                  <th *ngFor="let c of getColumns(impl.id, 'op');">{{getColumnName(c)}}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let o of actuationSheetFragments.get(getActuationKey(impl.id, 'op'));">
+                  <td *ngFor="let c of getColumns(impl.id, 'op');">{{o[c]}}</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <mat-divider></mat-divider>
+            <button mat-button (click)="downloadTable(impl, 'operations_' + impl.id)"><mat-icon>download</mat-icon>Sheet</button>
+            <mat-divider></mat-divider>
+            <br>
+          </ng-template>
+        </mat-tab>
+
+        <mat-tab label="Stimuli">
+          <ng-template matTabContent>
+            <table class="styled-table" [id]="'stimuli_' + impl.id">
+              <thead>
+                <tr>
+                  <th *ngFor="let c of getColumns(impl.id, 'input_value');">{{getColumnName(c)}}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let o of actuationSheetFragments.get(getActuationKey(impl.id, 'input_value'));">
+                  <td *ngFor="let c of getColumns(impl.id, 'input_value');">{{o[c]}}</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <mat-divider></mat-divider>
+            <button mat-button (click)="downloadTable(impl, 'stimuli_' + impl.id)"><mat-icon>download</mat-icon>Sheet</button>
+            <mat-divider></mat-divider>
+            <br>
+          </ng-template>
+        </mat-tab>
+
+        <mat-tab label="Observations">
+          <ng-template matTabContent>
+            <mat-accordion multi="false">
+              <mat-expansion-panel *ngFor="let rType of recordTypes" (opened)="getRecords(impl.id, rType)">
+                <mat-expansion-panel-header>
+                  <mat-panel-title>
+                    {{rType}}
+                  </mat-panel-title>
+                  <mat-panel-description>
+                    Observation
+                  </mat-panel-description>
+                </mat-expansion-panel-header>
+                <ng-template matExpansionPanelContent>
+                  <table class="styled-table">
+                    <thead>
+                      <tr>
+                        <th>Adapter</th>
+                        <th>X</th>
+                        <th>Y</th>
+                        <th>Value</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let o of observationRecords.get(getActuationKey(impl.id, rType))">
+                        <td>{{o.adapter}}</td>
+                        <td>{{o.x}}</td>
+                        <td>{{o.y}}</td>
+                        <td *ngIf="o.type === 'exseq' || o.type === 'seq'"><pre class="line-numbers"><code class="language-java line-numbers">{{o.value}}</code></pre></td>
+                        <td *ngIf="o.type != 'exseq' && o.type != 'seq'">{{o.value}}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </ng-template>
+
+              </mat-expansion-panel>
+            </mat-accordion>
+          </ng-template>
+        </mat-tab>
+
+        <mat-tab label="Reports">
+          <mat-accordion multi>
+            <mat-expansion-panel>
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  Project
+                </mat-panel-title>
+                <mat-panel-description>
+                  Metadata
+                </mat-panel-description>
+              </mat-expansion-panel-header>
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Meta</th>
+                    <th>Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let m of impl.metaData | keyvalue; index as index;">
+                    <th>{{index}}</th>
+                    <td>{{m.key}}</td>
+                    <td>{{m.value}}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </mat-expansion-panel>
+
+            <mat-expansion-panel>
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  Index Measures
+                </mat-panel-title>
+                <mat-panel-description>
+                  Static Measures
+                </mat-panel-description>
+              </mat-expansion-panel-header>
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Metric</th>
+                    <th>Measure</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let m of impl.measures | keyvalue; index as index;">
+                    <th>{{index}}</th>
+                    <td>{{m.key}}</td>
+                    <td>{{m.value}}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </mat-expansion-panel>
+          </mat-accordion>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-card-content>
+    <mat-card-actions>
+      <button mat-button (click)="downloadContent(impl.content, impl.name)"><mat-icon>download</mat-icon>Get Code</button>
+      <button mat-button (click)="findSimilar(impl)"><mat-icon>search</mat-icon>Find Similar Code</button>
+      <button mat-button (click)="openArtifact(impl)"><mat-icon>deployed_code</mat-icon>Get Artifact</button>
+    </mat-card-actions>
+    <!-- <mat-card-footer>{{impl.id}}</mat-card-footer> -->
+  </mat-card>
+  <br>
+</ng-container>

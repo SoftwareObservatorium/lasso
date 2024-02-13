@@ -1,0 +1,277 @@
+<ngx-smart-modal #sheetModal identifier="sheetModal">
+  <h1>Actuation Sheets</h1>
+  <div class="col-12">
+    <!-- <ngx-datatable  *ngIf="sheetRows"
+    class="bootstrap"
+    [rows]="sheetRows"
+    [columns]="sheetColumns"
+    columnMode="force"
+    [headerHeight]="40"
+    [summaryRow]="true"
+    [summaryPosition]="'bottom'"
+    [footerHeight]="50"
+    [limit]="sheetsPageSize"
+    [rowHeight]="50"
+    [reorderable]="reorderable"
+    [loadingIndicator]="true"
+    [scrollbarH]="true"
+      >
+      <ngx-datatable-column *ngFor="let column of sheetColumns; let i = index;" name="{{column.name}}" prop="{{column.prop}}">
+        <ng-template let-value="value" let-row="row" ngx-datatable-cell-template>
+          <span>
+            <a class="btn btn-link" *ngIf="column.name === 'SYSTEM' || column.name === 'ABSTRACTION'" href="./datasource/{{row['datasource']}}/{{value}}" target="_blank"><p>{{value}}</p></a>
+
+            
+            <a class="btn btn-link" *ngIf="column.name === 'SYSTEMID'" href="./datasource/mavenCentral2020/{{value}}" target="_blank"><p>{{value}}</p></a>
+
+            <p *ngIf="!(column.name === 'SYSTEM')">{{value}}</p>
+          </span>
+        </ng-template>
+      </ngx-datatable-column>
+    </ngx-datatable> -->
+
+    <div class="table-responsive">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th scope="col">#</th>
+          <th scope="col" *ngFor="let column of sheetColumns; let i = index;">{{column.name}}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of sheetRows; let i = index;">
+          <th scope="row">{{i + 1}}</th>
+          <td *ngFor="let column of sheetColumns">{{row[column.name]}}</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <button (click)="sheetModal.close()">Close</button>
+</ngx-smart-modal>
+  
+  <div class="container">
+
+    <div class="row">
+        <div class="col-12">
+                <div *ngIf="error" class="alert alert-danger mt-3 mb-0">{{error}}</div>
+        </div></div>
+
+    <div *ngIf="!executionId" class="row">
+        <div class="col-12">
+          <label for="query">Query (Interface-driven Code Search, keyword etc.)</label>
+            <ngx-monaco-editor id="query" style="height: 150px; margin-top: 1%" [options]="editorOptions" (onInit)="onInit($event)" [(model)]="editorModel"></ngx-monaco-editor>
+        
+            <div class="form-group">
+              <label for="filterQueryTextArea">Filter Queries (separated by 'newline'; e.g., 'm_static_complexity_td:[3 TO *]')</label>
+              <textarea class="form-control" id="filterQueryTextArea" rows="3" [(ngModel)]='filterQueries'></textarea>
+            </div>
+          </div>
+        </div>
+
+          <div *ngIf="!executionId" class="row">
+            <div class="col-12">
+                    <div class="btn-toolbar mb-3" role="toolbar" aria-label="Toolbar with button groups">
+                            <div class="btn-group mr-2" role="group" aria-label="First group">
+                              <button type="button" class="btn btn-primary" (click)="getPage(1)">Search</button>
+
+                              <ng-template [ngIf]="datasourceResponse">
+                                <div class="dropdown">
+                                  <button type="button" title="Data Source" id="dropdownMenuLink" class="btn btn-info dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    {{dataSource}} <span class="sr-only">Toggle Dropdown</span>
+                                  </button>
+                                  
+                                        <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                                                <a *ngFor="let info of datasourceResponse.dataSources | keyvalue" class="dropdown-item" title="{{info.value.description}}" (click)="setDataSource(info.value)">{{info.value.name}}</a>
+                                              </div>
+                                  
+                              </div>
+                            </ng-template>
+      
+                              <div class="dropdown">
+                                <button type="button" title="Compilation Unit" id="dropdownMenuLink2" class="btn btn-info dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                  {{compilationUnitType}} <span class="sr-only">Toggle Dropdown</span>
+                                </button>
+                                
+                                      <div class="dropdown-menu" aria-labelledby="dropdownMenuLink2">
+                                              <a *ngFor="let cu of compilationUnitTypes" class="dropdown-item" (click)="compilationUnitType = cu">{{cu}}</a>
+                                            </div>
+                                
+                            </div>
+      
+                            <div class="dropdown">
+                              <button type="button" title="Strategy" id="dropdownMenuLink2" class="btn btn-info dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                {{strategy}} <span class="sr-only">Toggle Dropdown</span>
+                              </button>
+                              
+                                    <div class="dropdown-menu" aria-labelledby="dropdownMenuLink2">
+                                            <a *ngFor="let strat of strategies" class="dropdown-item" (click)="strategy = strat">{{strat}}</a>
+                                          </div>
+                              
+                          </div>
+                            </div>
+                        </div>
+                    </div>
+            </div>
+
+        <div *ngIf="searchResults" class="col-12">
+          <br>
+          <h3>{{total}} Results <small *ngIf="executionId">{{executionId}}</small></h3>
+          <br>
+
+          <div class="col-12">
+            <div class="btn-toolbar mb-3" role="toolbar" aria-label="Toolbar with button groups">
+                    <div class="btn-group mr-2" role="group" aria-label="First group">
+
+                      <ng-template [ngIf]="actions">
+                        <div class="dropdown">
+                          <button type="button" title="Actions" id="dropdownMenuLink" class="btn btn-info dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                           Systems for Action '{{action}}'<span class="sr-only">Toggle Dropdown</span>
+                          </button>
+                          
+                                <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                                        <a *ngFor="let myaction of actions" class="dropdown-item" title="{{myaction}}" (click)="setAction(myaction)">{{myaction}}</a>
+                                      </div>
+                          
+                      </div>
+                    </ng-template>
+
+                    <button type="button" title="Sheets" class="btn btn-primary" *ngIf="executionId" (click)="openSheets()">Open Responses</button>
+
+                  </div>
+          </div></div>
+          
+          <div class="has-text-centered">
+              <div class="spinner" [ngClass]="{ 'hidden': !loading }"></div>
+              <pagination-controls (pageChange)="getPage($event)" id="server"></pagination-controls>
+          </div>
+        </div>
+
+        <div class="col-12">
+            <ng-template [ngIf]="searchResults">
+                <div *ngFor="let impl of searchResults | async | keyvalue:orderBy | paginate: { id: 'server', itemsPerPage: 10, currentPage: p, totalItems: total }" class="card text-left">
+                    <div class="card-header">
+                      <ul class="nav nav-tabs card-header-tabs">
+                        <li class="nav-item">
+                          <a class="nav-link active" data-toggle="tab" href="#class_{{impl.key}}">Class</a>
+                        </li>
+                        <li class="nav-item">
+                          <a class="nav-link" data-toggle="tab" href="#methods_{{impl.key}}">Methods</a>
+                        </li>
+                        <li class="nav-item">
+                          <a class="nav-link" data-toggle="tab" href="#measures_{{impl.key}}">Metrics</a>
+                        </li> 
+                        <li class="nav-item">
+                          <a class="nav-link" data-toggle="tab" href="#source_{{impl.key}}" (click)="doHighlight($event)">Source</a>
+                        </li>
+                        <li class="nav-item">
+                          <a class="nav-link" data-toggle="tab" href="#project_{{impl.key}}">Project</a>
+                        </li> 
+                        <li class="nav-item" *ngIf="executionId">
+                          <a class="nav-link" data-toggle="tab" href="#report_{{impl.key}}">Reports</a>
+                        </li> 
+                        <li class="nav-item" *ngIf="executionId">
+                          <a class="nav-link" data-toggle="tab" href="#srm_{{impl.key}}">Response</a>
+                        </li> 
+                        <li class="nav-item">
+                          <a class="nav-link" data-toggle="tab" href="#debug_{{impl.key}}" (click)="doHighlight($event)">{{impl.key}}</a>
+                        </li>
+                        <li class="nav-item">
+                          <a class="nav-link disabled" href="#">{{impl.value.score | number:'1.2-2'}}</a>
+                        </li>
+                      </ul>
+
+                    </div>
+                    <div class="card-body">
+                      <!-- Tab panes -->
+                      <div class="tab-content">
+                        <div class="tab-pane container active" id="class_{{impl.key}}">
+                          <h5 class="card-title">{{impl.value.name}}</h5>
+                          <p class="card-text">{{impl.value.packagename}}</p>
+                          <p class="card-text"><small>{{impl.value.dataSource}}</small></p>
+                        </div>
+                        <div class="tab-pane container fade" id="methods_{{impl.key}}">
+                          <p *ngFor="let m of impl.value.methods"><small>{{m}}</small></p>
+                        </div>
+                        <div class="tab-pane container fade" id="measures_{{impl.key}}">
+                          <table class="table table-striped">
+                            <thead>
+                              <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Metric</th>
+                                <th scope="col">Measure</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr *ngFor="let m of impl.value.measures | keyvalue; index as index;">
+                                <th scope="row">{{index}}</th>
+                                <td>{{m.key}}</td>
+                                <td>{{m.value}}</td>
+                              </tr>
+                            </tbody>
+                          </table>
+
+                        </div>
+                        <div class="tab-pane container fade" id="source_{{impl.key}}">
+                          <pre class="line-numbers"><code class="language-java line-numbers">{{impl.value.content}}</code></pre>
+                        </div>
+                        <div class="tab-pane container fade" id="debug_{{impl.key}}">
+                          <a class="nav-link" href="./datasource/{{impl.value.dataSource}}/{{impl.key}}" target="_blank">Raw Source</a>
+                          <pre class="line-numbers"><code class="language-javascript line-numbers">{{impl.value | json}}</code></pre>
+                        </div>
+                        <div class="tab-pane container fade" id="project_{{impl.key}}">
+                          <table class="table table-striped">
+                            <thead>
+                              <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Meta</th>
+                                <th scope="col">Value</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr *ngFor="let m of impl.value.metaData | keyvalue; index as index;">
+                                <th scope="row">{{index}}</th>
+                                <td>{{m.key}}</td>
+                                <td>{{m.value}}</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        <div *ngIf="executionId" class="tab-pane container fade" id="srm_{{impl.key}}">
+                          <div class="table-responsive">
+                            <table class="table table-striped">
+                              <thead>
+                                <tr>
+                                  <th scope="col">#</th>
+                                  <th scope="col" *ngFor="let column of getActuationSheetsFor(impl.key); let i = index;">{{column.name}}</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr *ngFor="let row of sheetRows; let i = index;">
+                                  <th scope="row">{{i + 1}}</th>
+                                  <td *ngFor="let column of getActuationSheetsFor(impl.key)">{{row[column.name]}}</td>
+                                </tr>
+                              </tbody>
+                            </table>
+                            </div>
+                        </div>
+                        <div *ngIf="executionId" class="tab-pane container fade" id="report_{{impl.key}}">
+                          <a *ngFor="let table of reportTables" class="btn btn-link" href="./cache/{{executionId}}/db:{{table}}/{{action}}/{{impl.value.metaData.abstraction}}/{{impl.key}}/{{impl.value.dataSource}}/-1" target="_blank"><p><span class="badge badge-info">{{table}}</span></p></a>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="card-footer text-muted">
+                        {{impl.value.groupId}}:{{impl.value.artifactId}}:{{impl.value.version}}
+                    </div>
+                  </div>
+          </ng-template>
+        </div>
+
+        <div *ngIf="searchResults" class="col-12">
+          <div class="has-text-centered">
+              <div class="spinner" [ngClass]="{ 'hidden': !loading }"></div>
+              <pagination-controls (pageChange)="getPage($event)" id="server"></pagination-controls>
+          </div>
+        </div>
+    </div>

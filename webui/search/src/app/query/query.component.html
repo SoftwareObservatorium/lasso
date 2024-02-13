@@ -1,0 +1,95 @@
+<div class="grid-container">
+    <h1 class="mat-h1">New Analysis</h1>
+
+    <mat-tab-group (selectedTabChange)="onTabChange($event)">
+      <mat-tab label="Script Editor">
+            <mat-card class="lsl-editor-card">
+              <mat-card-header>
+                <mat-card-title>Editor</mat-card-title>
+                <mat-card-subtitle>LSL Script</mat-card-subtitle>
+              </mat-card-header>
+              <mat-card-actions>
+                <button mat-button (click)="newStudy()">New</button>
+                <button mat-button (click)="onRefreshLSL()">Generate</button>
+                <button mat-button (click)="lslFileInput.click()">Load</button>
+                <input hidden (change)="readScript($event)" #lslFileInput type="file" id="file">
+
+                <mat-form-field>
+                  <mat-label>Add DataSource</mat-label>
+                  <mat-select (selectionChange)="onAddDatasource($event)">
+                    <mat-option *ngFor="let info of datasourceResponse.dataSources | keyvalue" [value]="info.value">{{info.key}}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field>
+                  <mat-label>Add Action</mat-label>
+                  <mat-select (selectionChange)="onAddAction($event)">
+                    <mat-option [value]="'empty'">Empty</mat-option>
+                    <mat-option [value]="'select'">Select</mat-option>
+                    <mat-option *ngFor="let actionInfo of infoResponse.actions | keyvalue" [value]="actionInfo.value">{{actionInfo.key}}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </mat-card-actions>
+              <mat-card-content style="height: 100%;">
+                  <ngx-monaco-editor style="height: 100%" [options]="lslEditorOptions" [(ngModel)]="lslCode" (onInit)="onLSLInit($event)"></ngx-monaco-editor>
+              </mat-card-content>
+              <mat-card-actions>
+                <button mat-raised-button color="primary" (click)="onSearch(false)">Submit</button>
+                <button mat-raised-button color="accent" (click)="onSearch(true)">Save</button>
+              </mat-card-actions>
+            </mat-card>
+
+      </mat-tab>
+
+      <mat-tab label="Graph Viewer">
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title>Execution Graph</mat-card-title>
+            <mat-card-subtitle>LSL Script</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <ngx-graph
+            class="chart-container"
+
+            [links]="ledges"
+            [nodes]="lnodes"
+            (select)="onNodeSelect($event)"
+          >
+
+          <ng-template #defsTemplate>
+            <svg:marker id="arrow" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="4" markerHeight="4" orient="auto">
+              <svg:path d="M0,-5L10,0L0,5" class="arrow-head" />
+            </svg:marker>
+          </ng-template>
+
+          <ng-template #nodeTemplate let-node>
+            <svg:g class="node">
+              <svg:rect [attr.width]="node.dimension.width" [attr.height]="node.dimension.height + 12" [attr.fill]="node.data.color" />
+              <svg:text alignment-baseline="central" [attr.x]="10" [attr.y]="node.dimension.height / 2">
+                
+                <svg:tspan x="0.6em" dy="0" font-style = "bold">{{node.label}}</svg:tspan>
+                <svg:tspan x="0.6em" dy="1.2em" font-style = "italic">{{node.id}}</svg:tspan>
+              </svg:text>
+            </svg:g>
+          </ng-template>
+  
+          <ng-template #linkTemplate let-link>
+            <svg:g class="edge">
+              <svg:path class="line" stroke-width="2" marker-end="url(#arrow)">
+              </svg:path>
+              <svg:text class="edge-label" text-anchor="middle">
+                <textPath class="text-path" [attr.href]="'#' + link.id" [style.dominant-baseline]="link.dominantBaseline" startOffset="50%">
+                  {{link.label}}
+                </textPath>
+              </svg:text>
+            </svg:g>
+          </ng-template>
+
+          </ngx-graph>
+          </mat-card-content>
+        </mat-card>
+
+  </mat-tab>
+
+    </mat-tab-group>
+</div>

@@ -1,0 +1,49 @@
+<div class="grid-container">
+  <h1 class="mat-h1">SRM</h1>
+
+  <mat-progress-bar mode="query" *ngIf="isLoading"></mat-progress-bar>
+
+  <mat-card>
+      <mat-card-header>
+        <mat-card-title>SQL Query</mat-card-title>
+        <mat-card-subtitle>Query LASSO's Tables</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-actions>
+        <mat-form-field>
+          <mat-label>Choose Table</mat-label>
+          <mat-select (selectionChange)="onChangeTable($event)">
+            <mat-option [value]="'srm'">SRM (Observations)</mat-option>
+            <mat-option *ngFor="let table of tables" [value]="table">{{table}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+    </mat-card-actions>
+      <mat-card-content>
+          <ngx-monaco-editor class="my-code-editor" [options]="editorOptions" [(ngModel)]="code" (onInit)="onInit($event)"></ngx-monaco-editor>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-raised-button color="primary" (click)="query()">Query</button>
+      </mat-card-actions>
+    </mat-card>
+    <br>
+
+    <div *ngIf="error">{{error}}</div>
+
+    <div>
+      <table mat-table [dataSource]="data" class="mat-elevation-z8">
+        <ng-container [matColumnDef]="column" *ngFor="let column of displayedColumns">
+          <th mat-header-cell *matHeaderCellDef> {{column}} </th>
+          <td mat-cell *matCellDef="let element"> {{element[column]}} </td>
+        </ng-container>
+      
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+      
+        <mat-paginator #paginator [length]="totalRows" [pageIndex]="currentPage" [pageSize]="pageSize"
+        [pageSizeOptions]="pageSizeOptions" (page)="pageChanged($event)" aria-label="Select page">
+      </mat-paginator>
+    </div>
+
+</div>
+
+

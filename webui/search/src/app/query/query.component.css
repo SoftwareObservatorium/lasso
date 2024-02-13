@@ -1,0 +1,13 @@
+.grid-container {
+    margin: 20px;
+  }
+
+.lql-editor-card {
+  min-height: 250px;
+  height: 350px;
+}
+
+.lsl-editor-card {
+    min-height: 350px;
+    height: 700px;
+}

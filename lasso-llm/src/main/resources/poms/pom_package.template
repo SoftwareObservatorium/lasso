@@ -1,0 +1,68 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>${groupId}</groupId>
+	<artifactId>${artifactId}</artifactId>
+	<version>${version}</version>
+	<packaging>jar</packaging>
+
+	<name>Benchmark on Generator ${artifactId}</name>
+	
+   <repositories>
+      <repository>
+         <id>${repoId}</id>
+         <url>${repoUrl}</url>
+         <snapshots>
+             <enabled>true</enabled>
+        </snapshots>
+        <releases>
+            <enabled>true</enabled>
+        </releases>
+      </repository>
+   </repositories>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>swt100nexus</id>
+            <url>http://lassohp12.informatik.uni-mannheim.de:8081/repository/maven-snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<maven.compiler.plugin.version>3.10.1</maven.compiler.plugin.version>
+		<solr.core>${solrCore}</solr.core>
+	</properties>
+
+	<dependencies>
+	
+		<!-- Dependencies -->
+		${dependencies}
+
+	</dependencies>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${maven.compiler.plugin.version}</version>
+                    <configuration>
+                        <release>${jdk.version}</release>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>de.uni-mannheim.swt.lasso</groupId>
+                    <artifactId>indexer-maven-plugin</artifactId>
+                    <version>1.0.0-SNAPSHOT</version>
+                    <configuration>
+                        <solrCore>${solr.core}</solrCore>
+                        <metadata>${metaData}</metadata>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+</project>
