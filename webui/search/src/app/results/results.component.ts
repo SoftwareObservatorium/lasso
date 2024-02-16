@@ -251,7 +251,7 @@ export class ResultsComponent implements AfterViewChecked {
     //return data.splice(startIndex, this.paginator.pageSize);
     console.log("triggering query for executionId")
 
-    const perPage = 10;
+    //const perPage = 10;
 
     //this.loading = true;
 
@@ -328,11 +328,12 @@ export class ResultsComponent implements AfterViewChecked {
   sortImplementationsToArray = (implementations: any): any[] => {
     const jsonArray = Array.from(Object.values(implementations));
 
-    // Sort the array by the "id" attribute
+    // sort the array by the "score" attribute
     jsonArray.sort((a: any, b: any) => a.score >b.score ? -1 : (b.score > a.score ? 1 : 0));
 
-    // Now, the jsonArray is sorted by the "id" attribute
-    console.log(jsonArray);
+    for (let [i, elem] of jsonArray.entries()) { 
+      let impl: any = elem
+    }
 
     return jsonArray;
   };
@@ -436,11 +437,13 @@ export class ResultsComponent implements AfterViewChecked {
 
   findSimilar(impl: any) {
     this.router.navigate(
-      ['/submit'],
+      ['/search'],
       {
-        queryParams: { lql: impl.lql },
+        queryParams: { lql: impl.lql, /*filter: searchFilters,*/ strategy: 'class-simple', datasource: impl.dataSource },
         queryParamsHandling: 'merge' }
-      );
+      ).then(() => {
+        window.location.reload();
+      });
   }
 
   // Open artifact in Nexus

@@ -16,7 +16,7 @@
     </button>
   </mat-card-actions>
   <mat-card-content *ngIf="oracle">
-    <h4>Oracle set to implementation '{{oracle.referenceImpl}}'</h4>
+    <h4>Select Outputs '{{oracle.referenceImpl}}'</h4>
 
     <mat-chip-listbox selectable multiple class="mat-mdc-chip-set-stacked" aria-label="Output Selection">
       <mat-chip-option *ngFor="let o of oracle.manual; index as index;" (selectionChange)="onOutputSelectionChange($event, o, index)" color="accent">
