@@ -19,24 +19,10 @@
  */
 package de.uni_mannheim.swt.lasso.llm.problem;
 
-import org.apache.arrow.memory.BufferAllocator;
-import org.apache.arrow.memory.RootAllocator;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.hadoop.fs.Path;
 import org.apache.parquet.avro.AvroParquetReader;
 import org.apache.parquet.hadoop.ParquetReader;
-
-import org.apache.arrow.dataset.file.FileFormat;
-import org.apache.arrow.dataset.file.FileSystemDatasetFactory;
-import org.apache.arrow.dataset.jni.NativeMemoryPool;
-import org.apache.arrow.dataset.scanner.ScanOptions;
-import org.apache.arrow.dataset.scanner.Scanner;
-import org.apache.arrow.dataset.source.Dataset;
-import org.apache.arrow.dataset.source.DatasetFactory;
-import org.apache.arrow.memory.BufferAllocator;
-import org.apache.arrow.memory.RootAllocator;
-import org.apache.arrow.vector.VectorSchemaRoot;
-import org.apache.arrow.vector.ipc.ArrowReader;
 
 import java.io.File;
 
