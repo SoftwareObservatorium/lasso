@@ -65,13 +65,13 @@ export class ScriptsComponent implements AfterViewInit {
     this.dataSource.paginator = this.paginator;
     this.table.dataSource = this.dataSource;
 
-    timer(0, INTERVAL).subscribe(n => {
-      console.log("refreshing scripts")
-      // this.dataSource.sort = this.sort;
-      // this.dataSource.paginator = this.paginator;
-      // this.table.dataSource = new ScriptsDataSource(this.lassoApiService);
-      // this.table.renderRows();
-    });
+    // timer(0, INTERVAL).subscribe(n => {
+    //   console.log("refreshing scripts")
+    //   // this.dataSource.sort = this.sort;
+    //   // this.dataSource.paginator = this.paginator;
+    //   // this.table.dataSource = new ScriptsDataSource(this.lassoApiService);
+    //   // this.table.renderRows();
+    // });
   }
 
   onResults(scriptInfo: ScriptInfo): void {

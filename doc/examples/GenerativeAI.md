@@ -55,7 +55,6 @@ study(name: 'GenerativeAI-Base64') {
 
         whenAbstractionsReady() {
             def base64 = abstractions['Base64Encode']
-            def base64Srm = srm(abstraction: base64)
             // define oracle based on expected responses in sequences
             def expectedBehaviour = toOracle(srm(abstraction: base64).sequences)
             // returns a filtered SRM

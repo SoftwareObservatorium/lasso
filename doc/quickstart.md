@@ -22,7 +22,7 @@ The following command needs to be executed in the root directory of the reposito
 
 ```bash
 ./mvnw -DskipTests \
-  -Dfrontend.build=embedded \ # profile for localhost:10222
+  -Dfrontend.build=embedded \
   clean install
 ```
 
@@ -267,7 +267,6 @@ study(name: 'Base64encode') {
         // match implementations (note no candidates are dropped)
         whenAbstractionsReady() {
             def base64 = abstractions['Base64']
-            def base64Srm = srm(abstraction: base64)
             // define oracle based on expected responses in sequences
             def expectedBehaviour = toOracle(srm(abstraction: base64).sequences)
             // returns a filtered SRM

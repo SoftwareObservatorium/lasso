@@ -64,8 +64,9 @@ public class ScriptQueryStrategy extends QueryStrategy {
                 "SELECT count(system) from StepReport where passed = true and action = '"+lastAction+"'");
         long totalSystems = countTable.longColumn(0).get(0);
         //  limit " + request.getStart() + "," + request.getRows()
+        // FIXME issue with post-ranking (hen & egg problem)
         Table systemsTable = clusterEngine.getReportRepository().select(request.getExecutionId(),
-                "SELECT system,abstraction,datasource from StepReport where passed = true and action = '"+lastAction+"' order by lastmodified asc limit " + request.getStart() + "," + request.getRows());
+                "SELECT system,abstraction,datasource from StepReport where passed = true and action = '"+lastAction+"' order by lastmodified");// asc limit " + request.getStart() + "," + request.getRows());
 
         if(LOG.isInfoEnabled()) {
             LOG.info("oracle filters '{}'", request.getOracleFilters());
@@ -115,7 +116,7 @@ public class ScriptQueryStrategy extends QueryStrategy {
             //
         }
 
-        Map<String, CodeUnit> implementations = systemsTable.stream().map(row -> {
+        LinkedHashMap<String, CodeUnit> implementations = systemsTable.stream().map(row -> {
             try {
                 String id = row.getString(0);
                 String ds = row.getString(2); // datasource used
@@ -185,7 +186,23 @@ public class ScriptQueryStrategy extends QueryStrategy {
             }
         }
 
+        LOG.info("Pre-selected '{}' implementations.", implementations.size());
+
+        // paging
+        implementations = implementations.entrySet().stream().sorted(Comparator.comparingDouble(e -> e.getValue().getScore() * -1))
+                        .skip(request.getStart()).limit(request.getRows()).collect(Collectors.toMap(Map.Entry::getKey,
+                        Map.Entry::getValue,
+                (e1, e2) -> e1,
+                LinkedHashMap::new));
+
+        for(CodeUnit impl : implementations.values()) {
+            LOG.info("impl score {}", impl.getScore());
+        }
+
         response.setImplementations(implementations);
+        response.setRows(implementations.size());
+
+        LOG.info("Returning '{}' implementations.", implementations.size());
 
         return response;
     }

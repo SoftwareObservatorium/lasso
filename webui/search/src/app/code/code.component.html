@@ -32,7 +32,7 @@
         <button mat-button (click)="onAddSheet()">New Sheet</button>
         <button mat-button (click)="fileInput.click()">Load</button>
         <input hidden (change)="readSheet($event)" #fileInput type="file" id="file">
-        <button mat-button (click)="onExport()">Save</button>
+        <button mat-button (click)="onExport()">Export</button>
         <!-- <button mat-button (click)="onGenerateSequences()">Generate LSL</button> -->
       </mat-card-actions>
     </mat-card>
@@ -110,11 +110,57 @@
                       </mat-form-field>
               
                 </mat-expansion-panel>
+
+                <mat-expansion-panel>
+                  <mat-expansion-panel-header>
+                    <mat-panel-title>
+                      Arena
+                    </mat-panel-title>
+                    <mat-panel-description>
+                      Set your arena settings
+                      <!-- <mat-icon>account_circle</mat-icon>-->
+                    </mat-panel-description>
+                  </mat-expansion-panel-header>
+
+                  <mat-form-field>
+                      <mat-label>Generate up to N Adapters</mat-label>
+                      <input matInput [(ngModel)]="arenaAdapters">
+                  </mat-form-field>
+              
+                </mat-expansion-panel>
+
+                <mat-expansion-panel>
+                  <mat-expansion-panel-header>
+                    <mat-panel-title>
+                      LSL Script Template
+                    </mat-panel-title>
+                    <mat-panel-description>
+                      Set your LSL script template
+                      <!-- <mat-icon>account_circle</mat-icon>-->
+                    </mat-panel-description>
+                  </mat-expansion-panel-header>
+
+                  <mat-card class="lsl-editor-card">
+                    <mat-card-header>
+                      <mat-card-title>Editor</mat-card-title>
+                      <mat-card-subtitle>LSL Script</mat-card-subtitle>
+                    </mat-card-header>
+                    <mat-card-actions>
+                    </mat-card-actions>
+                    <mat-card-content style="height: 100%;">
+                        <ngx-monaco-editor style="height: 100%" [options]="lslEditorOptions" [(ngModel)]="lslCodeTemplate" (onInit)="onLSLInit($event)"></ngx-monaco-editor>
+                    </mat-card-content>
+                    <mat-card-actions>
+                    </mat-card-actions>
+                  </mat-card>
+
+                </mat-expansion-panel>
       
             </mat-accordion>
       </mat-card-content>
       <mat-card-actions align="start">
-        <button mat-raised-button color="primary" (click)="onSearch()">Search</button>
+        <button mat-raised-button color="primary" (click)="onSearch(false)">Search</button>
+        <button mat-raised-button color="accent" (click)="onSearch(true)">Save</button>
       </mat-card-actions>
     </mat-card>
 </div>

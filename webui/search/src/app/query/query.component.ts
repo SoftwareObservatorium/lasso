@@ -18,21 +18,17 @@
 /// along with LASSO.  If not, see <https://www.gnu.org/licenses/>.
 ///
 
-import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { MatTabChangeEvent } from '@angular/material/tabs';
 import { HotTableRegisterer } from '@handsontable/angular';
-import Handsontable from 'handsontable';
-import { read, utils, writeFileXLSX } from 'xlsx';
 
-import {MatAccordion} from '@angular/material/expansion';
 import { LassoApiServiceService } from '../service/lasso-api-service.service';
-import { ActivatedRoute, Params, Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ActionInfo, DataSourceResponse, LSLInfoResponse, LslRequest, ScriptInfo } from '../model/lsl';
 import { AuthenticationService } from '../service/authentication.service';
 import { User } from '../model/user';
 import { first } from 'rxjs/operators';
 
-import { Node, Edge, ClusterNode } from '@swimlane/ngx-graph';
 import { MatSelectChange } from '@angular/material/select';
 
 @Component({
@@ -49,71 +45,71 @@ export class QueryComponent implements OnInit, AfterViewInit {
 
   // monaco for LSL
   lslEditorOptions = {theme: 'vs-light', language: 'lsl'};
-  lslCode: string= `dataSource 'mavenCentral2023'
+  lslCode: string= `dataSource 'lasso_quickstart'
 
-  def totalRows = 100
-  def noOfAdapters = 10
-  // interface in LQL notation
-  def interfaceSpec = """Stack {
-      push(java.lang.Object)->java.lang.Object
-      pop()->java.lang.Object
-      peek()->java.lang.Object
-      size()->int}"""
-  study(name: 'JSSReuse-Stack-size') {
-      action(name: 'select', type: 'Select') {
-          abstraction('Stack') { // interface-driven code search
-              queryForClasses interfaceSpec, 'class-simple'
-              rows = totalRows
-              excludeClassesByKeywords(['private', 'abstract'])
-              excludeTestClasses()
-              excludeInternalPkgs()
-          }
-      }
-  
-      action(name: "clones", type: 'Nicad6') {
-          cloneType = "type2" // clone type to reject
-          collapseClones = true // remove clone implementations
-  
-          dependsOn "select"
-          includeAbstractions 'Stack'
-          
-          profile {
-              environment('nicad') {
-                  image = 'nicad:6.2'
-              }
-          }
-      }
-  
-      action(name: 'filter', type: 'ArenaExecute') { // filter by tests
-          containerTimeout = 10 * 60 * 1000L // 10 minutes
-          specification = interfaceSpec
-          sequences = [
-                  'pushPop': sheet(p1: 'Stack', p2: "hello", p3: "world") {
-                      row '', 'create', '?p1'
-                      row '?p2', 'push', 'A1', '?p2'
-                      row '?p3', 'push', 'A1', '?p3'
-                      row '?p3', 'peek', 'A1'
-                      row 2, 'size', 'A1'
-                      row '?p3', 'pop', 'A1'
-                      row 1, 'size', 'A1'
-                  }
-          ]
-          features = ['cc'] // enable code coverage measurement (class scope)
-          maxAdaptations = noOfAdapters // how many adaptations to try
-  
-          dependsOn 'clones'
-          includeAbstractions 'Stack'
-          profile('myTdsProfile') {
-              scope('class') { type = 'class' }
-              environment('java11') {
-                  image = 'maven:3.6.3-openjdk-17' // change
-              }
-          }
-  
-          whenAbstractionsReady() {
-          }
-      }
-  }`;
+def totalRows = 10
+def noOfAdapters = 100
+// interface in LQL notation
+def interfaceSpec = """Base64{encode(byte[])->byte[]}"""
+study(name: 'Base64encode') {
+    /* select class candidates using interface-driven code search */
+    action(name: 'select', type: 'Select') {
+        abstraction('Base64') {
+            queryForClasses interfaceSpec, 'class-simple'
+            rows = totalRows
+            excludeClassesByKeywords(['private', 'abstract'])
+            excludeTestClasses()
+            excludeInternalPkgs()
+        }
+    }
+    /* filter candidates by two tests (test-driven code filtering) */
+    action(name: 'filter', type: 'ArenaExecute') { // filter by tests
+        containerTimeout = 10 * 60 * 1000L // 10 minutes
+        specification = interfaceSpec
+        sequences = [
+                // parameterised sheet (SSN) with default input parameter values
+                // expected values are given in first row (oracle)
+                'testEncode': sheet(base64:'Base64', p2:"user:pass".getBytes()) {
+                    row  '',    'create', '?base64'
+                    row 'dXNlcjpwYXNz'.getBytes(),  'encode',   'A1',     '?p2'
+                },
+                'testEncode_padding': sheet(base64:'Base64', p2:"Hello World".getBytes()) {
+                    row  '',    'create', '?base64'
+                    row 'SGVsbG8gV29ybGQ='.getBytes(),  'encode',   'A1',     '?p2'
+                }
+        ]
+        features = ['cc'] // enable code coverage measurement (class scope)
+        maxAdaptations = noOfAdapters // how many adaptations to try
+
+        dependsOn 'select'
+        includeAbstractions 'Base64'
+        profile('myTdsProfile') {
+            scope('class') { type = 'class' }
+            environment('java11') {
+                image = 'maven:3.6.3-openjdk-17' // Java 17
+            }
+        }
+
+        // match implementations (note no candidates are dropped)
+        whenAbstractionsReady() {
+            def base64 = abstractions['Base64']
+            // define oracle based on expected responses in sequences
+            def expectedBehaviour = toOracle(srm(abstraction: base64).sequences)
+            // returns a filtered SRM
+            def matchesSrm = srm(abstraction: base64)
+                    .systems // select all systems
+                    .equalTo(expectedBehaviour) // functionally equivalent
+        }
+    }
+    /* rank candidates based on functional correctness */
+    action(name:'rank', type:'Rank') {
+        // sort by functional similarity (passing tests/total tests) descending
+        criteria = ['FunctionalSimilarityReport.score:MAX:1'] // more criteria possible
+
+        dependsOn 'filter'
+        includeAbstractions '*'
+    }
+}`;
 
   currentUser: User;
   error: string;

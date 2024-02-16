@@ -44,8 +44,66 @@ export class CodeComponent implements OnInit, AfterViewInit {
 
   // monaco editor for signature
   editorOptions = {theme: 'vs-light', language: 'java'};
-  code: string= 'Base64 {\n  encode(byte[])->java.lang.String\n}';
+  code: string= 'Base64 {\n  encode(byte[])->byte[]\n}';
   sigEditor: any;
+
+    // monaco for LSL
+    lslEditorOptions = {theme: 'vs-light', language: 'lsl'};
+    lslCodeTemplate: string= `dataSource '{{corpus_datasource}}'
+def totalRows = {{select_rows}}
+def noOfAdapters = {{arena_adapters}}
+// interface in LQL notation
+def interfaceSpec = """{{select_lql}}"""
+def abstractionName = '{{abstraction_name}}'
+study(name: 'CodeSearch-TDCS-{{abstraction_name}}') {
+    /* select class candidates using interface-driven code search */
+    action(name: 'select', type: 'Select') {
+        abstraction(abstractionName) {
+            queryForClasses interfaceSpec, '{{select_strategy}}'
+            rows = totalRows
+            excludeClassesByKeywords(['private', 'abstract'])
+            excludeTestClasses()
+            excludeInternalPkgs()
+        }
+    }
+    /* filter candidates by two tests (test-driven code filtering) */
+    action(name: 'filter', type: 'ArenaExecute') { // filter by tests
+        containerTimeout = 10 * 60 * 1000L // 10 minutes
+        specification = interfaceSpec
+        sequences = [
+                {{arena_sequences}}
+        ]
+        maxAdaptations = noOfAdapters // how many adaptations to try
+
+        dependsOn 'select'
+        includeAbstractions '*'
+        profile('myTdsProfile') {
+            scope('class') { type = 'class' }
+            environment('java11') {
+                image = 'maven:3.6.3-openjdk-17' // Java 17
+            }
+        }
+
+        // match implementations (note no candidates are dropped)
+        whenAbstractionsReady() {
+            def myAb = abstractions[abstractionName]
+            // define oracle based on expected responses in sequences
+            def expectedBehaviour = toOracle(srm(abstraction: myAb).sequences)
+            // returns a filtered SRM
+            def matchesSrm = srm(abstraction: myAb)
+                    .systems // select all systems
+                    .equalTo(expectedBehaviour) // functionally equivalent
+        }
+    }
+    /* rank candidates based on functional correctness */
+    action(name:'rank', type:'Rank') {
+        // sort by functional similarity (passing tests/total tests) descending
+        criteria = ['FunctionalSimilarityReport.score:MAX:1'] // more criteria possible
+
+        dependsOn 'filter'
+        includeAbstractions '*'
+    }
+}`
 
   currentEditorTab: number = 0
 
@@ -82,12 +140,15 @@ export class CodeComponent implements OnInit, AfterViewInit {
 
   filters: string[] = [];
   filter: string = '';
-  rows: number = 100;
+  rows: number = 10;
 
   datasource: string | undefined;
 
   strategies: string[] = ['class-simple'];
   strategy: string = this.strategies[0];
+
+  // arena
+  arenaAdapters: number = 100
 
   createHotSettings(): Handsontable.GridSettings {
     let hotSettings: Handsontable.GridSettings = {
@@ -97,6 +158,7 @@ export class CodeComponent implements OnInit, AfterViewInit {
       rowHeaders: true,
       stretchH: 'all', // 'none' is default
       contextMenu: true,
+      manualColumnResize: true,
       licenseKey: 'non-commercial-and-evaluation'
     }
 
@@ -105,6 +167,10 @@ export class CodeComponent implements OnInit, AfterViewInit {
 
   getHot(): Handsontable {
     return this.hotRegisterer.getInstance(`hot_${this.selectedSheetIndex}`)
+  }
+
+  getHotBySheetIndex(sheetIndex: number): Handsontable {
+    return this.hotRegisterer.getInstance(`hot_${sheetIndex}`)
   }
 
   infoResponse: LSLInfoResponse;
@@ -165,9 +231,30 @@ export class CodeComponent implements OnInit, AfterViewInit {
       const wb = read(ab);
 
       // array of arrays with header:1
-      console.log(utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header: 1}));
-      //this.getHot().loadData())
-      this.getHot().updateData(utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header: 1}))
+      let arrArr = utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header: 1})
+
+      // dimensions are wrong for some reasons, set all rows to same length
+      // determine max cols (based on row with most columns)
+      let maxCols = Math.max(...arrArr.map((arr: any) => arr.length))
+
+      let dimData = []
+      for (let [idx, arr] of arrArr.entries()) { 
+        let myArr: any = arr
+        if(myArr.length < maxCols) {
+          console.log("need modify")
+          let nArr = new Array(maxCols)
+          for(let [cdx, carr] of myArr.entries()) {
+            nArr[cdx] = carr
+          }
+
+          dimData.push(nArr)
+        } else {
+          dimData.push(arr)
+        }
+      }
+
+      //this.getHot().updateData(arrArr)
+      this.getHot().loadData(dimData)
     })();
   }
 
@@ -183,9 +270,25 @@ export class CodeComponent implements OnInit, AfterViewInit {
     console.log(this.filters)
   }
 
-  onSearch(): void {
-    let lslRequest = new LslRequest();
+  /**
+   * Identify if sheets have been added.
+   * 
+   * @returns 
+   */
+  isTds(): boolean {
+    for (let i = 0; i < this.sheets.length ; i++) {
+      console.log(this.getHotBySheetIndex(i).countCols())
+      console.log(this.getHotBySheetIndex(i).countEmptyCols())
 
+      if(this.getHotBySheetIndex(i).countCols() != this.getHotBySheetIndex(i).countEmptyCols()) {
+        return true
+      }
+    }
+
+    return false
+  }
+
+  onSearch(draft: boolean): void {
     // visual editor
 
     let lqlCode = this.code
@@ -194,40 +297,171 @@ export class CodeComponent implements OnInit, AfterViewInit {
     searchFilters.push(`doctype_s:class`)
     this.filters.forEach(x => searchFilters.push(x))
 
-    // FIXME if no sequence sheets, directly trigger textual search
-    this.router.navigate(
-      ['/search'],
-      {
-        queryParams: { lql: lqlCode, filter: searchFilters, strategy: this.strategy, datasource: this.datasource },
-        queryParamsHandling: 'merge' }
-      );
+    let tdcs = this.isTds()
+    if(tdcs) {
+      console.log("TDCS")
+      // generate sequences
+      let sequences = this.onGenerateSequences()
+      // get abstraction name
+      let abstractionName = lqlCode.substring(0, lqlCode.indexOf("{")).trim()
+
+      let templateMap = {
+        "corpus_datasource": `${this.datasource}`,
+        "abstraction_name": `${abstractionName}`,
+        "select_rows" : `${this.rows}`,
+        "select_lql" : `${this.code}`,
+        "select_strategy" : `${this.strategy}`,
+        "arena_adapters": `${this.arenaAdapters}`,
+        "arena_sequences" : `${sequences}`
+      }
+
+      let lslCode = this.substituteStr(this.lslCodeTemplate, templateMap)
+      console.log(lslCode)
+
+      let lslRequest = new LslRequest();
+      // get current value
+      lslRequest.script = lslCode;
+
+      lslRequest.email = this.currentUser.email;
+      lslRequest.type = draft ? "DRAFT" : null; // or draft
+
+      console.log(lslRequest);
+
+      // submit script
+      this.lassoApiService
+        .execute(lslRequest)
+        .pipe(first())
+        .subscribe({
+          error: (e) => {this.error = e;
+            console.log(this.error);},
+          complete: () => {this.router.navigate(["/scripts"])} 
+      });
+    } else {
+      console.log("IDCS")
+      // interface-driven code search (textual search)
+      // if no sequence sheets, directly trigger textual search
+      this.router.navigate(
+        ['/search'],
+        {
+          queryParams: { lql: lqlCode, filter: searchFilters, strategy: this.strategy, datasource: this.datasource },
+          queryParamsHandling: 'merge' }
+        );
+    }
   }
 
-  onGenerateSequences(): void {
-    console.log(this.getHot().getData());
+  /**
+   * Substitute LSL template string
+   * 
+   * @param templateString 
+   * @param values 
+   * @returns 
+   */
+  substituteStr(templateString: string, values: any): string {
+    return templateString.replace(/{{(.*?)}}/g, function(match, number) { 
+      return typeof values[number] != 'undefined'
+        ? values[number] 
+        : match
+      ;
+    });
+  }
 
-    // TODO for each
+  /**
+   * Determine non-null length 
+   * 
+   * @param arr 
+   * @returns 
+   */
+  findMaxLength(row: any): number {
+    let length = 0
+    for (let [i, elem] of row.entries()) { 
+      if(elem != null) {
+        length = i
+      }
+    }
+
+    return length + 1
+  }
+
+  /**
+   * Check if row is empty (no cells defined, all null)
+   * 
+   * @param arr 
+   * @returns 
+   */
+  rowEmpty(arr: any): boolean {
+    for (let [i, elem] of arr.entries()) { 
+      if(!(elem == null)) {
+        return false
+      }
+    }
+
+    return true
+  }
+
+  /**
+   * Generate LSL-based sequence sheet blocks from spreadsheets
+   * 
+   * @returns 
+   */
+  onGenerateSequences(): string {
+    // sequence sheets
     let mylsl = '';
-    this.getHot().getData().forEach(row => {
-      mylsl += "row ";
-      let first = true;
-      row.forEach((col: any) => {
-        if(col != null) {
-          if(!first) {
-            mylsl += ", ";
-          } else {
-            first = false;
-          }
-          mylsl += `'${col}'`;
+
+    // N sheets
+    for (let i = 0; i < this.sheets.length ; i++) {
+      // start sheet block
+      mylsl += `'sheet${i + 1}': sheet() {\n`;
+
+      let sheetData = this.getHotBySheetIndex(i).getData()
+      //console.log(sheetData)
+
+      // determine max cols (based on row with most columns)
+      let maxCols = Math.max(...sheetData.map((arr: any) => this.findMaxLength(arr)))
+
+      for (let [rdx, row] of sheetData.entries()) { 
+        if(this.rowEmpty(row)) {
+          continue
         }
-      })
+
+        let maxLength = this.findMaxLength(row)
+
+        let rowStr = "";
+        let myRow: any = row
+
+        for(let [cdx, cell] of myRow.entries()) {
+          if(cdx < maxLength) {
+            if(cdx < maxCols) {
+              if(cdx > 0) {
+                rowStr += ", ";
+              }
+  
+              if(cell) {
+                rowStr += `${cell}`;
+              } else {
+                rowStr += `''`;
+              }
+            }
+          }
+        }
+
+        if(rowStr.length > 0) {
+          mylsl += "row " + rowStr + "\n";
+        }
+      }
+
+      // end block
+      mylsl += `}`;
+
+      if(i + 1 < this.sheets.length) {
+        mylsl += ",";
+      }
 
       mylsl += "\n";
-    })
+    }
 
     console.log(mylsl);
 
-    //this.lslCode = mylsl + "\n\n" + this.lslCode;
+    return mylsl
   }
 
   /**
