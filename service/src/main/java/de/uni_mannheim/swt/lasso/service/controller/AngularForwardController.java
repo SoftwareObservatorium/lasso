@@ -31,13 +31,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class AngularForwardController {
 
     // Match everything without a suffix (so not a static resource)
-    @RequestMapping(value = "/lasso/**/{path:[^.]*}")
-    public String redirectFrontend() {
-        // Forward to home page so that route is preserved.
-        return "forward:/lasso/index.html";
-    }
-
-    // Match everything without a suffix (so not a static resource)
     @RequestMapping(value = "/webui/**/{path:[^.]*}")
     public String redirectWebui() {
         // Forward to home page so that route is preserved.

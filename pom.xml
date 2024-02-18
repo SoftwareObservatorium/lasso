@@ -108,7 +108,6 @@
         <module>arena-support</module>
         <module>arena</module>
         <module>worker</module>
-        <module>frontend</module>
         <module>webui</module>
         <module>service</module>
         <module>lasso-llm</module>

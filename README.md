@@ -103,7 +103,6 @@ Note: For up-to-date information, have a look at the _modules_ [here](./pom.xml)
 * `arena-support` - Arena support module (shared classes)
 * `arena` - LASSO Arena module (arena test driver)
 * `worker` - LASSO's cluster worker application (web-based using spring-boot)
-* `frontend` - LASSO's web application based on Angular 12 and bootstrap
 * `webui` - LASSO's next-generation web application based on Angular 16 and Material
 * `service` - LASSO's cluster service and manager (web-based using spring-boot)
 * `lasso-llm` - Companion module to `benchmarks` (facilities to integrate generated code obtained by MultiPL-E experiment)
