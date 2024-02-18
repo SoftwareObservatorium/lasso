@@ -107,29 +107,6 @@ nodejs and npm are automatically downloaded as part of webui's _pom.xml_.
 * `local` - http://localhost:4200
 * `remote` - e.g., http://localhost:10222/webui/
 
-#### LASSO Frontend (deprecated)
-
-An Angular 12 web application using bootstrap.
-
-Start test server with Angular CLI:
-
-```
-./frontend/lasso-app/SERVE.sh
-```
-
-LASSO's service URL can be defined in `environments/`.
-
-It is located in [frontend](..%2Ffrontend).
-
-nodejs and npm are automatically downloaded as part of the frontend's _pom.xml_.
-
-Note (experimental): All users are defined in `service/src/main/resources/users.json`.
-
-##### URLs
-
-* `local` - http://localhost:4200
-* `remote` - e.g., http://my.localhost:10222/lasso/
-
 ##### Out of Memory Issues
 
 On some machines, nodejs may run into out of memory issues, see
