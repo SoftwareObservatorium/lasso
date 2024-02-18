@@ -22,7 +22,6 @@ package de.uni_mannheim.swt.lasso.service.controller.report;
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.uni_mannheim.swt.lasso.cluster.ClusterEngine;
 
 import de.uni_mannheim.swt.lasso.service.controller.BaseApi;
 import de.uni_mannheim.swt.lasso.service.dto.UserInfo;
@@ -61,7 +60,7 @@ public class SRMController extends BaseApi {
             .getLogger(SRMController.class);
 
     @Autowired
-    ClusterEngine clusterEngine;
+    private SRMManager srmManager;
 
     @Autowired
     private Environment env;
@@ -83,7 +82,6 @@ public class SRMController extends BaseApi {
             StreamingResponseBody response = os -> {
                 try {
                     //
-                    SRMManager srmManager = new SRMManager(clusterEngine.getClusterSRMRepository());
                     // FIXME arena id (let's assume arena "execute" for now)
                     DataFrame df = srmManager.getActuationSheets(executionId, "execute", type, null);
 
@@ -132,7 +130,6 @@ public class SRMController extends BaseApi {
             StreamingResponseBody response = os -> {
                 try {
                     //
-                    SRMManager srmManager = new SRMManager(clusterEngine.getClusterSRMRepository());
                     // FIXME arena id (let's assume arena "execute" for now)
                     DataFrame df = srmManager.getActuationSheetsForSystem(executionId, "execute", systemId, type);
 

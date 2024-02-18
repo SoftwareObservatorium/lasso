@@ -19,33 +19,45 @@
  */
 package de.uni_mannheim.swt.lasso.srm;
 
+import de.uni_mannheim.swt.lasso.srm.operators.FunctionalCorrectness;
 import joinery.DataFrame;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
 /**
+ * Simplified SRM operations.
  *
  * @author Marcus Kessel
  */
 public class SRMManager {
 
-    private final ClusterSRMRepository clusterSRMRepository;
+    private static final Logger LOG = LoggerFactory
+            .getLogger(SRMManager.class);
 
-    public SRMManager(ClusterSRMRepository clusterSRMRepository) {
+    private final ClusterSRMRepository clusterSRMRepository;
+    private final FunctionalCorrectness correctness;
+
+    public SRMManager(ClusterSRMRepository clusterSRMRepository, FunctionalCorrectness correctness) {
         this.clusterSRMRepository = clusterSRMRepository;
+        this.correctness = correctness;
     }
 
-//    public DataFrame getActuationSheets(String executionId, String arenaId) throws IOException {
-//        DataFrame df = clusterSRMRepository.sqlToDataFrame("SELECT CONCAT(REGEXP_REPLACE(SHEETID, '_[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}',''),'@',X, ',', Y) as statement, CONCAT(SYSTEMID,'_',ADAPTERID) as SYSTEMID, VALUE FROM srm.cellvalue where executionid = ? and arenaid = ? and type = 'value' order by sheetid", executionId, arenaId);
-//        DataFrame wide = df.pivot("STATEMENT", "SYSTEMID", "VALUE").sortBy("STATEMENT");
-//
-//        return wide;
-//    }
-
+    /**
+     * Get actuation sheets based on given oracle value filters.
+     *
+     * @param executionId
+     * @param arenaId
+     * @param type
+     * @param oracleFilters
+     * @return
+     * @throws IOException
+     */
     public DataFrame getActuationSheets(String executionId, String arenaId, String type, Map<String, String> oracleFilters) throws IOException {
         if(StringUtils.isBlank(type)) {
             type = "value";
@@ -53,36 +65,49 @@ public class SRMManager {
 
         DataFrame df = clusterSRMRepository.sqlToDataFrame("SELECT CONCAT(REGEXP_REPLACE(SHEETID, '_[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}',''),'@',X, ',', Y) as statement, CONCAT(SYSTEMID,'_',ADAPTERID) as SYSTEMID, VALUE FROM srm.cellvalue where executionid = ? and arenaid = ? and type = ? order by sheetid", executionId, arenaId, type);
 
-        if(MapUtils.isNotEmpty(oracleFilters)) {
-            df = df.select((DataFrame.Predicate<String>) row -> {
-                String statement = row.get(0);
-
-                if(oracleFilters.containsKey(statement)) {
-                    //String systemId = row.get(1);
-                    String actualValue = row.get(2);
-                    String expectedValue = oracleFilters.get(statement);
-
-                    return isEqual(actualValue, expectedValue);
-                }
-
-                return true;
-            });
-        }
-
         DataFrame wide = df.pivot("STATEMENT", "SYSTEMID", "VALUE").sortBy("STATEMENT");
+
+        // filter by oracle
+        wide = this.filterByOracleValues(wide, oracleFilters);
 
         return wide;
     }
 
     /**
-     * FIXME more sophisticated strategies
+     * Filter systems by given oracle filters.
      *
-     * @param expected
-     * @param actual
+     * @param wide
+     * @param oracleFilters
      * @return
      */
-    public boolean isEqual(String expected, String actual) {
-        return StringUtils.equals(actual, expected);
+    protected DataFrame filterByOracleValues(DataFrame wide, Map<String, String> oracleFilters) {
+        if(MapUtils.isNotEmpty(oracleFilters)) {
+            Set<String> drop = new HashSet<>();
+            for(Object column : wide.columns()) {
+                String colName = (String) column;
+                if(!StringUtils.equalsAnyIgnoreCase(colName, "STATEMENT", "VALUE")) {
+                    boolean equivalent = true;
+                    for(String stmt : oracleFilters.keySet()) {
+                        String actual = (String) wide.get(stmt, colName);
+                        String expected = oracleFilters.get(stmt);
+                        equivalent = correctness.assertStringEquals(stmt, actual, expected);
+
+                        if(!equivalent) {
+                            break;
+                        }
+                    }
+
+                    if(!equivalent) {
+                        drop.add(colName);
+                    }
+                }
+            }
+
+            // drop
+            wide = wide.drop(drop.toArray());
+        }
+
+        return wide;
     }
 
     public DataFrame getActuationSheets(String executionId, String arenaId, String[] types) throws IOException {

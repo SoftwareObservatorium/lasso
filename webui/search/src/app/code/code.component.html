@@ -132,6 +132,40 @@
                 <mat-expansion-panel>
                   <mat-expansion-panel-header>
                     <mat-panel-title>
+                      Ranking
+                    </mat-panel-title>
+                    <mat-panel-description>
+                      Set your ranking preferences
+                      <!-- <mat-icon>account_circle</mat-icon>-->
+                    </mat-panel-description>
+                  </mat-expansion-panel-header>
+
+                  <mat-form-field>
+                      <mat-label>Strategy</mat-label>
+                      <input matInput [(ngModel)]="rankingStrategy">
+                  </mat-form-field>
+
+                  <mat-divider></mat-divider>
+
+                  <mat-form-field>
+                    <mat-label>Criterion</mat-label>
+                    <input matInput [(ngModel)]="rankingCriterion">
+                  </mat-form-field>
+
+                  <button mat-raised-button color="primary" (click)="addRankingCriterion()">Add</button>
+  
+                  <mat-divider></mat-divider>
+                  <mat-list>
+                    <mat-list-item *ngFor="let criterion of rankingCriteria">
+                      <h3 matListItemTitle>{{criterion}}</h3>
+                    </mat-list-item>
+                  </mat-list>
+              
+                </mat-expansion-panel>
+
+                <mat-expansion-panel>
+                  <mat-expansion-panel-header>
+                    <mat-panel-title>
                       LSL Script Template
                     </mat-panel-title>
                     <mat-panel-description>

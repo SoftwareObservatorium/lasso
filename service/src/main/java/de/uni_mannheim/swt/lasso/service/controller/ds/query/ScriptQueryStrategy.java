@@ -64,7 +64,7 @@ public class ScriptQueryStrategy extends QueryStrategy {
                 "SELECT count(system) from StepReport where passed = true and action = '"+lastAction+"'");
         long totalSystems = countTable.longColumn(0).get(0);
         //  limit " + request.getStart() + "," + request.getRows()
-        // FIXME issue with post-ranking (hen & egg problem)
+        // FIXME perf. issue with post-ranking (hen & egg problem)
         Table systemsTable = clusterEngine.getReportRepository().select(request.getExecutionId(),
                 "SELECT system,abstraction,datasource from StepReport where passed = true and action = '"+lastAction+"' order by lastmodified");// asc limit " + request.getStart() + "," + request.getRows());
 
@@ -80,7 +80,7 @@ public class ScriptQueryStrategy extends QueryStrategy {
 
             try {
                 //
-                SRMManager srmManager = new SRMManager(clusterEngine.getClusterSRMRepository());
+                SRMManager srmManager = lassoConfiguration.getService(SRMManager.class);
                 // FIXME arena id (let's assume arena "execute" for now)
                 DataFrame df = srmManager.getActuationSheets(request.getExecutionId(), "execute", "value", request.getOracleFilters());
 
@@ -94,8 +94,8 @@ public class ScriptQueryStrategy extends QueryStrategy {
 
                 systemsTable = systemsTable.where(systemsTable.stringColumn(0).isIn(filteredSystems));
 
-                if(LOG.isDebugEnabled()) {
-                    LOG.debug("Systems filtered '{}' '{}'", filteredSystems, systemsTable.print());
+                if(LOG.isInfoEnabled()) {
+                    LOG.info("Systems filtered '{}' '{}'", filteredSystems, systemsTable.print());
                 }
             } catch (Exception e) {
                 throw new IOException(e);
@@ -114,6 +114,7 @@ public class ScriptQueryStrategy extends QueryStrategy {
             rankingTable = clusterEngine.getReportRepository().select(request.getExecutionId(), "SELECT system,abstraction,datasource,rankposition from RankReport order by rankposition asc");
         } catch (Throwable e) {
             //
+            LOG.warn("Ranking failed", e);
         }
 
         LinkedHashMap<String, CodeUnit> implementations = systemsTable.stream().map(row -> {

@@ -23,7 +23,6 @@ import de.uni_mannheim.swt.lasso.cluster.ClusterEngine;
 import de.uni_mannheim.swt.lasso.core.model.Behaviour;
 
 import joinery.DataFrame;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,13 +44,15 @@ public class FunctionalSimilarity {
             .getLogger(FunctionalSimilarity.class);
 
     private final ClusterEngine clusterEngine;
+    private final FunctionalCorrectness correctness;
 
-    public FunctionalSimilarity(ClusterEngine clusterEngine) {
+    public FunctionalSimilarity(ClusterEngine clusterEngine, FunctionalCorrectness correctness) {
         this.clusterEngine = clusterEngine;
+        this.correctness = correctness;
     }
 
     /**
-     * Measure degree of functional similarity (see {@link #similarity(List, List)}.
+     * Measure degree of functional similarity (see {@link #correctness}).
      * 
      * @param behaviour the desired behaviour
      * @param map Properties
@@ -84,7 +85,9 @@ public class FunctionalSimilarity {
         // pivot - widen (statements as rows and systems as columns)
         DataFrame wide_statement = df.pivot("STATEMENT", "SYSTEMID", "VALUE");
 
-        // TODO we have to determine the "best match" if ref impl is used
+        List<String> stmts = wide_statement.col("STATEMENT");
+
+        // TODO we have to determine the "best match" if ref impl is used (?)
         // for manual oracle, it is "oracle_oracle"
 
         // select oracle column
@@ -95,7 +98,9 @@ public class FunctionalSimilarity {
         for (Object column : wide_statement.drop(0).drop(oracleId).columns()) {
             List alternative = wide_statement.col(column);
 
-            double sim = similarity(oracle, alternative);
+            //double sim = similarity(oracle, alternative);
+            Similarity similarity = correctness.assertStringEquals(stmts, oracle, alternative);
+            double sim = similarity.getSimilarity();
 
             if (LOG.isDebugEnabled()) {
                 LOG.debug("SIM oracle '{}' vs '{}' => {}", oracleId, column, sim);
@@ -105,43 +110,5 @@ public class FunctionalSimilarity {
         }
 
         return similarities;
-    }
-
-    /**
-     * Jaccard'ish (Intersection over Union), but for (ordered) lists
-     *
-     * @param one
-     * @param two
-     * @return
-     */
-    private double similarity(List one, List two) {
-        int total = one.size();
-        int matches = 0;
-        for (int i = 0; i < total; i++) {
-            // special handling for oracle: _INSTANCE_ vs _NA_ in oracle
-            if(two.get(i) instanceof String && StringUtils.equals((String) two.get(i), "_INSTANCE_") &&
-                    one.get(i) instanceof String && StringUtils.equals((String) one.get(i), "_NA_")
-            ) {
-                matches++;
-                continue;
-            }
-
-            if (Objects.equals(one.get(i), two.get(i))) {
-                matches++;
-            }
-        }
-
-        return (double) matches / total;
-    }
-
-    /**
-     * Transform output value.
-     *
-     * @param value
-     * @return
-     */
-    private Object transformOutput(Object value) {
-        // TODO more sophisticated adaptation strategies for values
-        return value;
     }
 }

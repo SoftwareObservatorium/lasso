@@ -39,6 +39,9 @@ import de.uni_mannheim.swt.lasso.service.persistence.UserRepository;
 import de.uni_mannheim.swt.lasso.service.persistence.ScriptJobRepository;
 
 import de.uni_mannheim.swt.lasso.srm.DefaultSRM;
+import de.uni_mannheim.swt.lasso.srm.SRMManager;
+import de.uni_mannheim.swt.lasso.srm.operators.FunctionalCorrectness;
+import de.uni_mannheim.swt.lasso.srm.operators.HeuristicsBasedCorrectness;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.ignite.cluster.ClusterGroup;
@@ -227,8 +230,38 @@ public class EngineConfig {
         return new FileStorageService(env.getRequiredProperty("lasso.file.upload.root"));
     }
 
+    /**
+     * Default implementation for {@link FunctionalCorrectness}.
+     *
+     * @return
+     */
     @Bean
-    public SRM srm(ClusterEngine clusterEngine) {
-        return new DefaultSRM(clusterEngine);
+    public FunctionalCorrectness functionalCorrectness() {
+        HeuristicsBasedCorrectness correctness = new HeuristicsBasedCorrectness();
+        return correctness;
+    }
+
+    /**
+     * SRM service for script usage
+     *
+     * @param clusterEngine
+     * @param correctness
+     * @return
+     */
+    @Bean
+    public SRM srm(ClusterEngine clusterEngine, FunctionalCorrectness correctness) {
+        return new DefaultSRM(clusterEngine, correctness);
+    }
+
+    /**
+     *
+     *
+     * @param clusterEngine
+     * @param correctness
+     * @return
+     */
+    @Bean
+    public SRMManager srmManager(ClusterEngine clusterEngine, FunctionalCorrectness correctness) {
+        return new SRMManager(clusterEngine.getClusterSRMRepository(), correctness);
     }
 }
