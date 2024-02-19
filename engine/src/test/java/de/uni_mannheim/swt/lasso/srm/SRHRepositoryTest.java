@@ -32,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * @author Marcus Kessel
  */
-public class SRMManagerTest {
+public class SRHRepositoryTest {
 
     static FunctionalCorrectness correctness = new HeuristicsBasedCorrectness();
 
@@ -55,8 +55,8 @@ public class SRMManagerTest {
         DataFrame wide = srm.pivot("STATEMENT", "SYSTEMID", "VALUE").sortBy("STATEMENT");
         System.out.println(wide.toString());
 
-        SRMManager srmManager = new SRMManager(null, correctness);
-        wide = srmManager.filterByOracleValues(wide, oracleFilters);
+        SRHRepository srhRepository = new SRHRepository(null, correctness);
+        wide = srhRepository.filterByOracleValues(wide, oracleFilters);
 
         assertEquals(new HashSet(Arrays.asList("STATEMENT", "system1", "system3")), wide.columns());
     }

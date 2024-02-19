@@ -1,5 +1,6 @@
 <mat-progress-bar mode="query" *ngIf="isLoading"></mat-progress-bar>
 
+<div id="options">
 <mat-card *ngIf="!textualSearch">
   <mat-card-header>
     <mat-card-title>Results for LSL Pipeline</mat-card-title>
@@ -10,19 +11,25 @@
       <mat-icon>code</mat-icon>
       <span>View LSL Script</span>
     </button>
+    <button mat-button (click)="onSrm()">
+      <mat-icon>table</mat-icon>
+      <span>SRM</span>
+    </button>
     <button mat-button (click)="onDatabase()">
       <mat-icon>table</mat-icon>
       <span>Database</span>
     </button>
   </mat-card-actions>
   <mat-card-content *ngIf="oracle">
-    <h2>Filter by Outputs - Ref. Implementation is '{{oracle.referenceImpl}}'</h2>
+    <h2>Output Filter (click to apply)</h2>
 
     <mat-chip-listbox selectable multiple class="mat-mdc-chip-set-stacked" aria-label="Output Selection">
       <mat-chip-option *ngFor="let o of oracle.manual; index as index;" (selectionChange)="onOutputSelectionChange($event, o, index)" color="accent">
         {{formatOracleRow(o)}}
       </mat-chip-option>
     </mat-chip-listbox>
+    <mat-divider></mat-divider>
+    <p>Ref. Implementation is '{{getImplementationLabel(oracle.referenceImpl)}}'</p>
   </mat-card-content>
   <mat-card-actions *ngIf="oracle">
     <button mat-button (click)="onFilterByOracleValues()">
@@ -31,6 +38,7 @@
     </button>
   </mat-card-actions>
 </mat-card>
+</div>
 
 <mat-card *ngIf="textualSearch">
   <mat-card-header>

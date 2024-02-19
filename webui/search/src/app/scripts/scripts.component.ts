@@ -97,6 +97,12 @@ export class ScriptsComponent implements AfterViewInit {
   onDatabase(scriptInfo: ScriptInfo) {
     localStorage.setItem(`currentScript_${scriptInfo.executionId}`, JSON.stringify(scriptInfo));
 
+    this.router.navigate(['/db', scriptInfo.executionId]);
+  }
+
+  onSrm(scriptInfo: ScriptInfo) {
+    localStorage.setItem(`currentScript_${scriptInfo.executionId}`, JSON.stringify(scriptInfo));
+
     this.router.navigate(['/srm', scriptInfo.executionId]);
   }
 

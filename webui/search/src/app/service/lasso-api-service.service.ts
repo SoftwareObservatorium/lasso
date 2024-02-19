@@ -26,7 +26,7 @@ import { map } from 'rxjs/operators';
 
 import { environment } from 'src/environments/environment';
 
-import { LslRequest, LslResponse, RecordsRequest, ImplementationRequest, ReportRequest, FileViewRequest, SearchQueryRequest } from '../model/lsl';
+import { LslRequest, LslResponse, RecordsRequest, ImplementationRequest, ReportRequest, FileViewRequest, SearchQueryRequest, SrmQueryRequest } from '../model/lsl';
 
 @Injectable({
   providedIn: 'root'
@@ -417,6 +417,21 @@ export class LassoApiServiceService {
 
             return response;
         }));
+  }
+
+  /**
+   * Get actuation sheets
+   * 
+   */
+  actuationSheetsByOracleFilters(executionId: string, type: string = "value", request: SrmQueryRequest) {
+    return this.http.post<any>(`${environment.apiUrl}/api/v1/lasso/srm/${executionId}`, request)
+    .pipe(map(response => {
+        // do something
+
+        console.log(response)
+
+        return response;
+    }));
   }
 
   /**

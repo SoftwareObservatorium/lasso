@@ -35,6 +35,7 @@ import { DfsComponent } from './dfs/dfs.component';
 import { ProfileComponent } from './profile/profile.component';
 import { DatasourcesComponent } from './datasources/datasources.component';
 import { CodeComponent } from './code/code.component';
+import { DbComponent } from './db/db.component';
 
 const routes: Routes = [
   {path: '', component: HomeComponent},
@@ -45,6 +46,7 @@ const routes: Routes = [
   {path: 'scripts', component: ScriptsComponent, canActivate: [AuthGuard] },
   {path: 'search', component: ResultsComponent, canActivate: [AuthGuard] },
   {path: 'results/:executionId', component: ResultsComponent, canActivate: [AuthGuard] },
+  {path: 'db/:executionId', component: DbComponent, canActivate: [AuthGuard] },
   {path: 'srm/:executionId', component: SrmComponent, canActivate: [AuthGuard] },
   {path: 'workspace/:executionId', component: WorkspaceComponent, canActivate: [AuthGuard] },
 

@@ -22,7 +22,7 @@ LASSO's core building blocks consist of several well-defined concepts and data s
 The platform is realized in Java using Spring Boot (https://spring.io/projects/spring-boot), while its architecture is realized on top of Apache Ignite (https://ignite.apache.org/). The platform's architecture, therefore, is distributed by design. It follows the manager/worker architecture style. The platform can be accessed via its website (RESTful API) and a webapp GUI.
 
 ![quickstart_results.png](doc%2Fimg%2Fquickstart_results.png)
-
+![quickstart_results_filters.png](doc%2Fimg%2Fquickstart_results_filters.png)
 ## Documentation
 
 There are ways to get started:

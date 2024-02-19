@@ -27,7 +27,8 @@ import de.uni_mannheim.swt.lasso.engine.LSLScript
 import de.uni_mannheim.swt.lasso.service.systemtests.integration.AbstractGroovySystemTest
 import de.uni_mannheim.swt.lasso.service.systemtests.util.LassoTestEngine
 import de.uni_mannheim.swt.lasso.srm.ClusterSRMRepository
-import de.uni_mannheim.swt.lasso.srm.SRMManager
+import de.uni_mannheim.swt.lasso.srm.SRHRepository
+import de.uni_mannheim.swt.lasso.srm.operators.FunctionalCorrectness
 import joinery.DataFrame
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Test
@@ -40,11 +41,15 @@ import tech.tablesaw.api.Table
  *
  * @author mkessel
  */
+// FIXME update
 class ReuseSISystemTest extends AbstractGroovySystemTest {
 
     @Autowired
     @Qualifier("testLassoEngine")
     LassoTestEngine lassoEngine
+
+    @Autowired
+    FunctionalCorrectness correctness
 
     @Test
     void test_LSL_TDS() throws IOException, DataSourceNotFoundException {
@@ -146,8 +151,8 @@ class ReuseSISystemTest extends AbstractGroovySystemTest {
         Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
         System.out.println(table.printAll());
 
-        SRMManager srmManager = new SRMManager(clusterEngine.getClusterSRMRepository())
-        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId)
+        SRHRepository srmManager = new SRHRepository(clusterEngine, correctness)
+        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, SRHRepository.ARENA_DEFAULT, SRHRepository.TYPE_VALUE)
         System.out.println(df)
     }
 
@@ -227,8 +232,8 @@ class ReuseSISystemTest extends AbstractGroovySystemTest {
         Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
         System.out.println(table.printAll());
 
-        SRMManager srmManager = new SRMManager(clusterEngine.getClusterSRMRepository())
-        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId)
+        SRHRepository srmManager = new SRHRepository(clusterEngine, correctness)
+        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, SRHRepository.ARENA_DEFAULT, SRHRepository.TYPE_VALUE)
         System.out.println(df)
     }
 

@@ -39,7 +39,7 @@ import de.uni_mannheim.swt.lasso.service.persistence.UserRepository;
 import de.uni_mannheim.swt.lasso.service.persistence.ScriptJobRepository;
 
 import de.uni_mannheim.swt.lasso.srm.DefaultSRM;
-import de.uni_mannheim.swt.lasso.srm.SRMManager;
+import de.uni_mannheim.swt.lasso.srm.SRHRepository;
 import de.uni_mannheim.swt.lasso.srm.operators.FunctionalCorrectness;
 import de.uni_mannheim.swt.lasso.srm.operators.HeuristicsBasedCorrectness;
 import org.apache.commons.collections4.CollectionUtils;
@@ -261,7 +261,7 @@ public class EngineConfig {
      * @return
      */
     @Bean
-    public SRMManager srmManager(ClusterEngine clusterEngine, FunctionalCorrectness correctness) {
-        return new SRMManager(clusterEngine.getClusterSRMRepository(), correctness);
+    public SRHRepository srhRepository(ClusterEngine clusterEngine, FunctionalCorrectness correctness) {
+        return new SRHRepository(clusterEngine, correctness);
     }
 }

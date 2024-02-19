@@ -23,9 +23,10 @@ import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.uni_mannheim.swt.lasso.core.dto.SrmQueryRequest;
 import de.uni_mannheim.swt.lasso.service.controller.BaseApi;
 import de.uni_mannheim.swt.lasso.service.dto.UserInfo;
-import de.uni_mannheim.swt.lasso.srm.SRMManager;
+import de.uni_mannheim.swt.lasso.srm.SRHRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import joinery.DataFrame;
@@ -60,7 +61,7 @@ public class SRMController extends BaseApi {
             .getLogger(SRMController.class);
 
     @Autowired
-    private SRMManager srmManager;
+    private SRHRepository srhRepository;
 
     @Autowired
     private Environment env;
@@ -81,9 +82,54 @@ public class SRMController extends BaseApi {
         try {
             StreamingResponseBody response = os -> {
                 try {
-                    //
                     // FIXME arena id (let's assume arena "execute" for now)
-                    DataFrame df = srmManager.getActuationSheets(executionId, "execute", type, null);
+                    DataFrame df = srhRepository.getActuationSheets(executionId, SRHRepository.ARENA_DEFAULT, type, null);
+
+                    try (JsonGenerator jg = objectMapper.getFactory().createGenerator(
+                            os, JsonEncoding.UTF8)) {
+                        writeDataFrameToJson(df, jg);
+                        jg.flush();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                } catch (Exception e) {
+                    throw new IOException(e);
+                }
+            };
+
+            if (LOG.isInfoEnabled()) {
+                LOG.info("Returning getActuationSheets response to '{}'",
+                        userInfo.getRemoteIpAddress());
+            }
+
+            // 200
+            return response;
+        } catch (Throwable e) {
+            if (LOG.isWarnEnabled()) {
+                LOG.warn(String.format("Could not get getActuationSheets response"), e);
+            }
+
+            // bad request
+            throw new RuntimeException(String.format("Could not get getActuationSheets response"), e);
+        }
+    }
+
+    @Operation(summary = "Get Actuation Sheets", description = "Get Actuation Sheets")
+    @RequestMapping(value = "/{executionId}", method = RequestMethod.POST, consumes = "application/json;charset=UTF-8", produces = "application/json;charset=UTF-8")
+    @ResponseBody
+    public StreamingResponseBody getActuationSheets(
+            @PathVariable("executionId") String executionId,
+            @RequestBody SrmQueryRequest srmQueryRequest,
+            /*@ApiIgnore*/ @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletRequest httpServletRequest) {
+        // get user details
+        UserInfo userInfo = getUserInfo(httpServletRequest, userDetails);
+
+        try {
+            StreamingResponseBody response = os -> {
+                try {
+                    // FIXME arena id (let's assume arena "execute" for now)
+                    DataFrame df = srhRepository.getActuationSheets(executionId, SRHRepository.ARENA_DEFAULT, srmQueryRequest.getType(), srmQueryRequest.getOracleFilters());
 
                     try (JsonGenerator jg = objectMapper.getFactory().createGenerator(
                             os, JsonEncoding.UTF8)) {
@@ -129,9 +175,8 @@ public class SRMController extends BaseApi {
         try {
             StreamingResponseBody response = os -> {
                 try {
-                    //
                     // FIXME arena id (let's assume arena "execute" for now)
-                    DataFrame df = srmManager.getActuationSheetsForSystem(executionId, "execute", systemId, type);
+                    DataFrame df = srhRepository.getActuationSheetsForSystem(executionId, SRHRepository.ARENA_DEFAULT, systemId, type);
 
                     try (JsonGenerator jg = objectMapper.getFactory().createGenerator(
                             os, JsonEncoding.UTF8)) {

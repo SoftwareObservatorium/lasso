@@ -70,6 +70,7 @@ import { DfsComponent } from './dfs/dfs.component';
 import { ProfileComponent } from './profile/profile.component';
 import { DatasourcesComponent } from './datasources/datasources.component';
 import { CodeComponent } from './code/code.component';
+import { DbComponent } from './db/db.component';
 
 export function configureMonaco() {
   console.log((<any>window).monaco); 
@@ -228,7 +229,8 @@ const monacoConfig: NgxMonacoEditorConfig = {
     LogsComponent,
     DfsComponent,
     ProfileComponent,
-    DatasourcesComponent
+    DatasourcesComponent,
+    DbComponent
   ],
   imports: [
     BrowserModule,

@@ -53,9 +53,9 @@ public class FunctionalSimilarity {
 
     /**
      * Measure degree of functional similarity (see {@link #correctness}).
-     * 
+     *
      * @param behaviour the desired behaviour
-     * @param map Properties
+     * @param map       Properties
      * @return
      * @throws IOException
      */
@@ -77,9 +77,12 @@ public class FunctionalSimilarity {
         // 2. determine statements in each sheet: remove UUIDs in sheet names and concat X,Y coordinates
 
         // FIXME arenaid should be passed as parameter
+        String arenaId = "execute";
+        String valueType = "value";
         DataFrame df = clusterEngine.getClusterSRMRepository().sqlToDataFrame(
                 "SELECT CONCAT(REGEXP_REPLACE(SHEETID, '_[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}',''),'@',X, ',', Y) as statement," +
-                        " CONCAT(SYSTEMID,'_',ADAPTERID) as SYSTEMID, VALUE FROM srm.cellvalue where executionid = ? and actionId = ? and ARENAID = 'execute' and type = 'value' order by sheetid",
+                        " CONCAT(SYSTEMID,'_',ADAPTERID) as SYSTEMID, VALUE FROM srm.cellvalue where executionid = ? and actionId = ? and ARENAID = '"
+                        + arenaId + "' and type = '" + valueType + "' order by sheetid",
                 map.get("executionId"), map.get("actionName"));
 
         // pivot - widen (statements as rows and systems as columns)

@@ -11,7 +11,7 @@ import de.uni_mannheim.swt.lasso.engine.LassoConfiguration;
 import de.uni_mannheim.swt.lasso.index.CandidateQueryResult;
 import de.uni_mannheim.swt.lasso.index.SearchOptions;
 import de.uni_mannheim.swt.lasso.index.repo.SolrCandidateDocument;
-import de.uni_mannheim.swt.lasso.srm.SRMManager;
+import de.uni_mannheim.swt.lasso.srm.SRHRepository;
 import joinery.DataFrame;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -80,14 +80,14 @@ public class ScriptQueryStrategy extends QueryStrategy {
 
             try {
                 //
-                SRMManager srmManager = lassoConfiguration.getService(SRMManager.class);
+                SRHRepository srhRepository = lassoConfiguration.getService(SRHRepository.class);
                 // FIXME arena id (let's assume arena "execute" for now)
-                DataFrame df = srmManager.getActuationSheets(request.getExecutionId(), "execute", "value", request.getOracleFilters());
+                DataFrame df = srhRepository.getActuationSheets(request.getExecutionId(), SRHRepository.ARENA_DEFAULT, SRHRepository.TYPE_VALUE, request.getOracleFilters());
 
-                Set<String> filteredSystems = (Set<String>) df.columns().stream()
-                        .filter(s -> !StringUtils.equalsAnyIgnoreCase(s.toString(), "statement"))
-                        .filter(s -> !StringUtils.startsWithIgnoreCase(s.toString(), "oracle_"))
-                        .map(s -> StringUtils.substringBeforeLast(s.toString(), "_"))
+                Set<String> filteredSystems = ((Set<String>) df.columns()).stream()
+                        .filter(s -> !StringUtils.equalsAnyIgnoreCase(s, "statement"))
+                        .filter(s -> !StringUtils.startsWithIgnoreCase(s, "oracle_"))
+                        .map(s -> StringUtils.substringBeforeLast(s, "_"))
                         .collect(Collectors.toSet());
 
                 totalSystems = filteredSystems.size();
@@ -148,8 +148,8 @@ public class ScriptQueryStrategy extends QueryStrategy {
                 }).collect(Collectors.toList());
 
                 return impls.get(0);
-            } catch (IOException e) {
-                e.printStackTrace();
+            } catch (Throwable e) {
+                LOG.warn("Resolving code unit failed", e);
             }
 
             return null;
