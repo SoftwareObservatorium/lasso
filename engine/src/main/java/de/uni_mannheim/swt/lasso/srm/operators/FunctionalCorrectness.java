@@ -17,23 +17,54 @@
  * You should have received a copy of the GNU General Public License
  * along with LASSO.  If not, see <https://www.gnu.org/licenses/>.
  */
-package de.uni_mannheim.swt.lasso.service.controller;
+package de.uni_mannheim.swt.lasso.srm.operators;
 
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
+import java.util.List;
 
 /**
- * Required for Angular apps.
+ * Pair-wise determination of functional correctness.
  *
  * @author Marcus Kessel
  */
-@Controller
-public class AngularForwardController {
+public interface FunctionalCorrectness {
 
-    // Match everything without a suffix (so not a static resource)
-    @RequestMapping(value = "/webui/**/{path:[^.]*}")
-    public String redirectWebui() {
-        // Forward to home page so that route is preserved.
-        return "forward:/webui/index.html";
-    }
+    /**
+     *
+     *
+     * @param stmts
+     * @param s1
+     * @param s2
+     * @return Similarity
+     */
+    Similarity assertStringEquals(List<String> stmts, List<String> s1, List<String> s2);
+
+    /**
+     *
+     *
+     * @param stmt
+     * @param s1
+     * @param s2
+     * @return
+     */
+    boolean assertStringEquals(String stmt, String s1, String s2);
+
+    /**
+     *
+     *
+     * @param stmts
+     * @param o1
+     * @param o2
+     * @return Similarity
+     */
+    Similarity assertObjectEquals(List<String> stmts, List o1, List o2);
+
+    /**
+     *
+     *
+     * @param stmt
+     * @param o1
+     * @param o2
+     * @return
+     */
+    boolean assertObjectEquals(String stmt, Object o1, Object o2);
 }

@@ -123,3 +123,8 @@ export class SearchQueryResponse {
 
     actions: string[]
 }
+
+export class SrmQueryRequest {
+    type: string
+    oracleFilters: any;
+}

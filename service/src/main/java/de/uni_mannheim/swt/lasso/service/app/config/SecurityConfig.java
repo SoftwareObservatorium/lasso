@@ -83,10 +83,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 // FIXME permit ZIP downloads
                 //.antMatchers("/api/**/records").permitAll()
 
-                // permit web app (angular frontend)
-                .antMatchers("/lasso/**").permitAll()
-                        //, "/*.html", "/*.js", "/*.ico", "/*.css", "/*.txt", "/assets/**").permitAll()
-
                 // permit new web app (angular webui)
                 .antMatchers("/webui/**").permitAll()
 

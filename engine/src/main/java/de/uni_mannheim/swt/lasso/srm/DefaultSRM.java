@@ -25,8 +25,10 @@ import de.uni_mannheim.swt.lasso.core.model.Abstraction;
 import de.uni_mannheim.swt.lasso.core.model.Behaviour;
 import de.uni_mannheim.swt.lasso.core.model.System;
 import de.uni_mannheim.swt.lasso.core.srm.SRM;
+import de.uni_mannheim.swt.lasso.engine.LassoConfiguration;
 import de.uni_mannheim.swt.lasso.engine.action.arena.FunctionalSimilarityReport;
 import de.uni_mannheim.swt.lasso.engine.data.ReportKey;
+import de.uni_mannheim.swt.lasso.srm.operators.FunctionalCorrectness;
 import de.uni_mannheim.swt.lasso.srm.operators.FunctionalSimilarity;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
@@ -44,7 +46,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Default SRM implementation.
+ * Default SRM service implementation (used as part of script pipelines).
  *
  * @author Marcus Kessel
  */
@@ -64,9 +66,11 @@ public class DefaultSRM implements SRM {
     };
 
     private final ClusterEngine clusterEngine;
+    private final FunctionalCorrectness correctness;
 
-    public DefaultSRM(ClusterEngine clusterEngine) {
+    public DefaultSRM(ClusterEngine clusterEngine, FunctionalCorrectness correctness) {
         this.clusterEngine = clusterEngine;
+        this.correctness = correctness;
     }
 
     /**
@@ -90,7 +94,7 @@ public class DefaultSRM implements SRM {
      * @throws IOException
      */
     public List<String> similarTo(Behaviour behaviour, double minimum, Map<String, ?> map) throws IOException {
-        FunctionalSimilarity similarity = new FunctionalSimilarity(clusterEngine);
+        FunctionalSimilarity similarity = new FunctionalSimilarity(clusterEngine, correctness);
 
         Map<String, Double> similarityMap = similarity.measure(behaviour, map);
 

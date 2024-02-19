@@ -42,3 +42,9 @@ see [GenerativeAI.md](examples%2FGenerativeAI.md).
 GitImport
 
 see [GitImport.md](examples%2FGitImport.md).
+
+## Actions
+
+Existing actions are documented in the `webui` module (see http://localhost:4200/actions).
+
+A developer-oriented introduction to the creation of new actions is available in [actions.md](actions.md)

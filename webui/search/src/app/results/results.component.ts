@@ -18,7 +18,7 @@
 /// along with LASSO.  If not, see <https://www.gnu.org/licenses/>.
 ///
 
-import { AfterViewChecked, ChangeDetectorRef, Component, ViewChild } from '@angular/core';
+import { AfterViewChecked, ChangeDetectorRef, Component, ElementRef, ViewChild } from '@angular/core';
 import { first } from 'rxjs/operators';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LassoApiServiceService } from '../service/lasso-api-service.service';
@@ -34,6 +34,7 @@ import { LassoGraphService, ObservationQuery } from '../service/graphql.service'
 
 import * as XLSX from 'xlsx';
 import { MatChipSelectionChange } from '@angular/material/chips';
+import { LassoUtils } from '../utils/lutils';
 
 const EXCEL_EXTENSION = '.xlsx';
 
@@ -391,6 +392,10 @@ export class ResultsComponent implements AfterViewChecked {
     // this.dataSource.filter = "blub"
 
     //this.dataSource.data = this.dataSource.data.splice(10)
+
+    // scroll to top
+    let el = document.getElementById("options");
+    el.scrollIntoView();
   }
 
   formatOracleRow(r: any) {
@@ -403,6 +408,10 @@ export class ResultsComponent implements AfterViewChecked {
 
     // load new (filtered) results
     this.loadData()
+  }
+
+  getImplementationLabel(impl: string): string {
+    return LassoUtils.getColumnLabel(impl)
   }
 
   onOutputSelectionChange($event: MatChipSelectionChange, o: any, i: number) {
@@ -485,6 +494,10 @@ export class ResultsComponent implements AfterViewChecked {
   }
 
   onDatabase() {
+    this.router.navigate(['/db', this.executionId]);
+  }
+
+  onSrm() {
     this.router.navigate(['/srm', this.executionId]);
   }
 }

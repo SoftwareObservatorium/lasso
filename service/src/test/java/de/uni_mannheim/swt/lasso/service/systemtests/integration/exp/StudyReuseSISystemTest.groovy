@@ -27,7 +27,8 @@ import de.uni_mannheim.swt.lasso.engine.LSLScript
 import de.uni_mannheim.swt.lasso.service.systemtests.integration.AbstractGroovySystemTest
 import de.uni_mannheim.swt.lasso.service.systemtests.util.LassoTestEngine
 import de.uni_mannheim.swt.lasso.srm.ClusterSRMRepository
-import de.uni_mannheim.swt.lasso.srm.SRMManager
+import de.uni_mannheim.swt.lasso.srm.SRHRepository
+import de.uni_mannheim.swt.lasso.srm.operators.FunctionalCorrectness
 import joinery.DataFrame
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Test
@@ -36,15 +37,19 @@ import org.springframework.beans.factory.annotation.Qualifier
 import tech.tablesaw.api.Table
 
 /**
- * Demonstrates dissertation examples.
+ * Demonstrates examples.
  *
  * @author mkessel
  */
+// FIXME update
 class StudyReuseSISystemTest extends AbstractGroovySystemTest {
 
     @Autowired
     @Qualifier("testLassoEngine")
     LassoTestEngine lassoEngine
+
+    @Autowired
+    FunctionalCorrectness correctness
 
     /**
      * Add second version with superclass java.util.Collection?
@@ -176,8 +181,8 @@ class StudyReuseSISystemTest extends AbstractGroovySystemTest {
         Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
         System.out.println(table.printAll());
 
-        SRMManager srmManager = new SRMManager(clusterEngine.getClusterSRMRepository())
-        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, "execute")
+        SRHRepository srmManager = new SRHRepository(clusterEngine, correctness)
+        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, SRHRepository.ARENA_DEFAULT, SRHRepository.TYPE_VALUE)
         System.out.println(df)
     }
 
@@ -308,8 +313,8 @@ class StudyReuseSISystemTest extends AbstractGroovySystemTest {
         Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
         System.out.println(table.printAll());
 
-        SRMManager srmManager = new SRMManager(clusterEngine.getClusterSRMRepository())
-        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, "execute")
+        SRHRepository srmManager = new SRHRepository(clusterEngine, correctness)
+        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, SRHRepository.ARENA_DEFAULT, SRHRepository.TYPE_VALUE)
         System.out.println(df)
     }
 
@@ -434,8 +439,8 @@ class StudyReuseSISystemTest extends AbstractGroovySystemTest {
         Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
         System.out.println(table.printAll());
 
-        SRMManager srmManager = new SRMManager(clusterEngine.getClusterSRMRepository())
-        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, "execute")
+        SRHRepository srmManager = new SRHRepository(clusterEngine, correctness)
+        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, SRHRepository.ARENA_DEFAULT, SRHRepository.TYPE_VALUE)
         System.out.println(df)
     }
 
@@ -580,8 +585,8 @@ class StudyReuseSISystemTest extends AbstractGroovySystemTest {
         Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
         System.out.println(table.printAll());
 
-        SRMManager srmManager = new SRMManager(clusterEngine.getClusterSRMRepository())
-        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, "execute")
+        SRHRepository srmManager = new SRHRepository(clusterEngine, correctness)
+        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, SRHRepository.ARENA_DEFAULT, SRHRepository.TYPE_VALUE)
         System.out.println(df)
     }
 
@@ -718,8 +723,8 @@ class StudyReuseSISystemTest extends AbstractGroovySystemTest {
         Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
         System.out.println(table.printAll());
 
-        SRMManager srmManager = new SRMManager(clusterEngine.getClusterSRMRepository())
-        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, "execute")
+        SRHRepository srmManager = new SRHRepository(clusterEngine, correctness)
+        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, SRHRepository.ARENA_DEFAULT, SRHRepository.TYPE_VALUE)
         System.out.println(df)
     }
 
@@ -852,8 +857,8 @@ class StudyReuseSISystemTest extends AbstractGroovySystemTest {
         Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
         System.out.println(table.printAll());
 
-        SRMManager srmManager = new SRMManager(clusterEngine.getClusterSRMRepository())
-        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, "execute")
+        SRHRepository srmManager = new SRHRepository(clusterEngine, correctness)
+        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, SRHRepository.ARENA_DEFAULT, SRHRepository.TYPE_VALUE)
         System.out.println(df)
     }
 
@@ -977,8 +982,8 @@ class StudyReuseSISystemTest extends AbstractGroovySystemTest {
         Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
         System.out.println(table.printAll());
 
-        SRMManager srmManager = new SRMManager(clusterEngine.getClusterSRMRepository())
-        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, "execute")
+        SRHRepository srmManager = new SRHRepository(clusterEngine, correctness)
+        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, SRHRepository.ARENA_DEFAULT, SRHRepository.TYPE_VALUE)
         System.out.println(df)
     }
 
@@ -1115,8 +1120,8 @@ class StudyReuseSISystemTest extends AbstractGroovySystemTest {
         Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
         System.out.println(table.printAll());
 
-        SRMManager srmManager = new SRMManager(clusterEngine.getClusterSRMRepository())
-        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, "execute")
+        SRHRepository srmManager = new SRHRepository(clusterEngine, correctness)
+        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, SRHRepository.ARENA_DEFAULT, SRHRepository.TYPE_VALUE)
         System.out.println(df)
     }
 
@@ -1239,8 +1244,8 @@ class StudyReuseSISystemTest extends AbstractGroovySystemTest {
         Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
         System.out.println(table.printAll());
 
-        SRMManager srmManager = new SRMManager(clusterEngine.getClusterSRMRepository())
-        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, "execute")
+        SRHRepository srmManager = new SRHRepository(clusterEngine, correctness)
+        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, SRHRepository.ARENA_DEFAULT, SRHRepository.TYPE_VALUE)
         System.out.println(df)
     }
 
@@ -1352,8 +1357,8 @@ class StudyReuseSISystemTest extends AbstractGroovySystemTest {
         Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
         System.out.println(table.printAll());
 
-        SRMManager srmManager = new SRMManager(clusterEngine.getClusterSRMRepository())
-        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, "execute")
+        SRHRepository srmManager = new SRHRepository(clusterEngine, correctness)
+        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, SRHRepository.ARENA_DEFAULT, SRHRepository.TYPE_VALUE)
         System.out.println(df)
     }
 
@@ -1468,8 +1473,8 @@ class StudyReuseSISystemTest extends AbstractGroovySystemTest {
         Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
         System.out.println(table.printAll());
 
-        SRMManager srmManager = new SRMManager(clusterEngine.getClusterSRMRepository())
-        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, "execute")
+        SRHRepository srmManager = new SRHRepository(clusterEngine, correctness)
+        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, SRHRepository.ARENA_DEFAULT, SRHRepository.TYPE_VALUE)
         System.out.println(df)
     }
 
@@ -1583,8 +1588,8 @@ class StudyReuseSISystemTest extends AbstractGroovySystemTest {
         Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
         System.out.println(table.printAll());
 
-        SRMManager srmManager = new SRMManager(clusterEngine.getClusterSRMRepository())
-        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, "execute")
+        SRHRepository srmManager = new SRHRepository(clusterEngine, correctness)
+        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, SRHRepository.ARENA_DEFAULT, SRHRepository.TYPE_VALUE)
         System.out.println(df)
     }
 
@@ -1698,8 +1703,8 @@ class StudyReuseSISystemTest extends AbstractGroovySystemTest {
         Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
         System.out.println(table.printAll());
 
-        SRMManager srmManager = new SRMManager(clusterEngine.getClusterSRMRepository())
-        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, "execute")
+        SRHRepository srmManager = new SRHRepository(clusterEngine, correctness)
+        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, SRHRepository.ARENA_DEFAULT, SRHRepository.TYPE_VALUE)
         System.out.println(df)
     }
 
@@ -1821,8 +1826,8 @@ class StudyReuseSISystemTest extends AbstractGroovySystemTest {
         Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
         System.out.println(table.printAll());
 
-        SRMManager srmManager = new SRMManager(clusterEngine.getClusterSRMRepository())
-        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, "execute")
+        SRHRepository srmManager = new SRHRepository(clusterEngine, correctness)
+        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, SRHRepository.ARENA_DEFAULT, SRHRepository.TYPE_VALUE)
         System.out.println(df)
     }
 
@@ -1940,8 +1945,8 @@ class StudyReuseSISystemTest extends AbstractGroovySystemTest {
         Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
         System.out.println(table.printAll());
 
-        SRMManager srmManager = new SRMManager(clusterEngine.getClusterSRMRepository())
-        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, "execute")
+        SRHRepository srmManager = new SRHRepository(clusterEngine, correctness)
+        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, SRHRepository.ARENA_DEFAULT, SRHRepository.TYPE_VALUE)
         System.out.println(df)
     }
 
@@ -2053,8 +2058,8 @@ class StudyReuseSISystemTest extends AbstractGroovySystemTest {
         Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
         System.out.println(table.printAll());
 
-        SRMManager srmManager = new SRMManager(clusterEngine.getClusterSRMRepository())
-        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, "execute")
+        SRHRepository srmManager = new SRHRepository(clusterEngine, correctness)
+        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, SRHRepository.ARENA_DEFAULT, SRHRepository.TYPE_VALUE)
         System.out.println(df)
     }
 
@@ -2175,8 +2180,8 @@ class StudyReuseSISystemTest extends AbstractGroovySystemTest {
         Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
         System.out.println(table.printAll());
 
-        SRMManager srmManager = new SRMManager(clusterEngine.getClusterSRMRepository())
-        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, "execute")
+        SRHRepository srmManager = new SRHRepository(clusterEngine, correctness)
+        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, SRHRepository.ARENA_DEFAULT, SRHRepository.TYPE_VALUE)
         System.out.println(df)
     }
 
@@ -2298,8 +2303,8 @@ class StudyReuseSISystemTest extends AbstractGroovySystemTest {
         Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
         System.out.println(table.printAll());
 
-        SRMManager srmManager = new SRMManager(clusterEngine.getClusterSRMRepository())
-        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, "execute")
+        SRHRepository srmManager = new SRHRepository(clusterEngine, correctness)
+        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, SRHRepository.ARENA_DEFAULT, SRHRepository.TYPE_VALUE)
         System.out.println(df)
     }
 
@@ -2411,8 +2416,8 @@ class StudyReuseSISystemTest extends AbstractGroovySystemTest {
         Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
         System.out.println(table.printAll());
 
-        SRMManager srmManager = new SRMManager(clusterEngine.getClusterSRMRepository())
-        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, "execute")
+        SRHRepository srmManager = new SRHRepository(clusterEngine, correctness)
+        DataFrame df = srmManager.getActuationSheets(lslExecutionResult.executionId, SRHRepository.ARENA_DEFAULT, SRHRepository.TYPE_VALUE)
         System.out.println(df)
     }
 }

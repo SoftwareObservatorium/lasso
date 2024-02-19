@@ -22,7 +22,7 @@ LASSO's core building blocks consist of several well-defined concepts and data s
 The platform is realized in Java using Spring Boot (https://spring.io/projects/spring-boot), while its architecture is realized on top of Apache Ignite (https://ignite.apache.org/). The platform's architecture, therefore, is distributed by design. It follows the manager/worker architecture style. The platform can be accessed via its website (RESTful API) and a webapp GUI.
 
 ![quickstart_results.png](doc%2Fimg%2Fquickstart_results.png)
-
+![quickstart_results_filters.png](doc%2Fimg%2Fquickstart_results_filters.png)
 ## Documentation
 
 There are ways to get started:
@@ -103,7 +103,6 @@ Note: For up-to-date information, have a look at the _modules_ [here](./pom.xml)
 * `arena-support` - Arena support module (shared classes)
 * `arena` - LASSO Arena module (arena test driver)
 * `worker` - LASSO's cluster worker application (web-based using spring-boot)
-* `frontend` - LASSO's web application based on Angular 12 and bootstrap
 * `webui` - LASSO's next-generation web application based on Angular 16 and Material
 * `service` - LASSO's cluster service and manager (web-based using spring-boot)
 * `lasso-llm` - Companion module to `benchmarks` (facilities to integrate generated code obtained by MultiPL-E experiment)

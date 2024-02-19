@@ -97,8 +97,9 @@ study(name: 'CodeSearch-TDCS-{{abstraction_name}}') {
     }
     /* rank candidates based on functional correctness */
     action(name:'rank', type:'Rank') {
+        strategy = '{{ranking_strategy}}'
         // sort by functional similarity (passing tests/total tests) descending
-        criteria = ['FunctionalSimilarityReport.score:MAX:1'] // more criteria possible
+        criteria = [{{ranking_criteria}}] // more criteria possible
 
         dependsOn 'filter'
         includeAbstractions '*'
@@ -149,6 +150,11 @@ study(name: 'CodeSearch-TDCS-{{abstraction_name}}') {
 
   // arena
   arenaAdapters: number = 100
+
+  // ranking
+  rankingCriteria: string[] = ['FunctionalSimilarityReport.score:MAX:1'];
+  rankingCriterion: string = '';
+  rankingStrategy: string = 'HDS_SMOOP';
 
   createHotSettings(): Handsontable.GridSettings {
     let hotSettings: Handsontable.GridSettings = {
@@ -270,6 +276,11 @@ study(name: 'CodeSearch-TDCS-{{abstraction_name}}') {
     console.log(this.filters)
   }
 
+  addRankingCriterion(): void {
+    this.rankingCriteria.push(this.rankingCriterion)
+    console.log(this.rankingCriteria)
+  }
+
   /**
    * Identify if sheets have been added.
    * 
@@ -305,6 +316,8 @@ study(name: 'CodeSearch-TDCS-{{abstraction_name}}') {
       // get abstraction name
       let abstractionName = lqlCode.substring(0, lqlCode.indexOf("{")).trim()
 
+      let rankingPreferences = this.createRankingPreferencesStr()
+
       let templateMap = {
         "corpus_datasource": `${this.datasource}`,
         "abstraction_name": `${abstractionName}`,
@@ -312,7 +325,9 @@ study(name: 'CodeSearch-TDCS-{{abstraction_name}}') {
         "select_lql" : `${this.code}`,
         "select_strategy" : `${this.strategy}`,
         "arena_adapters": `${this.arenaAdapters}`,
-        "arena_sequences" : `${sequences}`
+        "arena_sequences" : `${sequences}`,
+        "ranking_strategy": `${this.rankingStrategy}`,
+        "ranking_criteria" : `${rankingPreferences}`
       }
 
       let lslCode = this.substituteStr(this.lslCodeTemplate, templateMap)
@@ -363,6 +378,24 @@ study(name: 'CodeSearch-TDCS-{{abstraction_name}}') {
         : match
       ;
     });
+  }
+
+  createRankingPreferencesStr(): string {
+    let rStr = ""
+    
+    let first = true
+    this.rankingCriteria.forEach(c => {
+      if(first) {
+        first = false
+      } else {
+        rStr += ","
+      }
+      rStr += "'"
+      rStr += c
+      rStr += "'"
+    })
+
+    return rStr
   }
 
   /**

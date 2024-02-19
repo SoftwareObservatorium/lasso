@@ -17,23 +17,33 @@
  * You should have received a copy of the GNU General Public License
  * along with LASSO.  If not, see <https://www.gnu.org/licenses/>.
  */
-package de.uni_mannheim.swt.lasso.service.controller;
+package de.uni_mannheim.swt.lasso.core.dto;
 
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
+import java.util.Map;
 
 /**
- * Required for Angular apps.
  *
  * @author Marcus Kessel
+ *
  */
-@Controller
-public class AngularForwardController {
+public class SrmQueryRequest {
 
-    // Match everything without a suffix (so not a static resource)
-    @RequestMapping(value = "/webui/**/{path:[^.]*}")
-    public String redirectWebui() {
-        // Forward to home page so that route is preserved.
-        return "forward:/webui/index.html";
+    private Map<String, String> oracleFilters;
+    private String type;
+
+    public Map<String, String> getOracleFilters() {
+        return oracleFilters;
+    }
+
+    public void setOracleFilters(Map<String, String> oracleFilters) {
+        this.oracleFilters = oracleFilters;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 }

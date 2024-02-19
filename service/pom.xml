@@ -350,21 +350,6 @@
                 <artifactId>maven-dependency-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>unpack-frontend</id>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>unpack-dependencies</goal>
-                        </goals>
-                        <configuration>
-                            <includeGroupIds>${project.groupId}</includeGroupIds>
-                            <includeArtifactIds>frontend</includeArtifactIds>
-                            <outputDirectory>${project.build.directory}/classes/static/lasso</outputDirectory>
-                            <excludes>META-INF/**</excludes>
-                            <overWriteReleases>true</overWriteReleases>
-                            <overWriteSnapshots>true</overWriteSnapshots>
-                        </configuration>
-                    </execution>
-                    <execution>
                         <id>unpack-webui</id>
                         <phase>compile</phase>
                         <goals>

@@ -11,7 +11,7 @@ import de.uni_mannheim.swt.lasso.engine.LassoConfiguration;
 import de.uni_mannheim.swt.lasso.index.CandidateQueryResult;
 import de.uni_mannheim.swt.lasso.index.SearchOptions;
 import de.uni_mannheim.swt.lasso.index.repo.SolrCandidateDocument;
-import de.uni_mannheim.swt.lasso.srm.SRMManager;
+import de.uni_mannheim.swt.lasso.srm.SRHRepository;
 import joinery.DataFrame;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -64,7 +64,7 @@ public class ScriptQueryStrategy extends QueryStrategy {
                 "SELECT count(system) from StepReport where passed = true and action = '"+lastAction+"'");
         long totalSystems = countTable.longColumn(0).get(0);
         //  limit " + request.getStart() + "," + request.getRows()
-        // FIXME issue with post-ranking (hen & egg problem)
+        // FIXME perf. issue with post-ranking (hen & egg problem)
         Table systemsTable = clusterEngine.getReportRepository().select(request.getExecutionId(),
                 "SELECT system,abstraction,datasource from StepReport where passed = true and action = '"+lastAction+"' order by lastmodified");// asc limit " + request.getStart() + "," + request.getRows());
 
@@ -80,22 +80,22 @@ public class ScriptQueryStrategy extends QueryStrategy {
 
             try {
                 //
-                SRMManager srmManager = new SRMManager(clusterEngine.getClusterSRMRepository());
+                SRHRepository srhRepository = lassoConfiguration.getService(SRHRepository.class);
                 // FIXME arena id (let's assume arena "execute" for now)
-                DataFrame df = srmManager.getActuationSheets(request.getExecutionId(), "execute", "value", request.getOracleFilters());
+                DataFrame df = srhRepository.getActuationSheets(request.getExecutionId(), SRHRepository.ARENA_DEFAULT, SRHRepository.TYPE_VALUE, request.getOracleFilters());
 
-                Set<String> filteredSystems = (Set<String>) df.columns().stream()
-                        .filter(s -> !StringUtils.equalsAnyIgnoreCase(s.toString(), "statement"))
-                        .filter(s -> !StringUtils.startsWithIgnoreCase(s.toString(), "oracle_"))
-                        .map(s -> StringUtils.substringBeforeLast(s.toString(), "_"))
+                Set<String> filteredSystems = ((Set<String>) df.columns()).stream()
+                        .filter(s -> !StringUtils.equalsAnyIgnoreCase(s, "statement"))
+                        .filter(s -> !StringUtils.startsWithIgnoreCase(s, "oracle_"))
+                        .map(s -> StringUtils.substringBeforeLast(s, "_"))
                         .collect(Collectors.toSet());
 
                 totalSystems = filteredSystems.size();
 
                 systemsTable = systemsTable.where(systemsTable.stringColumn(0).isIn(filteredSystems));
 
-                if(LOG.isDebugEnabled()) {
-                    LOG.debug("Systems filtered '{}' '{}'", filteredSystems, systemsTable.print());
+                if(LOG.isInfoEnabled()) {
+                    LOG.info("Systems filtered '{}' '{}'", filteredSystems, systemsTable.print());
                 }
             } catch (Exception e) {
                 throw new IOException(e);
@@ -114,6 +114,7 @@ public class ScriptQueryStrategy extends QueryStrategy {
             rankingTable = clusterEngine.getReportRepository().select(request.getExecutionId(), "SELECT system,abstraction,datasource,rankposition from RankReport order by rankposition asc");
         } catch (Throwable e) {
             //
+            LOG.warn("Ranking failed", e);
         }
 
         LinkedHashMap<String, CodeUnit> implementations = systemsTable.stream().map(row -> {
@@ -147,8 +148,8 @@ public class ScriptQueryStrategy extends QueryStrategy {
                 }).collect(Collectors.toList());
 
                 return impls.get(0);
-            } catch (IOException e) {
-                e.printStackTrace();
+            } catch (Throwable e) {
+                LOG.warn("Resolving code unit failed", e);
             }
 
             return null;

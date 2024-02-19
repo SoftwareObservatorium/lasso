@@ -4,3 +4,7 @@
       height: 200px;
   }
 }
+
+.example-container {
+  overflow-x: scroll;
+}
