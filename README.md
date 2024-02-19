@@ -64,7 +64,14 @@ See [pipelines.md](doc%2Fpipelines.md) for a few example LSL pipelines.
 
 A core design principle of the LASSO platform is to conduct extensive software analytics in external, popular data analytics tools. The platform, therefore, stores tracing data and reports in its distributed database using tabular representations.
 
+Use our _jupyterlab_ playground to explore and manipulate SRMs with Python pandas (https://pandas.pydata.org/)
+
+* https://softwareobservatorium.github.io/jupyterlab/lab/index.html
+
+
 See [analytics.md](doc%2Fanalytics.md) how resulting SRMs can be analyzed in Python and R.
+
+![quickstart_jupyterlab.png](doc%2Fimg%2Fquickstart_jupyterlab.png)
 
 ### Distributed Mode - Large scale analysis
 
