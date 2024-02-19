@@ -296,6 +296,17 @@ Once the execution has ended, the overview site of all executed scripts in the d
 
 ![quickstart_results.png](img%2Fquickstart_results.png)
 
+You can filter implementations by selecting a reference implementation from the results (i.e., select an implementation from the _Responses_ tab as shown below).
+
+![quickstart_results_filters.png](img%2Fquickstart_results_filters.png)
+
+### Software Analytics (SRMs)
+
+Use our _jupyterlab_ playground to explore and manipulate the SRM data obtained for the running example with Python pandas (https://pandas.pydata.org/)
+
+* https://softwareobservatorium.github.io/jupyterlab/lab/index.html
+
+
 ### Remarks
 
 #### Scalability / Distributed Mode

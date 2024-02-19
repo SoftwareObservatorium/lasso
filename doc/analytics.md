@@ -4,6 +4,14 @@ LSL pipeline script executions result in one or more SRMs that are stored in LAS
 
 SRHs including SRMs are accessible in external data analytic tools in which observational records can be analyzed.
 
+## Python (pandas)
+
+Examples to manipulate SRMs with Python pandas (https://pandas.pydata.org/) are available as interactive notebooks in _jupyterlab_ playground on our project website
+
+* https://softwareobservatorium.github.io/jupyterlab/lab/index.html
+
+![quickstart_jupyterlab.png](img%2Fquickstart_jupyterlab.png)
+
 ## Python (pyignite)
 
 Since LASSO uses Apache Ignite, an official Python module `pyignite` (https://ignite.apache.org/docs/latest/thin-clients/python-thin-client) is available to access SRHs in Python based on Ignite's concept of thin clients. The client can be used to manipulate SRMs/SRHs using popular data frame libraries including `pandas` (https://pandas.pydata.org/). This also offers the possibility to interactively explore SRMs as part of Jupyter notebooks.
