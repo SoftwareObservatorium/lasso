@@ -1,4 +1,4 @@
-# Examples forfor Unit Test Generation
+# Examples for Unit Test Generation
 
 ## Obtain new Tests using `EvoSuiteGenerateClass`
 
