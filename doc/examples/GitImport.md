@@ -2,6 +2,8 @@
 
 ## Ingest a git repository and analyze its classes
 
+This requires the presence of an artifact repository for deployment (see [nexus.md](..%2Fnexus.md)). 
+
 ```groovy
 dataSource 'lasso_quickstart'
 // interface in LQL notation

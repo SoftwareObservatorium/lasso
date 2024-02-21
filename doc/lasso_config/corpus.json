@@ -19,7 +19,7 @@
     "url": "http://localhost:8081/repository/maven-public/",
     "deploymentUrl": "http://localhost:8081/repository/lasso-deploy/",
     "user": "admin",
-    "pass": "fa74f329-91de-41ef-bf60-1ebbdaa8a1f3",
+    "pass": "0a37a6b9-a79b-4b06-a928-adfec6bc0ddc",
     "description": "quickstart repository of LASSO"
   }
 }
