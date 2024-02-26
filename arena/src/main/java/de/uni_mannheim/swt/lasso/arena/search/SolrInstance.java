@@ -87,4 +87,8 @@ public class SolrInstance {
     public static SolrInstance gitimport23() {
         return new SolrInstance("gitimport23", "", "", "http://lassohp10.informatik.uni-mannheim.de:8983/solr/gitimport-23/");
     }
+
+    public static SolrInstance local() {
+        return new SolrInstance("lasso_quickstart", "", "", "http://localhost:8983/solr/lasso_quickstart/");
+    }
 }

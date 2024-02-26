@@ -33,8 +33,10 @@ Note: tested under Ubuntu 22.04 LTS with Solr _9.4.1_ and docker _25.0.3_.
 Now update the schema of your newly created index (assuming your Solr instance is running on _localhost_ on port _8983_)
 
 ```bash
+# set your path to LASSO's repository (contains the config files)
+export LASSO_REPO=/my/path/lasso/repository
 # copy LASSO document schema to your index
-sudo cp solr_config/managed-schema* lassoindex/data/lasso_quickstart/conf/
+sudo cp $LASSO_REPO/doc/solr_config/managed-schema* lassoindex/data/lasso_quickstart/conf/
 
 # make sure its host owner matches the container's solr user
 sudo chown -R 8983:8983 lassoindex/data/lasso_quickstart/conf/
@@ -45,4 +47,4 @@ curl -vvv "http://localhost:8983/solr/admin/cores?action=RELOAD&core=lasso_quick
 # alternatively, open your webbrowser and load Solr's dashboard to reload the index using 'Core Admin' (http://localhost:8983/)
 ```
 
-The schema files are located in [managed-schema](solr%2Fmanaged-schema).
+The schema files are located in [solr_config](solr_config).

@@ -27,6 +27,7 @@ import de.uni_mannheim.swt.lasso.arena.adaptation.permutator.PermutatorAdaptedIm
 import de.uni_mannheim.swt.lasso.arena.adaptation.permutator.PermutatorAdaptedInitializer;
 import de.uni_mannheim.swt.lasso.arena.check.Oracle;
 import de.uni_mannheim.swt.lasso.arena.search.InterfaceSpecification;
+import de.uni_mannheim.swt.lasso.arena.search.LQLMethodSignature;
 import de.uni_mannheim.swt.lasso.arena.sequence.parser.unit.ReflectionConstructorSignature;
 import de.uni_mannheim.swt.lasso.arena.sequence.parser.unit.ReflectionMethodSignature;
 import de.uni_mannheim.swt.lasso.runner.permutator.Candidate;
@@ -313,21 +314,47 @@ public class SequenceSpecification {
                     MethodSignature methodSignature = methodCallStatement.getMethodSignature();
 
                     // FIXME BUG LQLMethodSignature vs ReflectionMethodSignature
+//                    if(methodSignature instanceof LQLMethodSignature) {
+//
+//                    } else if(methodSignature instanceof ReflectionMethodSignature) {
+//
+//                    }
                     int m = specification.getMethods().indexOf(methodSignature);
 
+                    LOG.debug("Spec {}", specification.toLQL());
+
                     if(m < 0) {
+                        // attempt direct match
                         for(int c = 0; c < specification.getMethods().size(); c++) {
                             MethodSignature other = specification.getMethods().get(c);
+
+                            LOG.debug("methodSignature MethodSignature class {} => {} vs {}", methodSignature.getClass(), methodSignature.getName(), other.getName());
+                            LOG.debug("other MethodSignature class {}", other.getClass());
                             if(Objects.equals(methodSignature.getName(), other.getName())) {
                                 m = c;
                                 break;
                             }
                         }
+
+//                        // still not found? try (closest) signature match
+//                        if(m < 0) {
+//                            for(int c = 0; c < specification.getMethods().size(); c++) {
+//                                MethodSignature other = specification.getMethods().get(c);
+//
+//                                LOG.debug("closest signature match class {} => {} vs {}", methodCallStatement.getClass(), methodSignature.getName(), other.getName());
+//                                if(Arrays.equals(methodSignature.getParameterTypes(), other.getParameterTypes()) &&
+//                                        Objects.equals(methodSignature.getReturnType(), other.getReturnType())) {
+//                                    m = c;
+//                                    break;
+//                                }
+//                            }
+//                        }
                     }
 
                     if(LOG.isDebugEnabled()) {
                         LOG.debug("Requested method signature '{}' for m '{}'", ToStringBuilder.reflectionToString(methodSignature), m);
                         LOG.debug(ToStringBuilder.reflectionToString(specification));
+                        LOG.debug(ToStringBuilder.reflectionToString(adaptedImplementation));
                     }
 
                     AdaptedMethod adaptedMethod = adaptedImplementation.getMethod(specification, m);

@@ -60,6 +60,8 @@ This uses functionality provided by the [crawler](../crawler) module.
 In this example, we aim to ingest `Apache Commons Codec 1.15` (sources and bytecode) and make it available in the executable corpus.
 
 ```bash
+# set your path to LASSO's repository
+export LASSO_REPO=/my/path/lasso/repository
 # create working directory (where artifacts are stored)
 mkdir lasso_crawler
 
@@ -68,7 +70,7 @@ java -Dartifacts=commons-codec:commons-codec:1.15:sources \
     -Dindexer.work.path=lasso_crawler \
     -Dbatch.maven.repo.url=http://localhost:8081/repository/maven-public/ \
     -Dlasso.indexer.worker.threads=1 \
-    -jar crawler/target/crawler-1.0.0-SNAPSHOT.jar
+    -jar $LASSO_REPO/crawler/target/crawler-1.0.0-SNAPSHOT.jar
 ```
 
 where
@@ -91,6 +93,8 @@ This uses functionality provided by the [analyzer](../analyzer) module.
 The following command first conducts static code analysis and then populates the results in the Solr index `lasso_quickstart` to enable code search
 
 ```bash
+# set your path to LASSO's repository
+export LASSO_REPO=/my/path/lasso/repository
 # run analyzer (points to directory of crawler above)
 java -Xms2g -Xmx2g \
     -Dindexer.work.path=lasso_crawler/ \
@@ -99,7 +103,7 @@ java -Xms2g -Xmx2g \
     -Dbatch.job.commit.interval=1 \
     -Dbatch.solr.url=http://localhost:8983/solr \
     -Dbatch.solr.core.candidates=lasso_quickstart \
-    -jar analyzer/target/analyzer-1.0.0-SNAPSHOT-exec.jar
+    -jar $LASSO_REPO/analyzer/target/analyzer-1.0.0-SNAPSHOT-exec.jar
 ```
 
 where

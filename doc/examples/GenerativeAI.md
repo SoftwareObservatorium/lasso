@@ -2,6 +2,8 @@
 
 ## Prompt ChatGPT to generate a Base64 class that for encoding strings and verify its functional correctness
 
+This requires the presence of an artifact repository for deployment (see [nexus.md](..%2Fnexus.md)).
+
 ```groovy
 dataSource 'lasso_quickstart'
 

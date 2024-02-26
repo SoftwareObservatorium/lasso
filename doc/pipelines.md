@@ -4,7 +4,7 @@
 
 ### Interface-Driven Code Search
 
-Select
+`Select` action
 
 ```groovy
 dataSource 'lasso_quickstart'
@@ -27,19 +27,25 @@ study(name: 'Base64encode') {
 
 ### Test-Driven Code Search
 
-ArenaExecute
+`ArenaExecute` action.
 
 see [quickstart.md](quickstart.md).
 
+### Automated, Unit Test Generation
+
+`EvoSuiteGenerateClass` action.
+
+see [TestGeneration.md](examples%2FTestGeneration.md).
+
 ### Generative AI (ChatGPT)
 
-Assess code returned by GAI.
+Assess code returned by GAI using `GenerativeAI` action.
 
 see [GenerativeAI.md](examples%2FGenerativeAI.md).
 
 ### Git - ingest and analyze projects managed via git
 
-GitImport
+`GitImport` action
 
 see [GitImport.md](examples%2FGitImport.md).
 
