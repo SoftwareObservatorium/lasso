@@ -25,6 +25,8 @@ java-build:
   # select the most appropriate image for your project
   image: maven:3.9.6-eclipse-temurin-17
   stage: build
+  tags:
+    - linux
   # Cache downloaded dependencies and plugins between builds.
   # The key here separates one cache per branch/tag ($CI_COMMIT_REF_SLUG)
   cache:
