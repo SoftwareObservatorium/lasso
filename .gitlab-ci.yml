@@ -34,8 +34,8 @@ java-build:
     paths:
       - .m2/repository
   script:
-    - mvn $MAVEN_CLI_OPTS -DskipTests=true -Dfrontend.build=embedded package
-  artifacts:
-    name: "Maven artifacts from $CI_PROJECT_NAME on $CI_COMMIT_REF_SLUG"
-    paths:
-      - "**/target"
+    - ./mvnw $MAVEN_CLI_OPTS -DskipTests=true -Dfrontend.build=embedded package
+  #artifacts:
+  #  name: "Maven artifacts from $CI_PROJECT_NAME on $CI_COMMIT_REF_SLUG"
+  #  paths:
+  #    - "**/target"
