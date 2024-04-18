@@ -73,7 +73,7 @@ public class EvosuiteClassCollector extends RecordCollector {
             if(LOG.isWarnEnabled()) {
                 LOG.warn(String.format("No evosuite report found for implementation %s", executable.getId()));
             }
-            // we don't tolerate that ..
+            // we don't tolerate that ...
             return Result.FAILURE;
         }
 
@@ -91,7 +91,7 @@ public class EvosuiteClassCollector extends RecordCollector {
         Collection<File> testClasses = workspace.listFilesRecursively(
                 executable.getProject(), EVOSUITE_TESTS, "java");
 
-        if(testClasses.size() < 1) {
+        if(testClasses.isEmpty()) {
             if(LOG.isInfoEnabled()) {
                 LOG.info(String.format("No evosuite tests found for implementation %s", executable.getId()));
             }

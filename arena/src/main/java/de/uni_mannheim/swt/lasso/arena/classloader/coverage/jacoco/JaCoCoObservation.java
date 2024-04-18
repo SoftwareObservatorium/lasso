@@ -140,6 +140,8 @@ public class JaCoCoObservation extends Observation {
             return Collections.emptyMap();
         }
 
+        classCoverage.get().getLine(0).getStatus();
+
         // FIXME do it for each scope
         Map<CellId, CellValue> cells = new LinkedHashMap<>();
         putClassScope(records, "instruction", cells, classCoverage.get().getInstructionCounter());

@@ -20,6 +20,9 @@
 package de.uni_mannheim.swt.lasso.llm.export;
 
 import de.uni_mannheim.swt.lasso.core.model.Environment;
+import de.uni_mannheim.swt.lasso.corpus.ArtifactRepository;
+import de.uni_mannheim.swt.lasso.corpus.Datasource;
+import de.uni_mannheim.swt.lasso.corpus.ExecutableCorpus;
 import de.uni_mannheim.swt.lasso.engine.environment.ExecutionEnvironmentManager;
 import de.uni_mannheim.swt.lasso.engine.environment.MavenExecutionEnvironment;
 import de.uni_mannheim.swt.lasso.engine.workspace.Workspace;
@@ -27,6 +30,7 @@ import de.uni_mannheim.swt.lasso.llm.problem.Problem;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.StrSubstitutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,10 +51,7 @@ public class Publisher {
 
     private static final String SETTINGS_TEMPLATE_XML = "/poms/settings.xml";
 
-    private String repoUrl = "http://lassohp12.informatik.uni-mannheim.de:8081/repository/multiple-benchmarks/";
-    private String repoId = "swt100nexus";
-
-    private String solrCore = "multiple-benchmark-23";
+    private ExecutableCorpus executableCorpus;
 
     private String mavenDefaultImage = "maven:3.6.3-openjdk-17";
 
@@ -62,8 +63,9 @@ public class Publisher {
 
     private String mavenThreads = "1";
 
-    public Publisher(File m2Home) {
+    public Publisher(ExecutableCorpus executableCorpus, File m2Home) {
         this.m2Home = m2Home;
+        this.executableCorpus = executableCorpus;
         initRepo();
         this.executionEnvironmentManager = executionEnvironmentManager();
     }
@@ -73,11 +75,14 @@ public class Publisher {
         File settingsXml = new File(this.m2Home, "settings.xml");
         if (!settingsXml.exists()) {
             try {
+                // replace placeholders
+                ArtifactRepository artifactRepository = executableCorpus.getArtifactRepository();
+
                 Map<String, Object> valueMap = new HashMap<>();
-                valueMap.put("repoId", "FIXME");
-                valueMap.put("repoUser", "FIXME");
-                valueMap.put("repoPass", "FIXME");
-                valueMap.put("repoUrl", "FIXME");
+                valueMap.put("repoId", artifactRepository.getId());
+                valueMap.put("repoUser", artifactRepository.getUser());
+                valueMap.put("repoPass", artifactRepository.getPass());
+                valueMap.put("repoUrl", artifactRepository.getUrl());
 
                 String settingsSource = StrSubstitutor.replace(getSettingsTemplate(), valueMap);
 
@@ -115,7 +120,9 @@ public class Publisher {
         // see https://maven.apache.org/plugins/maven-deploy-plugin/deploy-mojo.html
         String mojo = deploy ? "deploy" : "package";
 
-        // FIXME make configurable
+        String repoUrl = executableCorpus.getArtifactRepository().getDeploymentUrl();
+        String repoId = executableCorpus.getArtifactRepository().getId();
+
         args.addAll(
                 Arrays.asList(
                         "-DskipTests",
@@ -143,12 +150,34 @@ public class Publisher {
         // args passed
         List<String> args = new ArrayList<>(mvnCommand("maven_analyze.log"));
 
+        // FIXME select default ds
+        Datasource ds = executableCorpus.getDatasources().get(0);
+
+        String core = StringUtils.substringAfterLast(ds.getHost(), "/");
+        String url = StringUtils.substringBeforeLast(ds.getHost(), "/");
+
+        //File settingsXml = new File(this.m2Home, "settings.xml");
+
+//        args.addAll(
+//                Arrays.asList(
+//                        //"-X",
+//                        "-DskipTests",
+//                        "-Downer=" + problem.getName() + "/" + generatorId,
+//                        "-DsolrCore=" + core,
+//                        "de.uni-mannheim.swt.lasso:indexer-maven-plugin:1.0.0-SNAPSHOT:index"
+//                ));
         args.addAll(
                 Arrays.asList(
-                        //"-X",
+                        "-X",
+//                        "-s", settingsXml.getName(),
+//                        "-gs", settingsXml.getName(),
                         "-DskipTests",
-                        "-Downer=" + problem.getName() + "/" + generatorId,
-                        "-DsolrCore=" + solrCore,
+                        "-Dindex.url=" + url,
+                        "-Dindex.user=" + ds.getUser(),
+                        "-Dindex.pass=" + ds.getPass(),
+                        "-Dindex.core=" + core,
+                        "-Dindex.owner=" + problem.getName() + "/" + generatorId,
+                        //"-Dindex.metadata=" + metadata,
                         "de.uni-mannheim.swt.lasso:indexer-maven-plugin:1.0.0-SNAPSHOT:index"
                 ));
 
@@ -202,35 +231,19 @@ public class Publisher {
     protected ExecutionEnvironmentManager executionEnvironmentManager() {
         // populate system properties for docker
         if(System.getProperty("thirdparty.docker.uid") == null) {
-            System.setProperty("thirdparty.docker.uid", "1001");
+            System.setProperty("thirdparty.docker.uid", "1000");
         }
 
         if(System.getProperty("thirdparty.docker.gid") == null) {
-            System.setProperty("thirdparty.docker.gid", "1001");
+            System.setProperty("thirdparty.docker.gid", "1000");
         }
 
-        String proxyRegistry = "swt100.informatik.uni-mannheim.de:8443";
+        String proxyRegistry = "docker.io";
         Integer pullTimeout = 600;
 
         ExecutionEnvironmentManager executionEnvironmentManager = new ExecutionEnvironmentManager(proxyRegistry, pullTimeout, mavenDefaultImage);
 
         return executionEnvironmentManager;
-    }
-
-    public String getRepoUrl() {
-        return repoUrl;
-    }
-
-    public void setRepoUrl(String repoUrl) {
-        this.repoUrl = repoUrl;
-    }
-
-    public String getRepoId() {
-        return repoId;
-    }
-
-    public void setRepoId(String repoId) {
-        this.repoId = repoId;
     }
 
     public boolean isDeploy() {
@@ -239,14 +252,6 @@ public class Publisher {
 
     public void setDeploy(boolean deploy) {
         this.deploy = deploy;
-    }
-
-    public String getSolrCore() {
-        return solrCore;
-    }
-
-    public void setSolrCore(String solrCore) {
-        this.solrCore = solrCore;
     }
 
     public String getMavenDefaultImage() {

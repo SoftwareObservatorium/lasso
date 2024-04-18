@@ -22,7 +22,7 @@ package de.uni_mannheim.swt.lasso.llm.util;
 import de.uni_mannheim.swt.lasso.arena.classloader.Container;
 import de.uni_mannheim.swt.lasso.llm.problem.MultiPLE;
 import de.uni_mannheim.swt.lasso.llm.test.Value;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -35,6 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * @author Marcus Kessel
  */
 public class EvalAndSerializeTest {
+
 
     @Test
     public void test_string() throws ClassNotFoundException {

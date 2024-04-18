@@ -30,6 +30,7 @@ import de.uni_mannheim.swt.lasso.datasource.maven.lsl.MavenQuery;
 import de.uni_mannheim.swt.lasso.engine.LSLExecutionContext;
 import de.uni_mannheim.swt.lasso.engine.action.DefaultAction;
 import de.uni_mannheim.swt.lasso.engine.action.annotations.*;
+import de.uni_mannheim.swt.lasso.engine.action.utils.SequenceUtils;
 import de.uni_mannheim.swt.lasso.engine.data.ReportKey;
 import de.uni_mannheim.swt.lasso.engine.data.ReportOperations;
 import de.uni_mannheim.swt.lasso.engine.workspace.Workspace;
@@ -38,8 +39,8 @@ import de.uni_mannheim.swt.lasso.index.repo.SolrCandidateDocument;
 import de.uni_mannheim.swt.lasso.lsl.spec.AbstractionSpec;
 import de.uni_mannheim.swt.lasso.lsl.spec.LassoSpec;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.builder.ToStringBuilder;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tech.tablesaw.api.Table;
@@ -74,9 +75,6 @@ public class Select extends DefaultAction {
 
     @LassoInput(desc = "List of Data Sources", optional = true)
     public List<String> dataSources;
-
-    @LassoInput(desc = "List of Method Implementations", optional = true)
-    public List<String> implementations;
 
     @LassoInput(desc = "Reuse from past study (Select)", optional = true)
     public String reuseExecutionId;
@@ -139,21 +137,35 @@ public class Select extends DefaultAction {
                 }
 
                 Table table = Table.read().csv(csvFile);
-                implementations = new ArrayList<>(table.select("IMPLEMENTATION").stream()
+                List<String> implementations = new ArrayList<>(table.select("IMPLEMENTATION").stream()
                         .map(row -> row.getString(0))
                         .collect(Collectors.toSet()));
 
-                List<System> implementationList = retrieveImplementations(context, dataSource);
+                List<System> implementationList = retrieveImplementations(context, dataSource, implementations);
 
                 abstraction.getImplementations().addAll(implementationList);
-            } else if(CollectionUtils.isNotEmpty(implementations)) {
+
+                // set specification
+                if(StringUtils.isNotBlank(abstractionSpec.getLql())) {
+                    Specification spec = SequenceUtils.parseSpecificationFromLQL(abstractionSpec.getLql());
+                    abstraction.setSpecification(spec);
+                }
+            } else if(CollectionUtils.isNotEmpty(abstractionSpec.getImplementationIds())) {
+                List<String> ids = abstractionSpec.getImplementationIds();
+
                 if(LOG.isInfoEnabled()) {
-                    LOG.info("Using implementation list '{}'", String.join(",", implementations));
+                    LOG.info("Using implementation list '{}'", String.join(",", ids));
                 }
 
-                List<System> implementationList = retrieveImplementations(context, dataSource);
+                List<System> implementationList = retrieveImplementations(context, dataSource, ids);
 
                 abstraction.getImplementations().addAll(implementationList);
+
+                // set specification
+                if(StringUtils.isNotBlank(abstractionSpec.getLql())) {
+                    Specification spec = SequenceUtils.parseSpecificationFromLQL(abstractionSpec.getLql());
+                    abstraction.setSpecification(spec);
+                }
             } else {
                 // get query model
                 LassoSpec queryModel = (LassoSpec) dataSource.createQueryModelForLSL();
@@ -216,7 +228,7 @@ public class Select extends DefaultAction {
         return abstraction;
     }
 
-    private List<System> retrieveImplementations(LSLExecutionContext context, DataSource dataSource) {
+    private List<System> retrieveImplementations(LSLExecutionContext context, DataSource dataSource, List<String> implementations) {
         // do in parallel
         ForkJoinPool customThreadPool = new ForkJoinPool(4);
 

@@ -24,7 +24,6 @@ LASSO_WORK_PATH=$(pwd)/lasso-work/
 docker run -it \
   --env DIND_SUPPORT_LIBS=$LASSO_WORK_PATH \
   --network="host" \
-  -p 10222:10222 \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v $LASSO_WORK_PATH:/opt/lasso/work/ \
   lasso-service-embedded/latest
@@ -35,7 +34,6 @@ Here is a short explanation of each argument
 ```
 --env DIND_SUPPORT_LIBS=$LASSO_WORK_PATH # the host path is read by LASSO to detect if it is running in DIND
 --network="host" # host network is required to talk to Solr and Nexus OSS
--p 10222:10222 # exposes LASSO's webservice to localhost:10222
 -v /var/run/docker.sock:/var/run/docker.sock # required for DIND
 -v $LASSO_WORK_PATH:/opt/lasso/work/ # mounts the host work dir in which LASSO stores executions
 lasso-service-embedded/latest # the image we have created in the first step

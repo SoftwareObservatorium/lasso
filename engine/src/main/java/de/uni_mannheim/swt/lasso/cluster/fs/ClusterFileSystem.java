@@ -96,6 +96,10 @@ public class ClusterFileSystem implements LassoFileSystem {
                 lassoFile.setPath(path);
                 lassoFile.setBytes(toByteArray());
 
+                if(LOG.isDebugEnabled()) {
+                    LOG.debug("Putting {} bytes for {}", lassoFile.getBytes().length, path);
+                }
+
                 cache.put(path, lassoFile);
             }
         };

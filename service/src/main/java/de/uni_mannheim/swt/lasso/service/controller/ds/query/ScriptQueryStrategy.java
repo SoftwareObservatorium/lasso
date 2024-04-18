@@ -117,6 +117,7 @@ public class ScriptQueryStrategy extends QueryStrategy {
             LOG.warn("Ranking failed", e);
         }
 
+        // TODO make either parallel or batch retrieval
         LinkedHashMap<String, CodeUnit> implementations = systemsTable.stream().map(row -> {
             try {
                 String id = row.getString(0);

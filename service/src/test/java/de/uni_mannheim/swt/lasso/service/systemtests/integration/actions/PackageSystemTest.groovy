@@ -51,34 +51,39 @@ class PackageSystemTest extends AbstractGroovySystemTest {
     void test_package() throws IOException, DataSourceNotFoundException {
         @Language("Groovy")
         String content = '''
-        dataSource 'dummy' // define data source to use
+        dataSource 'lasso_quickstart' // define data source to use
         /** Define a new study */
-        study(name: 'Select') {
-            /** dummy data source */
-            action(name: 'select', type: 'Select') {
-                abstraction('Stack') {
-                    source = """package my.pkg;
-                                class Stack {}
-                             """
-                    className = "Stack"
-                    packageName = "my.pkg"
-                }
-            }
-            
+        study(name: 'Select') {            
             /** defines profile (compiler etc.) */
-            profile('java11Profile') {
+            profile('java17Profile') {
                 scope('class') { type = 'class' } // measurement scope
                 environment('java11') { // execution environment
-                    image = 'maven:3.6.3-openjdk-11' // (docker) image template
+                    image = 'maven:3.6.3-openjdk-17' // (docker) image template
                 }
             }
             
             /** Package (compile) source code */
             action(name: 'package', type: 'Package') {
-                dependsOn 'select'
-                includeAbstractions 'Stack'
+                specification = "Problem { greatestCommonDivisor(long,long)->long }"
+                compilationUnits = ["""package my.pkg;
+                                public class Problem {
+                                    public static long greatestCommonDivisor(long n1, long n2) {
+                                        long gcd = 1;
+                                        for (long i = 1; i <= n1 && i <= n2; i++) {
+                                            if (n1 % i == 0 && n2 % i == 0) {
+                                                gcd = i;
+                                            }
+                                        }
+                                        return gcd;
+                                    }
+                                }"""]
+                deploy = false
                 
-                profile('java11Profile')
+                abstraction('greatestCommonDivisor') {
+                    
+                }
+                
+                profile('java17Profile')
             }
         }
         '''
@@ -119,10 +124,10 @@ class PackageSystemTest extends AbstractGroovySystemTest {
             }
             
             /** defines profile (compiler etc.) */
-            profile('java11Profile') {
+            profile('java17Profile') {
                 scope('class') { type = 'class' } // measurement scope
                 environment('java11') { // execution environment
-                    image = 'maven:3.6.3-openjdk-11' // (docker) image template
+                    image = 'maven:3.6.3-openjdk-17' // (docker) image template
                 }
             }
             
@@ -133,7 +138,7 @@ class PackageSystemTest extends AbstractGroovySystemTest {
                 dependsOn 'select'
                 includeAbstractions 'Stack'
                 
-                profile('java11Profile')
+                profile('java17Profile')
             }
         }
         '''

@@ -70,6 +70,10 @@ public class InterfaceListener extends LQLBaseListener {
         if(ctx.inputs() != null) {
             //method.setInputs(Arrays.asList(StringUtils.split(ctx.inputs().getText(), ",")));
             List<String> inputs = new ArrayList<>(ctx.inputs().parameters().getChildCount());
+
+            // FIXME add type parameters
+            //ctx.inputs().parameters().typeparam().get(0).typeparam();
+
             for(int i = 0; i < ctx.inputs().parameters().getChildCount(); i++) {
                 if(!ctx.inputs().parameters().getChild(i).getText().equals(",")) {
                     inputs.add(ctx.inputs().parameters().getChild(i).getText());

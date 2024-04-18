@@ -17,9 +17,11 @@
          <url>${repoUrl}</url>
          <snapshots>
              <enabled>true</enabled>
+             <updatePolicy>daily</updatePolicy>
         </snapshots>
         <releases>
             <enabled>true</enabled>
+            <updatePolicy>never</updatePolicy>
         </releases>
       </repository>
    </repositories>

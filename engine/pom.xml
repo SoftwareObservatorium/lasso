@@ -292,6 +292,16 @@
             <artifactId>gai</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>testing-harness</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>clazz</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <!-- LOGGING DEPENDENCIES -->
         <dependency>

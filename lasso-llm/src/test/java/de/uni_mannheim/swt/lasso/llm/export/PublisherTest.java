@@ -19,7 +19,9 @@
  */
 package de.uni_mannheim.swt.lasso.llm.export;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.uni_mannheim.swt.lasso.arena.classloader.Container;
+import de.uni_mannheim.swt.lasso.corpus.ExecutableCorpus;
 import de.uni_mannheim.swt.lasso.llm.eval.EvalReader;
 import de.uni_mannheim.swt.lasso.llm.eval.ExecutedSolution;
 import de.uni_mannheim.swt.lasso.llm.eval.Results;
@@ -28,11 +30,11 @@ import de.uni_mannheim.swt.lasso.llm.problem.Problem;
 
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
+//import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -45,13 +47,16 @@ public class PublisherTest {
 
     @Test
     public void test_single_k() throws IOException {
+        File file = new File("../doc/lasso_config/corpus.json");
+        ObjectMapper json = new ObjectMapper();
+        ExecutableCorpus executableCorpus = json.readValue(file, ExecutableCorpus.class);
+        executableCorpus.getArtifactRepository().setPass("0a37a6b9-a79b-4b06-a928-adfec6bc0ddc");
+
         String problemId = "HumanEval_23_strlen";
         String generatorId = "humaneval-java-davinci-0.2-reworded";
         int k = 0;
 
-        String solrCore = "multiple-benchmark-23";
-        String nexusRepo = "http://lassohp12.informatik.uni-mannheim.de:8081/repository/multiple-benchmarks/";
-        String mavenDefaultImage = "maven:3.6.3-openjdk-11";
+        String mavenDefaultImage = "maven:3.6.3-openjdk-17";
 
         MultiPLE multiple = new MultiPLE();
         Container container = multiple.createContainer();
@@ -70,7 +75,7 @@ public class PublisherTest {
         File baseDir = new File("/tmp/llm_" + System.currentTimeMillis());
         baseDir.mkdirs();
         //
-        MavenExporter mavenExport = new MavenExporter(baseDir, Collections.emptyMap());
+        MavenExporter mavenExport = new MavenExporter(baseDir, executableCorpus);
 
         ExecutedSolution solution = results.getResults().get(k);
 
@@ -103,10 +108,8 @@ public class PublisherTest {
         // cut
         File m2Home = new File("/tmp/lasso_m2home");
         m2Home.mkdirs(); // must be created beforehand
-        Publisher publisher = new Publisher(m2Home);
+        Publisher publisher = new Publisher(executableCorpus, m2Home);
         publisher.setDeploy(true); // do deploy
-        publisher.setSolrCore(solrCore);
-        publisher.setRepoUrl(nexusRepo);
         publisher.setMavenDefaultImage(mavenDefaultImage);
 
         // do package (optionally deploy)

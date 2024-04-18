@@ -19,6 +19,8 @@
  */
 package de.uni_mannheim.swt.lasso.core.model;
 
+import org.apache.commons.collections4.CollectionUtils;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -90,5 +92,65 @@ public class MethodSignature {
                 ", inputs=" + inputs +
                 ", outputs=" + outputs +
                 '}';
+    }
+
+    public String toLQL() {
+        StringBuilder sb = new StringBuilder();
+//        sb.append(className);
+//        sb.append("(");
+
+        sb.append(getName());
+        sb.append("(");
+        sb.append(String.join(",", toParameterString()));
+        sb.append(")->");
+        try {
+            sb.append(String.join(",", toReturnString()));
+        } catch (Throwable e) {
+            java.lang.System.err.println("invalid LQL: " + sb.toString());
+
+            e.printStackTrace();
+
+            throw e;
+        }
+
+        return sb.toString();
+    }
+
+    public String toJava() {
+        StringBuilder sb = new StringBuilder();
+//        sb.append(className);
+//        sb.append("(");
+        try {
+            sb.append(String.join(",", toReturnString()));
+        } catch (Throwable e) {
+            java.lang.System.err.println("invalid Java: " + sb.toString());
+
+            e.printStackTrace();
+
+            throw e;
+        }
+        sb.append(" ");
+        sb.append(getName());
+        sb.append("(");
+        sb.append(String.join(",", toParameterString()));
+        sb.append(")");
+
+        return sb.toString();
+    }
+
+    public String[] toParameterString() {
+        if(CollectionUtils.isEmpty(inputs)) {
+            return new String[]{};
+        }
+
+        return inputs.toArray(String[]::new);
+    }
+
+    public String[] toReturnString() {
+        if(CollectionUtils.isEmpty(outputs)) {
+            return new String[]{};
+        }
+
+        return outputs.toArray(String[]::new);
     }
 }

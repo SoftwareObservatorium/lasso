@@ -19,7 +19,9 @@
  */
 package de.uni_mannheim.swt.lasso.llm.export;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.uni_mannheim.swt.lasso.arena.classloader.Container;
+import de.uni_mannheim.swt.lasso.corpus.ExecutableCorpus;
 import de.uni_mannheim.swt.lasso.llm.eval.EvalReader;
 import de.uni_mannheim.swt.lasso.llm.eval.ExecutedSolution;
 import de.uni_mannheim.swt.lasso.llm.eval.Results;
@@ -50,6 +52,11 @@ public class AppArtifactExporter {
     public static void main(String[] args) throws IOException, InterruptedException, ExecutionException {
         LOG.info("Args passed '{}'", Arrays.toString(args));
 
+        File file = new File("../doc/lasso_config/corpus.json");
+        ObjectMapper json = new ObjectMapper();
+        ExecutableCorpus executableCorpus = json.readValue(file, ExecutableCorpus.class);
+        executableCorpus.getArtifactRepository().setPass("0a37a6b9-a79b-4b06-a928-adfec6bc0ddc");
+
         String problems;
         List<String> generators;
         if(args[3].equals("humaneval")) {
@@ -76,8 +83,6 @@ public class AppArtifactExporter {
 
         int threads = Integer.parseInt(args[4]);
 
-        String solrCore = "multiple-benchmark-23";
-        String nexusRepo = "http://lassohp12.informatik.uni-mannheim.de:8081/repository/multiple-benchmarks/";
         String mavenDefaultImage = "maven:3.6.3-openjdk-11";
 
         boolean deploy = true;
@@ -118,7 +123,7 @@ public class AppArtifactExporter {
                             projectRoot.mkdirs();
 
                             //
-                            MavenExporter mavenExport = new MavenExporter(projectRoot, Collections.emptyMap());
+                            MavenExporter mavenExport = new MavenExporter(projectRoot, executableCorpus);
 
                             int k = 0;
                             for(ExecutedSolution solution : results.getResults()) {
@@ -152,10 +157,8 @@ public class AppArtifactExporter {
                             mavenExport.createAggregatedPom(projectRoot, problem, generatorId);
 
 
-                            Publisher publisher = new Publisher(m2Home);
+                            Publisher publisher = new Publisher(executableCorpus, m2Home);
                             publisher.setDeploy(deploy);
-                            publisher.setSolrCore(solrCore);
-                            publisher.setRepoUrl(nexusRepo);
                             publisher.setMavenDefaultImage(mavenDefaultImage);
 
                             // do package (optionally deploy)
@@ -172,70 +175,6 @@ public class AppArtifactExporter {
                     })).get();
 
             customThreadPool.shutdown();
-
-//            for(Problem problem : problemList) {
-//                EvalReader evalReader = new EvalReader();
-//                Results results = evalReader.getResults(
-//                        new File(rawDataPath),
-//                        generatorId,
-//                        problem.getName());
-//
-//                LOG.info("Processing {}/{}/k = {}", generatorId, problem.getName(), results.getResults().size());
-//
-//                File projectRoot = new File(new File(new File(toDir, problems), generatorId), problem.getName());
-//                projectRoot.mkdirs();
-//
-//                //
-//                MavenExporter mavenExport = new MavenExporter(projectRoot, Collections.emptyMap());
-//
-//                int k = 0;
-//                for(ExecutedSolution solution : results.getResults()) {
-//                    Map<String, String> meta = new HashMap<>();
-//                    meta.put("benchmark", problems);
-//                    meta.put("generator", generatorId);
-//                    meta.put("problem", problem.getName());
-//                    meta.put("k", String.valueOf(k));
-//
-//                    // metadata for index
-//                    String metadataStr = "";
-//                    if(MapUtils.isNotEmpty(meta)) {
-//                        metadataStr = meta.entrySet().stream()
-//                                .map(e -> e.getKey() + "," + e.getValue())
-//                                .collect(Collectors.joining("|"));
-//                    }
-//
-//                    LOG.debug("meta data string '{}'", metadataStr);
-//
-//                    Map<String, Object> metaData = new HashMap<>();
-//                    metaData.put("generator", generatorId);
-//                    metaData.put("k", k++);
-//                    if(StringUtils.isNotBlank(metadataStr)) {
-//                        metaData.put("metaData", metadataStr);
-//                    }
-//
-//                    mavenExport.export(problem, solution, metaData);
-//                }
-//
-//                // create aggregated
-//                mavenExport.createAggregatedPom(projectRoot, problem, generatorId);
-//
-//
-//                Publisher publisher = new Publisher(m2Home);
-//                publisher.setDeploy(deploy);
-//                publisher.setSolrCore(solrCore);
-//                publisher.setRepoUrl(nexusRepo);
-//                publisher.setMavenDefaultImage(mavenDefaultImage);
-//
-//                // do package (optionally deploy)
-//                publisher.doPackage(projectRoot, problem, generatorId);
-//
-//                // do index
-//                if(index) {
-//                    publisher.doAnalyzeAndStore(projectRoot, problem, generatorId);
-//                }
-//
-//                //Thread.sleep(100 * 1000L);
-//            }
         }
     }
 }

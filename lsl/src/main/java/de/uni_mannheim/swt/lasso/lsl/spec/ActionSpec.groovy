@@ -22,6 +22,7 @@ package de.uni_mannheim.swt.lasso.lsl.spec
 import de.uni_mannheim.swt.lasso.core.model.Abstraction
 import de.uni_mannheim.swt.lasso.core.model.ActionConfiguration
 import de.uni_mannheim.swt.lasso.core.model.Behaviour
+import de.uni_mannheim.swt.lasso.core.model.Specification
 import de.uni_mannheim.swt.lasso.core.model.System
 import de.uni_mannheim.swt.lasso.core.model.Sequence
 import de.uni_mannheim.swt.lasso.core.srm.SRM
@@ -150,6 +151,41 @@ class ActionSpec extends LassoSpec {
         //abstractionContainerSpec.abstractions.put(abstractionSpec.name, abstractionSpec)
     }
 
+    void abstraction(String name, String lql, Closure<AbstractionSpec> closure) {
+        // apply closure to action
+        Map<String, ?> aMap = [:]
+        aMap.put("name", name)
+
+        AbstractionSpec abstractionSpec = new AbstractionSpec(map: aMap, closure: closure)
+        if(lql) {
+            abstractionSpec.lql = lql
+        }
+
+        lasso.registerAbstraction(abstractionSpec)
+        abstractionSpecs << abstractionSpec
+        // set to scope
+        //abstractionContainerSpec.abstractions.put(abstractionSpec.name, abstractionSpec)
+    }
+
+    void abstraction(String name, List<String> implementationIds, String lql, Closure<AbstractionSpec> closure) {
+        // apply closure to action
+        Map<String, ?> aMap = [:]
+        aMap.put("name", name)
+
+        AbstractionSpec abstractionSpec = new AbstractionSpec(map: aMap, closure: closure)
+        if(lql) {
+            abstractionSpec.lql = lql
+        }
+        if(implementationIds) {
+            abstractionSpec.implementationIds = implementationIds
+        }
+
+        lasso.registerAbstraction(abstractionSpec)
+        abstractionSpecs << abstractionSpec
+        // set to scope
+        //abstractionContainerSpec.abstractions.put(abstractionSpec.name, abstractionSpec)
+    }
+
     void abstraction(System implementation, Closure<AbstractionSpec> closure) {
         abstraction(implementation.id, closure)
     }
@@ -201,6 +237,34 @@ class ActionSpec extends LassoSpec {
             all.addAll(implementations)
         }
         merged.implementations = all
+
+        abstractionSpec.abstraction = merged
+
+        lasso.registerAbstraction(abstractionSpec)
+        abstractionSpecs << abstractionSpec
+        // set to scope
+        //abstractionContainerSpec.abstractions.put(abstractionSpec.name, abstractionSpec)
+
+        return abstractionSpec
+    }
+
+    AbstractionSpec abstraction(List<System> implementations, String name, Specification specification) {
+        // apply closure to action
+        Map<String, ?> aMap = [:]
+        aMap.put("name", name)
+
+        AbstractionSpec abstractionSpec = new AbstractionSpec(map: aMap, closure: null)
+
+        Abstraction merged = new Abstraction()
+        merged.setName(name)
+        List all = []
+        if(implementations) {
+            all.addAll(implementations)
+        }
+        merged.implementations = all
+
+        //
+        merged.specification = specification
 
         abstractionSpec.abstraction = merged
 

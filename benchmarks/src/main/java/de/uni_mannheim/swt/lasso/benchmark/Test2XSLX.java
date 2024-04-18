@@ -19,6 +19,9 @@
  */
 package de.uni_mannheim.swt.lasso.benchmark;
 
+import com.google.gson.Gson;
+import de.uni_mannheim.swt.lasso.core.model.Specification;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFCell;
@@ -57,6 +60,68 @@ public class Test2XSLX {
      * Read Sequence to workbook with single sheet
      *
      * @param sequence
+     * @param specification
+     * @param name
+     * @throws Exception
+     * @return
+     */
+    public XSSFSheet createSheet(Sequence sequence, Specification specification, String name) throws Exception {
+        XSSFWorkbook workbook = new XSSFWorkbook();
+
+        XSSFSheet sheet = workbook.createSheet(name);
+
+        List<Statement> statements = sequence.getStatements();
+
+//        // FIXME add blank cells
+//        OptionalInt rowLength = getRowLength(statements);
+
+        // first do create statement
+        XSSFRow first = sheet.createRow(0);
+        first.createCell(1).setCellValue("CREATE");
+        first.createCell(2).setCellValue(specification.getInterfaceSpecification().getName());
+
+        Gson gson = new Gson();
+        for(int r = 0; r < statements.size(); r++) {
+            XSSFRow myRow = sheet.createRow(r + 1);
+
+            Statement row = statements.get(r);
+
+            // operation
+            String operation = row.getOperation();
+            XSSFCell operationCell = myRow.createCell(1);
+            operationCell.setCellValue(operation);
+
+            //boolean isCreate = StringUtils.equalsIgnoreCase(operation, "CREATE");
+
+            // result
+            XSSFCell resultCell = myRow.createCell(0);
+            if(CollectionUtils.isNotEmpty(row.getExpectedOutputs())) {
+                Value oracle = row.getExpectedOutputs().get(0); // FIXME single output
+                resultCell.setCellValue(oracle.getCode());
+            }
+
+            // receiver instance
+            myRow.createCell(2).setCellValue("A1");
+
+            if(row.getInputs().size() > 0) {
+                // inputs
+                for (int col = 3; col < row.getInputs().size() + 3; col++) {
+                    Value value = row.getInputs().get(col - 3);
+
+                    XSSFCell inputCell = myRow.createCell(col);
+                    // sets
+                    inputCell.setCellValue(gson.toJson(value.getValue()));
+                }
+            }
+        }
+
+        return sheet;
+    }
+
+    /**
+     * Read Sequence to workbook with single sheet
+     *
+     * @param sequence
      * @param name
      * @throws Exception
      * @return
@@ -89,10 +154,11 @@ public class Test2XSLX {
             //boolean isCreate = StringUtils.equalsIgnoreCase(operation, "CREATE");
 
             // result
-            Value oracle = row.getExpectedOutputs().get(0); // FIXME single output
-
             XSSFCell resultCell = myRow.createCell(0);
-            resultCell.setCellValue(oracle.getCode());
+            if(CollectionUtils.isNotEmpty(row.getExpectedOutputs())) {
+                Value oracle = row.getExpectedOutputs().get(0); // FIXME single output
+                resultCell.setCellValue(oracle.getCode());
+            }
 
             if(row.getInputs().size() > 0) {
                 // inputs

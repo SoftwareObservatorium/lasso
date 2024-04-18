@@ -42,7 +42,110 @@ class GenerativeAISystemTest extends AbstractGroovySystemTest {
 
     @Autowired
     @Qualifier("testLassoEngine")
-    LassoTestEngine lassoEngine;
+    LassoTestEngine lassoEngine
+
+    /**
+     * <a href="https://github.com/ggerganov/llama.cpp/tree/master/examples/server">LLaMA.cpp HTTP Server</a>
+     *
+     * @throws IOException
+     * @throws DataSourceNotFoundException
+     */
+    @Test
+    void test_llamacpp_Base64() throws IOException, DataSourceNotFoundException {
+        @Language("Groovy")
+        String content = '''
+        dataSource 'lasso_quickstart'
+
+        /** Define a new study */
+        study(name: 'GenerativeAIDemo-Base64WithoutPadding') {
+        
+            /** defines profile (compiler etc.) */
+            profile('java17Profile') {
+                scope('class') { type = 'class' } // measurement scope
+                environment('java17') { // execution environment
+                    image = 'maven:3.6.3-openjdk-17' // (docker) image template
+                }
+            }
+            
+            /** llama.cpp webservice */
+            action(name: 'gai', type: 'GenerativeAI') {
+                apiUrl = "http://dybbuk.informatik.uni-mannheim.de:8080/v1/chat/completions"
+                apiKey = "swt4321"
+                deploy = true // should be set to true
+                dataSource = 'lasso_quickstart'
+                
+                abstraction('Base64Encode') {           
+                    // NLP prompt         
+                    prompt 'write a java class with a method that encodes a string to base64 without padding and returns a byte array'
+                    
+                    model = "deepseek-coder-33b-instruct.Q5_K_M.gguf"
+                    role = "user"
+                    temperature = 0.7
+                }
+                
+                profile('java17Profile') // for building purposes
+            }
+            
+            // filter action
+            action(name: 'filter', type: 'ArenaExecute') { // filter by tests
+                specification = 'Base64{encode(java.lang.String)->byte[]}'
+                sequences = [
+                        'testEncode': sheet(base64:'Base64', p2:"user:pass") {
+                            row  '',    'create', '?base64'
+                            row 'dXNlcjpwYXNz'.getBytes(),  'encode',   'A1',     '?p2'
+                        },
+                        'testEncode_padding': sheet(base64:'Base64', p2:"Hello World") {
+                            row  '',    'create', '?base64'
+                            row 'SGVsbG8gV29ybGQ'.getBytes(),  'encode',   'A1',     '?p2'
+                        }
+                ]
+                maxAdaptations = 1 // how many adaptations to try
+                features = ["cc"] // enable code coverage
+        
+                dependsOn 'gai'
+                includeAbstractions '*'
+                profile('java17Profile')
+        
+                whenAbstractionsReady() {
+                    def base64 = abstractions['Base64Encode']
+                    def base64Srm = srm(abstraction: base64)
+                    // define oracle based on expected responses in sequences
+                    def expectedBehaviour = toOracle(srm(abstraction: base64).sequences)
+                    // returns a filtered SRM
+                    def matchesSrm = srm(abstraction: base64)
+                            .systems // select all systems
+                            .equalTo(expectedBehaviour) // functionally equivalent
+        
+                    // iterate over sub-SRM
+                    matchesSrm.systems.each { s ->
+                        log("Matched class ${s.id}, ${s.packageName}.${s.name}")
+                    }
+                    // continue pipeline with matched systems only
+                    base64.systems = matchesSrm.systems
+                }
+            }
+        }
+        '''
+
+        //
+        LSLScript scriptUnderTest = createScript(content)
+
+        // DO EXECUTE
+        LSLExecutionResult lslExecutionResult = lassoEngine.execute(scriptUnderTest);
+        LSLExecutionContext lslExecutionContext = lassoEngine.getLastContext();
+
+        // assertions
+        //verifyAbstraction(lslExecutionContext, 'select', 'Stack', 1)
+
+        // TODO verify SRM
+        // put
+        ClusterEngine clusterEngine = lslExecutionContext.getConfiguration().getService(ClusterEngine.class);
+
+        // also make sure that the SRM is initialized (otherwise the client has no way to put cells)
+        ClusterSRMRepository srmRepository = clusterEngine.getClusterSRMRepository();
+        Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
+        System.out.println(table.printAll());
+    }
 
     /**
      *
