@@ -505,7 +505,7 @@ public class LassoComputeEngine extends LassoEngine {
                 //ActionConfiguration cfg = actionConfiguration.fromAbstraction(abstractionSpec.getAbstraction());
 
                 // add step reports
-                abstractionSpec.getAbstraction().getImplementations().forEach(s -> java.lang.System.out.println(s.getId()));
+                //abstractionSpec.getAbstraction().getImplementations().forEach(s -> java.lang.System.out.println(s.getId()));
                 Map<ReportKey, StepReport> stepReports = abstractionSpec.getAbstraction().getImplementations().stream()
                         .collect(Collectors.toMap(k -> ReportKey.of(actionSpec.getName(), abstractionName, k),
                                 v -> new StepReport()));

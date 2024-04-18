@@ -36,9 +36,6 @@ public class Gpt4AllClientIntegrationTest {
     // 1. enable REST API in gpt4all GUI https://docs.gpt4all.io/gpt4all_chat.html#server-mode
     // 2. mitmproxy --set block_global=false --listen-host 134.155.89.225 --listen-port 5891 --mode reverse:http://localhost:4891
 
-    // OpenAI
-    // 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
-
     @Disabled
     @Test
     public void test_starcoderbase_7b() {

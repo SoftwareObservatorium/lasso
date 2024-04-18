@@ -19,6 +19,15 @@
  */
 package de.uni_mannheim.swt.lasso.engine;
 
+import de.uni_mannheim.swt.lasso.core.datasource.DataSource;
+import de.uni_mannheim.swt.lasso.core.model.CodeUnit;
+import de.uni_mannheim.swt.lasso.core.model.MavenProject;
+import de.uni_mannheim.swt.lasso.corpus.ArtifactRepository;
+import de.uni_mannheim.swt.lasso.corpus.ExecutableCorpus;
+import de.uni_mannheim.swt.lasso.engine.action.utils.SequenceUtils;
+import de.uni_mannheim.swt.lasso.engine.workspace.Workspace;
+import de.uni_mannheim.swt.lasso.lql.parser.LQLParseResult;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
@@ -48,5 +57,55 @@ public class Tester {
     public static File getResourceFile(String fileName) {
         return FileUtils.toFile(Tester.class
                 .getResource(fileName));
+    }
+
+    public static LSLExecutionContext ctx(String mavenRepoUrl) {
+        LSLExecutionContext context = new LSLExecutionContext();
+        Workspace workspace = new Workspace();
+        workspace.setLassoRoot(new File("/tmp/lasso_rnd_" + System.currentTimeMillis()));
+        context.setWorkspace(workspace);
+
+        ExecutableCorpus executableCorpus = new ExecutableCorpus();
+        ArtifactRepository artifactRepository = new ArtifactRepository();
+        artifactRepository.setUrl(mavenRepoUrl);
+        executableCorpus.setArtifactRepository(artifactRepository);
+        context.setConfiguration(new LassoConfiguration() {
+            @Override
+            public DataSource getDataSource(String id) {
+                return null;
+            }
+
+            @Override
+            public ExecutableCorpus getExecutableCorpus() {
+                return executableCorpus;
+            }
+
+            @Override
+            public <T> T getProperty(String name, Class<T> tClass) {
+                return null;
+            }
+
+            @Override
+            public <T> T getService(Class<T> type) {
+                return null;
+            }
+        });
+
+        return context;
+    }
+
+    public static de.uni_mannheim.swt.lasso.core.model.System system(String id, String name, String pkg) {
+        CodeUnit codeUnit = new CodeUnit();
+        codeUnit.setId(id);
+        codeUnit.setName(name);
+        codeUnit.setPackagename(pkg);
+        MavenProject mavenProject = new MavenProject(new File("/tmp/project_" + id + "_" + System.currentTimeMillis()), true);
+        de.uni_mannheim.swt.lasso.core.model.System system = new de.uni_mannheim.swt.lasso.core.model.System(codeUnit, mavenProject);
+
+        return system;
+    }
+
+    public static LQLParseResult parse(String lql) {
+        return SequenceUtils.parseLQL(lql);
     }
 }

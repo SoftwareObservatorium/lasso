@@ -95,4 +95,8 @@ public class ArenaProjectManager {
     public Workspace getWorkspace() {
         return workspace;
     }
+
+    public File getRepository() {
+        return this.arenaHome;
+    }
 }

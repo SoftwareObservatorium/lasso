@@ -19,6 +19,9 @@
  */
 package de.uni_mannheim.swt.lasso.benchmark;
 
+import com.google.gson.Gson;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -59,6 +62,27 @@ public class Sequence {
             sb.append(stmt.getInputs().stream().map(Value::getCode).collect(Collectors.joining(", ")));
             sb.append(" -> ");
             sb.append(stmt.getExpectedOutputs().stream().map(Value::getCode).collect(Collectors.joining(",")));
+            sb.append("\n");
+        }
+
+        return sb.toString();
+    }
+
+    public String toSequenceString() {
+        Gson gson = new Gson();
+        StringBuilder sb = new StringBuilder();
+        for(Statement stmt : getStatements()) {
+            sb.append(stmt.getOperation());
+            sb.append("(");
+            sb.append(stmt.getInputs().stream().map(Value::getValue)
+                    .map(gson::toJson)
+                    .collect(Collectors.joining(", ")));
+            sb.append(")");
+            sb.append("->");
+            sb.append(stmt.getExpectedOutputs().stream()
+                    .map(Value::getValue)
+                    .map(gson::toJson)
+                    .collect(Collectors.joining(",")));
             sb.append("\n");
         }
 

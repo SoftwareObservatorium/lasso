@@ -20,8 +20,9 @@
 package de.uni_mannheim.swt.lasso.llm.eval;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
+//import org.junit.jupiter.api.Disabled;
+//import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,7 +33,7 @@ import java.io.IOException;
  */
 public class EvalReaderIntegrationTest {
 
-    @Disabled
+    //@Disabled
     @Test
     public void testResults() throws IOException {
         EvalReader evalReader = new EvalReader();
@@ -47,7 +48,7 @@ public class EvalReaderIntegrationTest {
         System.out.println(results.getResults().size());
     }
 
-    @Disabled
+    //@Disabled
     @Test
     public void testHumanEval_95() throws IOException {
         EvalReader evalReader = new EvalReader();

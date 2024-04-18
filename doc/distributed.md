@@ -28,7 +28,6 @@ LASSO_WORK_PATH=$(pwd)/lasso-work/
 docker run -it \
   --env DIND_SUPPORT_LIBS=$LASSO_WORK_PATH \
   --network="host" \
-  -p 10222:10222 \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v $LASSO_WORK_PATH:/opt/lasso/work/ \
   -e LASSO_MANAGER_NODE_ID='manager' \
@@ -63,7 +62,6 @@ LASSO_WORK_PATH=$(pwd)/lasso-work/
 docker run -it \
   --env DIND_SUPPORT_LIBS=$LASSO_WORK_PATH \
   --network="host" \
-  -p 9988:9988 \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v $LASSO_WORK_PATH:/opt/lasso/work/ \
   -e LASSO_WORKER_NODE_ID='worker1' \

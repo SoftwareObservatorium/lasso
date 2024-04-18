@@ -19,7 +19,9 @@
  */
 package de.uni_mannheim.swt.lasso.llm.export;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.uni_mannheim.swt.lasso.arena.classloader.Container;
+import de.uni_mannheim.swt.lasso.corpus.ExecutableCorpus;
 import de.uni_mannheim.swt.lasso.llm.eval.EvalReader;
 import de.uni_mannheim.swt.lasso.llm.eval.ExecutedSolution;
 import de.uni_mannheim.swt.lasso.llm.eval.Results;
@@ -58,8 +60,11 @@ public class ArtifactExporter {
 //                "humaneval-java-incoder-0.8-reworded"
 //                );
 
-        String solrCore = "multiple-benchmark-23";
-        String nexusRepo = "http://lassohp12.informatik.uni-mannheim.de:8081/repository/multiple-benchmarks/";
+        File file = new File("../doc/lasso_config/corpus.json");
+        ObjectMapper json = new ObjectMapper();
+        ExecutableCorpus executableCorpus = json.readValue(file, ExecutableCorpus.class);
+        executableCorpus.getArtifactRepository().setPass("0a37a6b9-a79b-4b06-a928-adfec6bc0ddc");
+
         String mavenDefaultImage = "maven:3.6.3-openjdk-11";
 
         boolean deploy = true;
@@ -108,7 +113,7 @@ public class ArtifactExporter {
                             projectRoot.mkdirs();
 
                             //
-                            MavenExporter mavenExport = new MavenExporter(projectRoot, Collections.emptyMap());
+                            MavenExporter mavenExport = new MavenExporter(projectRoot, executableCorpus);
 
                             int k = 0;
                             for(ExecutedSolution solution : results.getResults()) {
@@ -142,10 +147,8 @@ public class ArtifactExporter {
                             mavenExport.createAggregatedPom(projectRoot, problem, generatorId);
 
 
-                            Publisher publisher = new Publisher(m2Home);
+                            Publisher publisher = new Publisher(executableCorpus, m2Home);
                             publisher.setDeploy(deploy);
-                            publisher.setSolrCore(solrCore);
-                            publisher.setRepoUrl(nexusRepo);
                             publisher.setMavenDefaultImage(mavenDefaultImage);
 
                             // do package (optionally deploy)

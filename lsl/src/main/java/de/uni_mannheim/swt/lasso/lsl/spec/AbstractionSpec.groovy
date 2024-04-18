@@ -33,6 +33,10 @@ class AbstractionSpec extends LassoSpec {
 
     Abstraction abstraction
 
+    String lql
+
+    List<String> implementationIds
+
     String getName() {
         map.name
     }

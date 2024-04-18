@@ -99,6 +99,8 @@
         <!-- core -->
         <module>core</module>
         <module>lql</module>
+        <module>clazz</module>
+        <module>testing-harness</module>
         <module>datasource-maven</module>
         <module>sandbox</module>
         <module>lsl</module>

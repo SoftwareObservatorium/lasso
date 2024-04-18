@@ -40,7 +40,6 @@ import de.uni_mannheim.swt.lasso.engine.action.annotations.Stable;
 import de.uni_mannheim.swt.lasso.engine.action.maven.MavenAction;
 import de.uni_mannheim.swt.lasso.engine.action.maven.support.MavenProjectManager;
 import de.uni_mannheim.swt.lasso.engine.action.maven.support.Mavenizer;
-import de.uni_mannheim.swt.lasso.engine.action.test.support.adaptation.TestAdaptationManager;
 
 import de.uni_mannheim.swt.lasso.engine.environment.ExecutionEnvironmentManager;
 import de.uni_mannheim.swt.lasso.engine.environment.MavenExecutionEnvironment;
@@ -53,7 +52,6 @@ import de.uni_mannheim.swt.lasso.lsl.spec.AbstractionSpec;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -124,7 +122,7 @@ public class GenerativeAI extends DefaultAction {
         CompletionResponse response = generate(prompt);
 
         if(LOG.isDebugEnabled()) {
-            LOG.debug("Response\n}{}", ToStringBuilder.reflectionToString(response));
+            LOG.debug("Response\n{}", ToStringBuilder.reflectionToString(response));
         }
 
         ContentParser contentParser = new ContentParser();
@@ -207,47 +205,6 @@ public class GenerativeAI extends DefaultAction {
         return null;
     }
 
-    //@Override
-    // FIXME remove
-    protected MavenProjectManager createManager(LSLExecutionContext context, ActionConfiguration actionConfiguration) throws IOException {
-        if(LOG.isInfoEnabled()) {
-            LOG.info("Executing "+  this.getClass());
-        }
-
-        TestAdaptationManager testAdaptationManager = new TestAdaptationManager(context);
-
-        Systems executables = testAdaptationManager.initNew(this,
-                getInstanceId(),
-                actionConfiguration.getAbstraction(),
-                POM_TEMPLATE,
-                (implementation, candidate, valueMap) -> {
-                    // FIXME create dep info for deploy
-                    valueMap.put("version", implementation.getVersion() + "-SNAPSHOT");
-                },
-                executable -> {
-                    // save source
-                    MavenProject targetProject = executable.getProject();
-
-                    LOG.info("Writing source code to target '{}'", targetProject.getBaseDir());
-                    try {
-                        targetProject.writeCompilationUnit(executable.getCode(), false);
-                    } catch (IOException e) {
-                        LOG.warn("Writing source code failed", e);
-
-                        return false;
-                    }
-
-                    return true;
-                });
-
-        Validate.notNull(executables, "Executables are null");
-
-        // set
-        setExecutables(executables);
-
-        return testAdaptationManager;
-    }
-
     private CompletionResponse generate(Prompt prompt) {
         OpenAiClient client = new OpenAiClient(apiUrl,
                 apiKey);
@@ -321,6 +278,10 @@ public class GenerativeAI extends DefaultAction {
     }
 
     CodeUnit parse(String code) {
+        if(LOG.isDebugEnabled()) {
+            LOG.debug("Parsing code\n{}", code);
+        }
+
         JavaParser javaParser = new JavaParser();
         com.github.javaparser.ast.CompilationUnit cu = javaParser.parse(code).getResult().get();
 

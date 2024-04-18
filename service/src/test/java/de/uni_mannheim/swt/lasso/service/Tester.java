@@ -19,6 +19,7 @@
  */
 package de.uni_mannheim.swt.lasso.service;
 
+import de.uni_mannheim.swt.lasso.core.model.CodeUnit;
 import de.uni_mannheim.swt.lasso.service.dto.UserInfo;
 import de.uni_mannheim.swt.lasso.service.persistence.User;
 import org.apache.commons.io.FileUtils;
@@ -61,5 +62,21 @@ public class Tester {
         userInfo.setUserDetails(user);
 
         return userInfo;
+    }
+
+    public static de.uni_mannheim.swt.lasso.core.model.System system(String id, String name, String pkg) {
+        return system(id, name, pkg, null);
+    }
+
+    public static de.uni_mannheim.swt.lasso.core.model.System system(String id, String name, String pkg, String code) {
+        CodeUnit codeUnit = new CodeUnit();
+        codeUnit.setId(id);
+        codeUnit.setName(name);
+        codeUnit.setPackagename(pkg);
+        codeUnit.setContent(code);
+        //MavenProject mavenProject = new MavenProject(new File("/tmp/project_" + id + "_" + System.currentTimeMillis()), true);
+        de.uni_mannheim.swt.lasso.core.model.System system = new de.uni_mannheim.swt.lasso.core.model.System(codeUnit);
+
+        return system;
     }
 }

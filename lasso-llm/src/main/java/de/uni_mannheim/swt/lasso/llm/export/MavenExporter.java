@@ -22,6 +22,8 @@ package de.uni_mannheim.swt.lasso.llm.export;
 import de.uni_mannheim.swt.lasso.core.model.CodeUnit;
 import de.uni_mannheim.swt.lasso.core.model.MavenArtifact;
 import de.uni_mannheim.swt.lasso.core.model.MavenProject;
+import de.uni_mannheim.swt.lasso.corpus.ArtifactRepository;
+import de.uni_mannheim.swt.lasso.corpus.ExecutableCorpus;
 import de.uni_mannheim.swt.lasso.llm.eval.ExecutedSolution;
 import de.uni_mannheim.swt.lasso.llm.problem.Problem;
 
@@ -51,13 +53,17 @@ public class MavenExporter {
 
     private static final String POM_TEMPLATE =
             getPomTemplate("/poms/pom_package.template");
+    private final ExecutableCorpus executableCorpus;
 
     private File baseDir;
     private Map<String, String> mvnOptions;
 
-    public MavenExporter(File baseDir, Map<String, String> mvnOptions) {
+    private String javaVersion = "17";
+
+    public MavenExporter(File baseDir, ExecutableCorpus executableCorpus) {
         this.baseDir = baseDir;
-        this.mvnOptions = mvnOptions;
+        this.executableCorpus = executableCorpus;
+        this.mvnOptions = Collections.emptyMap();
     }
 
     public void export(Problem problem, ExecutedSolution solution, Map<String, Object> metaData) throws IOException {
@@ -68,7 +74,7 @@ public class MavenExporter {
         valueMap.put("groupId", problem.getName());
         valueMap.put("artifactId", generator);
         valueMap.put("version", "" + k);
-        valueMap.put("jdk.version", 11);
+        valueMap.put("javaVersion", javaVersion);
         valueMap.put("metaData", metaData.get("metaData"));
 
         MavenProject project = createMavenProject(POM_TEMPLATE, k, valueMap);
@@ -95,6 +101,11 @@ public class MavenExporter {
 
     public MavenProject createMavenProject(String pomTemplate, int k, Map<String, Object> valueMap) throws IOException {
         MavenProject mavenProject = new MavenProject(new File(baseDir, String.valueOf(k)), true);
+
+        // add artifact repository
+        ArtifactRepository artifactRepository = executableCorpus.getArtifactRepository();
+        valueMap.put("repoId", artifactRepository.getId());
+        valueMap.put("repoUrl", artifactRepository.getUrl());
 
         // create pom source
         String pomSource = createPom(pomTemplate, valueMap);
@@ -156,6 +167,11 @@ public class MavenExporter {
         valueMap.put("artifactId", generator);
         valueMap.put("version", "1.0");
 
+        // add artifact repository
+        ArtifactRepository artifactRepository = executableCorpus.getArtifactRepository();
+        valueMap.put("repoId", artifactRepository.getId());
+        valueMap.put("repoUrl", artifactRepository.getUrl());
+
         String[] dirs = baseDir.list(DirectoryFileFilter.DIRECTORY);
 
         // write all modules to pom
@@ -165,5 +181,13 @@ public class MavenExporter {
 
         // write pom.xml
         FileUtils.write(new File(baseDir, "pom.xml"), pomSource, Charset.forName("UTF-8"));
+    }
+
+    public String getJavaVersion() {
+        return javaVersion;
+    }
+
+    public void setJavaVersion(String javaVersion) {
+        this.javaVersion = javaVersion;
     }
 }

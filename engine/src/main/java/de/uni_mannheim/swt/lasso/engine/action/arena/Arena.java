@@ -40,13 +40,13 @@ import de.uni_mannheim.swt.lasso.engine.action.annotations.Tester;
 import de.uni_mannheim.swt.lasso.engine.action.test.TestUtils;
 import de.uni_mannheim.swt.lasso.engine.action.test.generator.evosuite_class.EvoSuite;
 import de.uni_mannheim.swt.lasso.engine.action.test.support.adaptation.TestAdaptationManager;
+import de.uni_mannheim.swt.lasso.engine.action.utils.SequenceUtils;
 import de.uni_mannheim.swt.lasso.engine.adaptation.SystemAdapterReport;
 import de.uni_mannheim.swt.lasso.engine.dag.ActionNode;
 import de.uni_mannheim.swt.lasso.engine.environment.ArenaExecutionEnvironment;
 import de.uni_mannheim.swt.lasso.engine.environment.ExecutionEnvironmentManager;
 import de.uni_mannheim.swt.lasso.engine.project.ProjectHelper;
 import de.uni_mannheim.swt.lasso.engine.matcher.TestMatcher;
-import de.uni_mannheim.swt.lasso.lsl.spec.SheetSpec;
 import de.uni_mannheim.swt.lasso.sandbox.container.support.ArenaContainer;
 import de.uni_mannheim.swt.lasso.srm.ClusterSRMRepository;
 import org.apache.commons.collections4.CollectionUtils;
@@ -105,10 +105,13 @@ public class Arena extends DefaultAction {
     @LassoInput(desc = "Provide JUnit test classes (currently mutually exclusive to 'sequences')", optional = true)
     public Map<String, String> testClasses;
 
-    @LassoInput(desc = "Use Sequences provided by benchmark", optional = true)
+    @LassoInput(desc = "Use Sequences provided by benchmark with given id", optional = true)
     public String benchmark;
     @LassoInput(desc = "Use Sequences provided by benchmark", optional = true)
     public boolean noTestsFromBenchmark;
+
+    @LassoInput(desc = "Obtain stored Sequences from the following actions", optional = true)
+    public List<String> sequenceActions = Collections.emptyList();
 
     @LassoInput(desc = "Mine tests from given action (abstraction name is assumed to be the same, adds all tests to all systems)", optional = true)
     public String populateTestsFromAction = null;
@@ -562,50 +565,13 @@ public class Arena extends DefaultAction {
             sheets = sequences;
         }
 
+        // write manual sheets
         if (MapUtils.isNotEmpty(sheets)) {
-            Sheet2XSLX sheet2XSLX = new Sheet2XSLX();
+            SequenceUtils.toXlsx(sheets, this, executables);
+        }
 
-            for (String name : sheets.keySet()) {
-                Object sheet = sheets.get(name);
-
-                LOG.debug("sheet '{}' is '{}'", name, sheet);
-
-                if (sheet instanceof String) {
-                    //
-                    throw new UnsupportedOperationException("currently not implemented");
-                }
-
-                if (sheet instanceof SheetSpec) {
-                    SheetSpec spec = (SheetSpec) sheet;
-
-                    LOG.info("Writing sheet '{}' with input parameters '{}'", name, spec.getInputParameters());
-
-                    Sequence sequence = new Sequence();
-                    sequence.setName(name);
-                    sequence.setId(getName() + "_" + name);
-                    sequence.setActionId(getName());
-                    executables.addSequence(sequence);
-
-                    try {
-                        XSSFSheet xssfSheet = sheet2XSLX.createSheet(spec, name);
-
-                        for (System executable : executables.getExecutables()) {
-                            try {
-                                LOG.info("Writing sheet '{}' for '{}'", name, executable.getId());
-
-                                sheet2XSLX.write(executable, xssfSheet, name);
-                            } catch (Throwable e) {
-                                LOG.warn("Failed to write sheet for '{}'", executable.getId());
-                                LOG.warn("stack trace", e);
-                            }
-                        }
-                    } catch (Throwable e) {
-                        LOG.warn("Failed to read sheet '{}'", name);
-                        LOG.warn("stack trace", e);
-                    }
-                }
-            }
-        } else if(benchmark != null) {
+        // benchmark set?
+        if(benchmark != null) {
             LOG.info("Trying to load sequences from benchmark '{}' using abstraction '{}'", benchmark, executables.getAbstractionName());
             Benchmark b = context.getBenchmarkManager().load(benchmark);
 
@@ -651,8 +617,14 @@ public class Arena extends DefaultAction {
             specification = ab.getLql();
 
             LOG.info("Specification set from benchmark '{}' to '{}'", benchmark, specification);
-        } else {
-            LOG.info("No sheets defined for action");
+        }
+
+        // generated sequences available? (TestGen actions)
+        if(CollectionUtils.isNotEmpty(sequenceActions)) {
+            List<de.uni_mannheim.swt.lasso.benchmark.Sequence> collectedSequences =
+                    SequenceUtils.collectSequences(context, executables, sequenceActions);
+            // write sequences locally for each candidate
+            SequenceUtils.writeSequences2Xlsx(this, getExecutables(), collectedSequences, executables.getSpecification());
         }
     }
 

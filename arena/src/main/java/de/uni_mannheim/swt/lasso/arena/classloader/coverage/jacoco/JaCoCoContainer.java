@@ -244,6 +244,14 @@ public class JaCoCoContainer extends Container {
         return new JaCoCoFilters(filters);
     }
 
+    public ExecutionDataStore getExecutionDataStore() {
+        final ExecutionDataStore executionData = new ExecutionDataStore();
+        final SessionInfoStore sessionInfos = new SessionInfoStore();
+        data.collect(executionData, sessionInfos, false);
+
+        return executionData;
+    }
+
     public CoverageBuilder stop() throws IOException {
         // At the end of test execution we collect execution data and shutdown
         // the runtime:
