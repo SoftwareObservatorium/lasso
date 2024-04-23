@@ -111,6 +111,7 @@
         <module>arena</module>
         <module>worker</module>
         <module>webui</module>
+        <module>notebooks</module>
         <module>service</module>
         <module>lasso-llm</module>
     </modules>

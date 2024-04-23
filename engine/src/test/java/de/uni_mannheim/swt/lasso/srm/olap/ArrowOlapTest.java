@@ -21,6 +21,7 @@ package de.uni_mannheim.swt.lasso.srm.olap;
 
 import de.uni_mannheim.swt.lasso.srm.JDBC;
 import de.uni_mannheim.swt.lasso.srm.SRHRepository;
+import joinery.DataFrame;
 import org.apache.arrow.vector.VectorSchemaRoot;
 import org.junit.jupiter.api.Test;
 
@@ -31,6 +32,8 @@ import java.sql.SQLException;
  */
 public class ArrowOlapTest {
 
+    String executionId = "087c4964-87a1-4dd4-a9d3-18f7ffbd11b2";
+
     @Test
     public void testQueryArrow() throws SQLException {
         JDBC jdbc = new JDBC();
@@ -38,7 +41,7 @@ public class ArrowOlapTest {
         ArrowOlap olap = new ArrowOlap();
 
         String sql = "SELECT CONCAT(REGEXP_REPLACE(SHEETID, '_[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}',''),'@',X, ',', Y) as statement, CONCAT(SYSTEMID,'_',ADAPTERID) as SYSTEMID, VALUE FROM srm.cellvalue where executionid = ? and arenaid = ? and type = ? order by sheetid";
-        Object[] args = {"874aad2d-543d-4372-bc6a-22b4a6d3c04e", SRHRepository.ARENA_DEFAULT, SRHRepository.TYPE_VALUE};
+        Object[] args = {executionId, SRHRepository.ARENA_DEFAULT, SRHRepository.TYPE_VALUE};
 
         VectorSchemaRoot root = olap.queryArrow(jdbc.getJdbcTemplate(), sql, args);
     }
@@ -50,7 +53,7 @@ public class ArrowOlapTest {
         ArrowOlap olap = new ArrowOlap();
 
         String sql = "SELECT CONCAT(REGEXP_REPLACE(SHEETID, '_[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}',''),'@',X, ',', Y) as statement, CONCAT(SYSTEMID,'_',ADAPTERID) as SYSTEMID, VALUE FROM srm.cellvalue where executionid = ? and arenaid = ? and type = ?";
-        Object[] args = {"874aad2d-543d-4372-bc6a-22b4a6d3c04e", SRHRepository.ARENA_DEFAULT, SRHRepository.TYPE_VALUE};
+        Object[] args = {executionId, SRHRepository.ARENA_DEFAULT, SRHRepository.TYPE_VALUE};
 
         olap.queryDuckDB(jdbc.getJdbcTemplate(), sql, args);
     }
@@ -62,7 +65,7 @@ public class ArrowOlapTest {
         ArrowOlap olap = new ArrowOlap();
 
         String sql = "SELECT CONCAT(REGEXP_REPLACE(SHEETID, '_[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}',''),'@',X, ',', Y) as statement, CONCAT(SYSTEMID,'_',ADAPTERID) as SYSTEMID, VALUE, TYPE FROM srm.cellvalue where executionid = ? and arenaid = ?";
-        Object[] args = {"874aad2d-543d-4372-bc6a-22b4a6d3c04e", SRHRepository.ARENA_DEFAULT};
+        Object[] args = {executionId, SRHRepository.ARENA_DEFAULT};
 
         olap.queryDuckDBAllTypes(jdbc.getJdbcTemplate(), sql, args);
     }
@@ -74,15 +77,18 @@ public class ArrowOlapTest {
         ArrowOlap olap = new ArrowOlap();
 
         String sql = "SELECT CONCAT(REGEXP_REPLACE(SHEETID, '_[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}',''),'@',X, ',', Y) as statement, CONCAT(SYSTEMID,'_',ADAPTERID) as SYSTEMID, VALUE FROM srm.cellvalue where executionid = ? and arenaid = ? and type = ? order by sheetid";
-        Object[] args = {"874aad2d-543d-4372-bc6a-22b4a6d3c04e", SRHRepository.ARENA_DEFAULT, SRHRepository.TYPE_VALUE};
+        Object[] args = {executionId, SRHRepository.ARENA_DEFAULT, SRHRepository.TYPE_VALUE};
 
-        olap.writeParquet(jdbc.getJdbcTemplate(), sql, args);
+        String path = "/tmp/blub.parquet";
+
+        olap.writeParquet(jdbc.getJdbcTemplate(), sql, path, args);
     }
 
     @Test
     public void testReadDuckDB() throws SQLException {
         ArrowOlap olap = new ArrowOlap();
-
-        olap.read();
+        String path = "/tmp/blub.parquet";
+        DataFrame dataFrame = olap.readParquetAsDataFrame(path);
+        System.out.println(dataFrame);
     }
 }

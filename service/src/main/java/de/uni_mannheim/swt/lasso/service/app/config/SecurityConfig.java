@@ -90,6 +90,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/graphql").hasRole("USER")
                 .antMatchers("/graphiql").permitAll()
 
+                // FIXME needs public access
+                .antMatchers("/publicapi/v1/lasso/analytics/**").permitAll()
+                .antMatchers("/notebooks/**").permitAll()
+
                 // start swagger
                 .antMatchers("/swagger-ui.html").permitAll()
                 //.antMatchers("/swagger-resources/**").permitAll()

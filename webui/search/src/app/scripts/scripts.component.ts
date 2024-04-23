@@ -106,6 +106,13 @@ export class ScriptsComponent implements AfterViewInit {
     this.router.navigate(['/srm', scriptInfo.executionId]);
   }
 
+  onNotebook(scriptInfo: ScriptInfo) {
+    console.log(window.location.origin)
+    let parquetUrl = `${window.location.origin}/publicapi/v1/lasso/analytics/srm/value/${scriptInfo.executionId}.ipynb`
+    let notebookUrl = `${window.location.origin}/notebooks/lab/index.html?fromURL=${parquetUrl}`
+    window.open(notebookUrl, "_blank");
+  }
+
   onWorkspace(scriptInfo: ScriptInfo) {
     this.router.navigate(['/workspace', scriptInfo.executionId]);
   }

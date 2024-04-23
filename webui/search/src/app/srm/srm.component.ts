@@ -284,4 +284,11 @@ export class SrmComponent implements AfterViewInit {
   getActuationKey(implId: string, type: string) {
     return implId + "_" + type
   }
+
+  onNotebook() {
+    console.log(window.location.origin)
+    let parquetUrl = `${window.location.origin}/publicapi/v1/lasso/analytics/srm/value/${this.executionId}.ipynb`
+    let notebookUrl = `${window.location.origin}/notebooks/lab/index.html?fromURL=${parquetUrl}`
+    window.open(notebookUrl, "_blank");
+  }
 }

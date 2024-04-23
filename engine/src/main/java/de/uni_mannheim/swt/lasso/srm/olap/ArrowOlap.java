@@ -11,6 +11,8 @@ import org.apache.arrow.vector.ipc.ArrowReader;
 
 import org.duckdb.DuckDBConnection;
 import org.duckdb.DuckDBResultSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.io.IOException;
@@ -24,6 +26,9 @@ import java.sql.*;
  */
 public class ArrowOlap {
 
+    private static final Logger LOG = LoggerFactory
+            .getLogger(ArrowOlap.class);
+
     public VectorSchemaRoot queryArrow(JdbcTemplate jdbcTemplate, String sql, Object ... args) {
         return jdbcTemplate.query(sql, resultSet -> {
             try (BufferAllocator allocator = new RootAllocator()) {
@@ -31,14 +36,14 @@ public class ArrowOlap {
                              resultSet, allocator)) {
                     while (iterator.hasNext()) {
                         try (VectorSchemaRoot root = iterator.next()) {
-                            System.out.print(root.contentToTSVString());
+                            LOG.debug(root.contentToTSVString());
 
                             return root;
                         }
                     }
                 }
             } catch (SQLException | IOException e) {
-                e.printStackTrace();
+                LOG.warn("queryArrow failed", e);
             }
 
             return null;
@@ -48,7 +53,7 @@ public class ArrowOlap {
     /**
      * JDBC Ignite to Apache Arrow to DuckDB.
      *
-     * Demonstrates PIVOTING
+     * Demonstrates PIVOTING.
      *
      * Note that the impl. pipeline is odd, since for some reason we cannot pivot directly on the Arrow stream (table copy is current workaround)
      *
@@ -71,7 +76,7 @@ public class ArrowOlap {
 
                     return r;
             } catch (SQLException | IOException e) {
-                e.printStackTrace();
+                    LOG.warn("queryArrow failed", e);
             }
 
             return null;
@@ -95,7 +100,6 @@ public class ArrowOlap {
                 // run a query
                 try (Statement stmt = conn.createStatement()) {
                     boolean rs = stmt.execute(copyTableSql);
-                    System.out.println("successful? " + rs);
                 }
 
                 String pivSql = "PIVOT "+toTable+" ON SYSTEMID USING first(VALUE) ORDER BY STATEMENT";
@@ -104,7 +108,6 @@ public class ArrowOlap {
                 try (Statement stmt = conn.createStatement();
                      DuckDBResultSet rs = (DuckDBResultSet) stmt.executeQuery(pivSql)) {
                     DataFrame dataFrame = DataFrame.readSql(rs);
-                    System.out.println(dataFrame.toString());
                 }
 
                 pivSql = "PIVOT "+toTable+" ON STATEMENT USING first(VALUE) ORDER BY SYSTEMID";
@@ -113,7 +116,6 @@ public class ArrowOlap {
                 try (Statement stmt = conn.createStatement();
                      DuckDBResultSet rs = (DuckDBResultSet) stmt.executeQuery(pivSql)) {
                     DataFrame dataFrame = DataFrame.readSql(rs);
-                    System.out.println(dataFrame.toString());
                 }
             } catch (SQLException e) {
                 throw new RuntimeException(e);
@@ -138,7 +140,7 @@ public class ArrowOlap {
 
                 return r;
             } catch (SQLException | IOException e) {
-                e.printStackTrace();
+                LOG.warn("queryArrow failed", e);
             }
 
             return null;
@@ -162,7 +164,6 @@ public class ArrowOlap {
                 // run a query
                 try (Statement stmt = conn.createStatement()) {
                     boolean rs = stmt.execute(copyTableSql);
-                    System.out.println("successful? " + rs);
                 }
 
                 String pivSql = "PIVOT "+toTable+" ON SYSTEMID,TYPE USING first(VALUE) ORDER BY STATEMENT";
@@ -171,7 +172,7 @@ public class ArrowOlap {
                 try (Statement stmt = conn.createStatement();
                      DuckDBResultSet rs = (DuckDBResultSet) stmt.executeQuery(pivSql)) {
                     DataFrame dataFrame = DataFrame.readSql(rs);
-                    System.out.println(dataFrame.toString());
+                    LOG.debug(dataFrame.toString());
                 }
 
                 pivSql = "PIVOT "+toTable+" ON STATEMENT,TYPE USING first(VALUE) ORDER BY SYSTEMID";
@@ -180,7 +181,7 @@ public class ArrowOlap {
                 try (Statement stmt = conn.createStatement();
                      DuckDBResultSet rs = (DuckDBResultSet) stmt.executeQuery(pivSql)) {
                     DataFrame dataFrame = DataFrame.readSql(rs);
-                    System.out.println(dataFrame.toString());
+                    LOG.debug(dataFrame.toString());
                 }
             } catch (SQLException e) {
                 throw new RuntimeException(e);
@@ -191,15 +192,14 @@ public class ArrowOlap {
     }
 
     /**
-     * JDBC Ignite to Apache Arrow to DuckDB
+     * JDBC Ignite to Apache Arrow to DuckDB in order to write parquet files.
      *
      * @param jdbcTemplate
      * @param sql
+     * @param path
      * @param args
      */
-    public void writeParquet(JdbcTemplate jdbcTemplate, String sql, Object ... args) {
-        // pass to duckdb?
-        // FIXME see https://duckdb.org/docs/api/java
+    public void writeParquet(JdbcTemplate jdbcTemplate, String sql, String path, Object ... args) {
         BufferAllocator allocator = new RootAllocator();
         JdbcToArrowConfig config = new JdbcToArrowConfigBuilder(allocator,
                 JdbcToArrowUtils.getUtcCalendar()).build();
@@ -213,7 +213,7 @@ public class ArrowOlap {
 
                 return r;
             } catch (SQLException | IOException e) {
-                e.printStackTrace();
+                LOG.warn("ArrowReader failed", e);
             }
 
             return null;
@@ -222,19 +222,29 @@ public class ArrowOlap {
         try (ArrowArrayStream arrow_array_stream = ArrowArrayStream.allocateNew(allocator)) {
             Data.exportArrayStream(allocator, reader, arrow_array_stream);
 
+            String fromTable = "asdf";
+            String toTable = "bbb";
+
             // DuckDB stuff
             try (DuckDBConnection conn = (DuckDBConnection) DriverManager.getConnection("jdbc:duckdb:")) {
-                String table = "asdf";
-                conn.registerArrowStream(table, arrow_array_stream);
+                conn.registerArrowStream(fromTable, arrow_array_stream);
 
-                //String pivSql = "select count(*) from asdf";
-                String pivSql = "COPY "+table+" TO '/tmp/output.parquet' (FORMAT PARQUET);";
-                //String pivSql = "PIVOT asdf ON SYSTEMID USING first(VALUE)";
+                // FIXME for some reason, PIVOT does not work on Arrow Stream
+                // workaround is to copy table (view doesn't work either)
+                String copyTableSql = "CREATE TABLE "+toTable+" AS select * from " + fromTable;
 
                 // run a query
                 try (Statement stmt = conn.createStatement()) {
-                    boolean rs = stmt.execute(pivSql);
-                    System.out.println("successful? " + rs);
+                    boolean rs = stmt.execute(copyTableSql);
+                }
+
+                // based on https://duckdb.org/docs/sql/statements/pivot
+                String pivSql = "WITH pivot_alias AS (PIVOT "+toTable+" ON SYSTEMID USING first(VALUE) ORDER BY STATEMENT) SELECT * FROM pivot_alias";
+                String copySql = "COPY ("+pivSql+") TO '"+path+"' (FORMAT PARQUET);";
+
+                // run a query
+                try (Statement stmt = conn.createStatement()) {
+                    boolean rs = stmt.execute(copySql);
                 }
             } catch (SQLException e) {
                 throw new RuntimeException(e);
@@ -244,25 +254,17 @@ public class ArrowOlap {
         }
     }
 
-    public void read() {
+    public DataFrame readParquetAsDataFrame(String path) {
         // DuckDB stuff
         try (DuckDBConnection conn = (DuckDBConnection) DriverManager.getConnection("jdbc:duckdb:")) {
-            String table = "asdf";
-
-            // run a query
-            try (Statement stmt = conn.createStatement()) {
-                boolean rs = stmt.execute("CREATE TABLE "+table+" AS SELECT * FROM read_parquet('/tmp/output.parquet')");
-                System.out.println("successful? " + rs);
-            }
-
-            //String pivSql = "select count(*) from asdf";
-            String pivSql = "PIVOT "+table+" ON SYSTEMID USING first(VALUE) ORDER BY STATEMENT";
+            String pivSql = "SELECT * FROM read_parquet('"+path+"')";
 
             // run a query
             try (Statement stmt = conn.createStatement()) {
                 ResultSet rs = stmt.executeQuery(pivSql);
                 DataFrame dataFrame = DataFrame.readSql(rs);
-                System.out.println(dataFrame.toString());
+
+                return dataFrame;
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);

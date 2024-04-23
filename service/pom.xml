@@ -174,16 +174,17 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!-- frontend -->
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>frontend</artifactId>
-            <version>${project.version}</version>
-        </dependency>
         <!-- webui -->
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>webui</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- notebooks -->
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>notebooks</artifactId>
             <version>${project.version}</version>
         </dependency>
 
@@ -359,6 +360,21 @@
                             <includeGroupIds>${project.groupId}</includeGroupIds>
                             <includeArtifactIds>webui</includeArtifactIds>
                             <outputDirectory>${project.build.directory}/classes/static/webui</outputDirectory>
+                            <excludes>META-INF/**</excludes>
+                            <overWriteReleases>true</overWriteReleases>
+                            <overWriteSnapshots>true</overWriteSnapshots>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>unpack-notebooks</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>unpack-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <includeGroupIds>${project.groupId}</includeGroupIds>
+                            <includeArtifactIds>notebooks</includeArtifactIds>
+                            <outputDirectory>${project.build.directory}/classes/static/notebooks</outputDirectory>
                             <excludes>META-INF/**</excludes>
                             <overWriteReleases>true</overWriteReleases>
                             <overWriteSnapshots>true</overWriteSnapshots>
