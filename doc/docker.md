@@ -17,8 +17,10 @@ docker build -t lasso-service-embedded/latest -f docker/service_embedded/Dockerf
 ```bash
 # create LASSO work directory
 mkdir lasso-work
+mkdir ignite
 # set environmental variable
 LASSO_WORK_PATH=$(pwd)/lasso-work/
+IGNITE_WORK_PATH=$(pwd)/ignite/
 
 # start LASSO service (standalone) - interactive mode (to see logs etc.)
 docker run -it \
@@ -26,6 +28,7 @@ docker run -it \
   --network="host" \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v $LASSO_WORK_PATH:/opt/lasso/work/ \
+  -v $IGNITE_WORK_PATH:/opt/lasso/ignite/ \
   lasso-service-embedded/latest
 ```
 
@@ -36,6 +39,7 @@ Here is a short explanation of each argument
 --network="host" # host network is required to talk to Solr and Nexus OSS
 -v /var/run/docker.sock:/var/run/docker.sock # required for DIND
 -v $LASSO_WORK_PATH:/opt/lasso/work/ # mounts the host work dir in which LASSO stores executions
+-v $IGNITE_WORK_PATH:/opt/lasso/ignite/ # mounts the host work dir to store Ignite working data
 lasso-service-embedded/latest # the image we have created in the first step
 ```
 
