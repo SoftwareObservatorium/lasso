@@ -1,4 +1,4 @@
-# Examples for Unit Test Generation
+# Test Generation
 
 ## Obtain new Tests using `EvoSuiteGenerateClass`
 
@@ -59,4 +59,74 @@ study(name: 'Base64encode-TestGen') {
         includeAbstractions '*'
     }
 }
+```
+
+## Obtain new Tests using `RandomTestGen` (see [RandomTestGen.java](..%2F..%2Fengine%2Fsrc%2Fmain%2Fjava%2Fde%2Funi_mannheim%2Fswt%2Flasso%2Fengine%2Faction%2Ftest%2Fgenerator%2Frandom%2FRandomTestGen.java))
+
+Randomly samples test inputs for a given interface specification.
+
+```groovy
+    action(name: 'random', type: 'RandomTestGen') {
+        noOfTests = 10
+        
+        dependsOn 'select'
+        includeAbstractions '*'
+    }
+```
+
+## Obtain new Tests using `TypeAwareMutatorTestGen` (see [TypeAwareMutatorTestGen.java](..%2F..%2Fengine%2Fsrc%2Fmain%2Fjava%2Fde%2Funi_mannheim%2Fswt%2Flasso%2Fengine%2Faction%2Ftest%2Fgenerator%2Ftypeaware%2FTypeAwareMutatorTestGen.java))
+
+Test generation based on a type-aware mutator for test inputs  for a given interface specification (assumes a seed set of tests to mutate).
+
+```groovy
+    action(name: 'typeAware', type: 'TypeAwareMutatorTestGen') {
+        noOfTests = 1
+        
+        dependsOn 'select'
+        includeAbstractions '*'
+    }
+```
+
+## Obtain new Tests using `GAITestGen` (see [GAITestGen.java](..%2F..%2Fengine%2Fsrc%2Fmain%2Fjava%2Fde%2Funi_mannheim%2Fswt%2Flasso%2Fengine%2Faction%2Ftest%2Fgenerator%2Fgai%2FGAITestGen.java))
+
+Generates tests with generative AI (GAI) for a given interface specification based on OpenAI Restful API endpoints (optionally, seed tests are used to provide example values to the generative AI).
+
+Alternatives
+* OpenAI models https://platform.openai.com/docs/api-reference
+* llama.cpp with free (open) models https://github.com/ggerganov/llama.cpp/tree/master/examples/server
+
+For a recent list of possible models, see https://evalplus.github.io/leaderboard.html
+
+```groovy
+    action(name: 'gai', type: 'GAITestGen') {
+    apiUrl = "http://xxx:8080/v1/chat/completions"
+    apiKey = "xxx"
+    maxNoOfTests = 100
+    noOfPrompts = 1
+    // (optional) manual seed tests in terms of sequence sheets
+    sequences = [
+            'testEncode': sheet(mut:'Problem') {
+                row  '',    'create', '?mut'
+                row 6l,  'greatestCommonDivisor', 'A1', 54l, 24l
+            }
+    ]
+
+    dependsOn 'select'
+    includeAbstractions '*'
+}
+```
+
+### llama.cpp webservice example
+
+Start llama.cpp's webservice with `deepseek-coder-33b-instruct.Q5_K_M.gguf` (https://huggingface.co/deepseek-ai/deepseek-coder-33b-instruct/)
+
+```shell
+wget "https://huggingface.co/TheBloke/deepseek-coder-33B-instruct-GGUF/resolve/main/deepseek-coder-33b-instruct.Q5_K_M.gguf"
+
+git clone https://github.com/ggerganov/llama.cpp.git
+cd llama.cpp
+# build project (according to your needs)
+...
+# start webservice - ngl assumes that the machine has a GPU on which a certain number of layers can be offloaded (remove parameter if machine has no GPU)
+./server -m /path/to/deepseek-coder-33b-instruct.Q5_K_M.gguf --host YOUR.IP -ngl 63 --api-key XXX
 ```

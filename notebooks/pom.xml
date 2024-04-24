@@ -10,7 +10,7 @@
         <relativePath>../</relativePath>
     </parent>
 
-    <artifactId>notebooks</artifactId>
+    <artifactId>notebooks (gui)</artifactId>
     <packaging>jar</packaging>
 
     <name>notebooks</name>

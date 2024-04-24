@@ -154,12 +154,12 @@ study(name: 'Base64encode') {
                 // parameterised sheet (SSN) with default input parameter values
                 // expected values are given in first row (oracle)
                 'testEncode': sheet(base64:'Base64', p2:"user:pass".getBytes()) {
-                    row  '',    'create', '?base64\'
-                    row 'dXNlcjpwYXNz'.getBytes(),  'encode',   'A1',     '?p2\'
+                    row  '',    'create', '?base64'
+                    row 'dXNlcjpwYXNz'.getBytes(),  'encode',   'A1',     '?p2'
                 },
                 'testEncode_padding': sheet(base64:'Base64', p2:"Hello World".getBytes()) {
-                    row  '',    'create', '?base64\'
-                    row 'SGVsbG8gV29ybGQ='.getBytes(),  'encode',   'A1',     '?p2\'
+                    row  '',    'create', '?base64'
+                    row 'SGVsbG8gV29ybGQ='.getBytes(),  'encode',   'A1',     '?p2'
                 }
         ]
         

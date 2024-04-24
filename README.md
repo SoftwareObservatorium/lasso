@@ -112,6 +112,7 @@ Note: For up-to-date information, have a look at the _modules_ [here](./pom.xml)
 * `arena` - LASSO Arena module (arena test driver)
 * `worker` - LASSO's cluster worker application (web-based using spring-boot)
 * `webui` - LASSO's next-generation web application based on Angular 16 and Material
+* `notebooks` - Jupyterlite distribution to analyze SRMs in browsers as part of the _webui_
 * `service` - LASSO's cluster service and manager (web-based using spring-boot)
 * `lasso-llm` - Companion module to `benchmarks` (facilities to integrate generated code obtained by MultiPL-E experiment)
 
