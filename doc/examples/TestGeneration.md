@@ -116,17 +116,6 @@ For a recent list of possible models, see https://evalplus.github.io/leaderboard
 }
 ```
 
-### llama.cpp webservice example
+### APIs like OpenAI's Completions Endpoint
 
-Start llama.cpp's webservice with `deepseek-coder-33b-instruct.Q5_K_M.gguf` (https://huggingface.co/deepseek-ai/deepseek-coder-33b-instruct/)
-
-```shell
-wget "https://huggingface.co/TheBloke/deepseek-coder-33B-instruct-GGUF/resolve/main/deepseek-coder-33b-instruct.Q5_K_M.gguf"
-
-git clone https://github.com/ggerganov/llama.cpp.git
-cd llama.cpp
-# build project (according to your needs)
-...
-# start webservice - ngl assumes that the machine has a GPU on which a certain number of layers can be offloaded (remove parameter if machine has no GPU)
-./server -m /path/to/deepseek-coder-33b-instruct.Q5_K_M.gguf --host YOUR.IP -ngl 63 --api-key XXX
-```
+see [gai_models.md](gai_models.md)
