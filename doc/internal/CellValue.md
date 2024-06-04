@@ -6,7 +6,7 @@ The _CellValue_ model is used to store SRM-related observational data.
 
 ### Apache Ignite
 
-```roomsql
+```sql
 CREATE MEMORY TABLE SRM.CELLVALUE(
     -- Apache Ignite key (internal)
     _KEY OTHER INVISIBLE  NOT NULL, 
