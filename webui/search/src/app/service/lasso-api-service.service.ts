@@ -26,7 +26,7 @@ import { map } from 'rxjs/operators';
 
 import { environment } from 'src/environments/environment';
 
-import { LslRequest, LslResponse, RecordsRequest, ImplementationRequest, ReportRequest, FileViewRequest, SearchQueryRequest, SrmQueryRequest } from '../model/lsl';
+import { LslRequest, LslResponse, RecordsRequest, ImplementationRequest, ReportRequest, FileViewRequest, SearchQueryRequest, SrmQueryRequest, ChatRequest } from '../model/lsl';
 
 @Injectable({
   providedIn: 'root'
@@ -450,4 +450,22 @@ export class LassoApiServiceService {
               return response;
           }));
     }
+
+  /**
+   * Ask implementations
+   * 
+   * @param request 
+   * @param dataSource
+   * 
+   */
+  askImplementationsForDataSource(dataSource: string, request: ChatRequest) {
+    return this.http.post<any>(`${environment.apiUrl}/api/v1/lasso/chat/code/${dataSource}/ask`, request)
+        .pipe(map(response => {
+            // do something
+
+            console.log(response)
+
+            return response;
+        }));
+  }
 }

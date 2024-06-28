@@ -55,6 +55,36 @@
 <mat-divider></mat-divider>
 <br>
 
+<mat-card style="background-color:rgb(216, 246, 245) ;">
+  <mat-card-header>
+    <mat-card-title>Ask our Assistant</mat-card-title>
+  </mat-card-header>
+  <mat-card-content *ngIf="chatResponse">
+    <markdown [data]="chatResponse.content"></markdown>
+  </mat-card-content>
+  <mat-card-actions>
+    <mat-form-field style="width: 100%;">
+      <mat-label>Your question</mat-label>
+      <textarea matInput placeholder="Your question" [(ngModel)]="userQuestion"></textarea>
+    </mat-form-field>
+    <mat-form-field>
+      <mat-label>Model</mat-label>
+      <input matInput [(ngModel)]="userModel">
+    </mat-form-field>
+    <mat-form-field>
+      <mat-label>Temperature</mat-label>
+      <input matInput [(ngModel)]="userModelTemperature">
+    </mat-form-field>
+    <button mat-button (click)="askQuestion()">
+      <mat-icon>filter</mat-icon>
+      <span>Ask</span>
+    </button>
+  </mat-card-actions>
+</mat-card>
+
+<mat-divider></mat-divider>
+<br>
+
 <mat-paginator #paginator [length]="totalRows" [pageIndex]="currentPage" [pageSize]="pageSize"
   [pageSizeOptions]="pageSizeOptions" (page)="pageChanged($event)" aria-label="Select page">
 </mat-paginator>

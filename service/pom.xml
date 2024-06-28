@@ -188,6 +188,13 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- intelligence -->
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>intelligence</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- Spring Boot -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

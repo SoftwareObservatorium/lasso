@@ -25,7 +25,7 @@ import { LassoApiServiceService } from '../service/lasso-api-service.service';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { Observable } from 'rxjs';
 import { MatTableDataSource } from '@angular/material/table';
-import { SearchQueryRequest } from '../model/lsl';
+import { ChatRequest, ChatResponse, SearchQueryRequest } from '../model/lsl';
 import { HighlightService } from '../service/highlight.service';
 import { MatTabChangeEvent } from '@angular/material/tabs';
 import { OracleDescription, TextualSearch } from '../model/data';
@@ -55,7 +55,7 @@ export class ResultsComponent implements AfterViewChecked {
 
   isLoading = false;
   totalRows = 0;
-  pageSize = 5;
+  pageSize = 10;
   currentPage = 0;
   pageSizeOptions: number[] = [5, 10, 25, 100];
 
@@ -78,6 +78,12 @@ export class ResultsComponent implements AfterViewChecked {
 
   // selected outputs for oracle filtering
   oracleFilters: Map<string, string>
+
+  chatResponse: ChatResponse | null
+
+  userQuestion: string
+  userModel: string = "llama3:latest"
+  userModelTemperature: number = 0.7
 
   constructor(private route: ActivatedRoute,
     private router: Router,
@@ -311,6 +317,59 @@ export class ResultsComponent implements AfterViewChecked {
     });
 
     //console.log(JSON.stringify(searchResults.subscribe(res => console.log(res.json()))))
+  }
+
+  askQuestion() {
+    this.isLoading = true;
+
+    let chatRequest = new ChatRequest();
+    chatRequest.modelName = this.userModel
+    chatRequest.temperature = this.userModelTemperature
+    //chatRequest.message = "You are a software engineer. Given is a set of interface signature descriptions similar to Python's notation, starting wit the interface name, a set of methods delimited by newline, including their name, input parameter types as well as output parameter types. Identify if all interface specifications match the same functionality."
+    chatRequest.message = this.userQuestion
+
+    let request = new SearchQueryRequest();
+
+    if(this.textualSearch) {
+      request.query = this.textualSearch.lql
+      request.filters = this.textualSearch.filters
+      request.strategy = this.textualSearch.strategy
+    } else {
+      // set executionId
+      request.executionId = this.executionId;
+
+      if(this.oracleFilters) {
+        console.log(this.oracleFilters)
+        const convMap: any = {};
+        this.oracleFilters.forEach((val: string, key: string) => {
+          convMap[key] = val;
+        });
+        request.oracleFilters = convMap
+      }
+    }
+
+    request.start = 1;
+    request.rows = 25 // FIXME limit to token size
+
+    console.log(JSON.stringify(request));
+
+    chatRequest.searchQueryRequest = request;
+
+    // execute
+    this.lassoApiService.askImplementationsForDataSource(this.lassoDataSource, chatRequest)
+    .pipe(first())
+    .subscribe({
+      next: (res) => {
+        console.log(res);
+        this.chatResponse = res;
+        this.isLoading = false;
+
+       },
+      error: (e) => {this.error = e;
+        console.log(this.error);
+        this.isLoading = false;},
+      complete: () => {} 
+    });
   }
 
   pageChanged(event: PageEvent) {

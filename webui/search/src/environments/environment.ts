@@ -24,10 +24,10 @@ export const environment = {
     // relative
     //apiUrl: ''
     // absolute
-    //apiUrl: 'http://localhost:10222',
+    apiUrl: 'http://localhost:10222',
     //apiUrl: 'http://localhost:8899'
     //apiUrl: 'http://swt100.informatik.uni-mannheim.de:10222'
-    apiUrl: 'http://lassohp1.informatik.uni-mannheim.de:10222'
+    //apiUrl: 'http://lassohp1.informatik.uni-mannheim.de:10222'
     //apiUrl: 'http://swt-117.informatik.uni-mannheim.de:10222'
     //apiUrl: 'http://swt-mkessel.informatik.uni-mannheim.de:10222'
     //apiUrl: 'http://odisse.informatik.uni-mannheim.de:10222'

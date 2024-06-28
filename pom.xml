@@ -109,7 +109,8 @@
         <module>engine</module>
         <module>arena-support</module>
         <module>arena</module>
-        <module>worker</module>
+	<module>worker</module>
+	<module>intelligence</module>
         <module>webui</module>
         <module>notebooks</module>
         <module>service</module>

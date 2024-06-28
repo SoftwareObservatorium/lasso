@@ -128,3 +128,15 @@ export class SrmQueryRequest {
     type: string
     oracleFilters: any;
 }
+
+export class ChatRequest {
+    message: string
+    modelName: string
+    temperature: number
+    searchQueryRequest: SearchQueryRequest
+}
+
+export class ChatResponse {
+    message: string
+    content: string
+}

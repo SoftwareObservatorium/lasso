@@ -71,6 +71,7 @@ import { ProfileComponent } from './profile/profile.component';
 import { DatasourcesComponent } from './datasources/datasources.component';
 import { CodeComponent } from './code/code.component';
 import { DbComponent } from './db/db.component';
+import { MarkdownModule } from 'ngx-markdown';
 
 export function configureMonaco() {
   console.log((<any>window).monaco); 
@@ -263,7 +264,8 @@ const monacoConfig: NgxMonacoEditorConfig = {
     MatPaginatorModule,
     MatSortModule,
     NgxGraphModule,
-    GraphQLModule
+    GraphQLModule,
+    MarkdownModule.forRoot()
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },
