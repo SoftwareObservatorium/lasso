@@ -18,8 +18,8 @@
 
     <properties>
         <frontend-maven-plugin.version>1.12.1</frontend-maven-plugin.version>
-        <npm.version>9.6.7</npm.version>
-	<node.version>v18.17.1</node.version>
+        <npm.version>10.7.0</npm.version>
+	<node.version>v18.20.3</node.version>
 	<!-- either build or prod -->
 	<frontend.build>build</frontend.build>
     </properties>

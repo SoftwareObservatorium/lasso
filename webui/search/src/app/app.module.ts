@@ -41,7 +41,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MonacoEditorModule, NgxMonacoEditorConfig } from 'ngx-monaco-editor-v2';
 import { JwtInterceptor } from './service/jwt.interceptor';
 import { ErrorInterceptor } from './service/error.interceptor';
-import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { LoginComponent } from './login/login.component';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -215,65 +215,59 @@ const monacoConfig: NgxMonacoEditorConfig = {
   onMonacoLoad: configureMonaco
 };
 
-@NgModule({
-  declarations: [
-    AppComponent,
-    ResultsComponent,
-    QueryComponent,
-    CodeComponent,
-    LoginComponent,
-    ScriptsComponent,
-    SrmComponent,
-    ActionsComponent,
-    HomeComponent,
-    WorkspaceComponent,
-    GridComponent,
-    LogsComponent,
-    DfsComponent,
-    ProfileComponent,
-    DatasourcesComponent,
-    DbComponent,
-    ChatbotComponent
-  ],
-  imports: [
-    BrowserModule,
-    AppRoutingModule,
-    HttpClientModule,
-    FormsModule,
-    HotTableModule.forRoot(),
-    BrowserAnimationsModule,
-    MatToolbarModule,
-    MatButtonModule,
-    MatSidenavModule,
-    MatIconModule,
-    MatListModule,
-    MatGridListModule,
-    MatCardModule,
-    MatMenuModule,
-    MatExpansionModule,
-    MatProgressBarModule,
-    MatTooltipModule,
-    MatChipsModule,
-    MatBadgeModule,
-    MonacoEditorModule.forRoot(monacoConfig),
-    MatInputModule,
-    MatSelectModule,
-    MatRadioModule,
-    MatTabsModule,
-    MatTreeModule,
-    ReactiveFormsModule,
-    MatTableModule,
-    MatPaginatorModule,
-    MatSortModule,
-    NgxGraphModule,
-    GraphQLModule,
-    MarkdownModule.forRoot()
-  ],
-  providers: [
-    { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },
-    { provide: HTTP_INTERCEPTORS, useClass: ErrorInterceptor, multi: true },
-    HighlightService
-  ],
-  bootstrap: [AppComponent]
-})
+@NgModule({ declarations: [
+        AppComponent,
+        ResultsComponent,
+        QueryComponent,
+        CodeComponent,
+        LoginComponent,
+        ScriptsComponent,
+        SrmComponent,
+        ActionsComponent,
+        HomeComponent,
+        WorkspaceComponent,
+        GridComponent,
+        LogsComponent,
+        DfsComponent,
+        ProfileComponent,
+        DatasourcesComponent,
+        DbComponent,
+        ChatbotComponent
+    ],
+    bootstrap: [AppComponent], imports: [BrowserModule,
+        AppRoutingModule,
+        FormsModule,
+        HotTableModule.forRoot(),
+        BrowserAnimationsModule,
+        MatToolbarModule,
+        MatButtonModule,
+        MatSidenavModule,
+        MatIconModule,
+        MatListModule,
+        MatGridListModule,
+        MatCardModule,
+        MatMenuModule,
+        MatExpansionModule,
+        MatProgressBarModule,
+        MatTooltipModule,
+        MatChipsModule,
+        MatBadgeModule,
+        MonacoEditorModule.forRoot(monacoConfig),
+        MatInputModule,
+        MatSelectModule,
+        MatRadioModule,
+        MatTabsModule,
+        MatTreeModule,
+        ReactiveFormsModule,
+        MatTableModule,
+        MatPaginatorModule,
+        MatSortModule,
+        NgxGraphModule,
+        GraphQLModule,
+        MarkdownModule.forRoot()], providers: [
+        { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },
+        { provide: HTTP_INTERCEPTORS, useClass: ErrorInterceptor, multi: true },
+        HighlightService,
+        provideHttpClient(withInterceptorsFromDi())
+    ] })
 export class AppModule { }

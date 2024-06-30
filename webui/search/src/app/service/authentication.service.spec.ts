@@ -21,12 +21,14 @@
 import { TestBed } from '@angular/core/testing';
 
 import { AuthenticationService } from './authentication.service';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('AuthenticationService', () => {
   beforeEach(() => TestBed.configureTestingModule({
-    imports: [HttpClientTestingModule],
-  }));
+    imports: [],
+    providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
+}));
 
   it('should be created', () => {
     const service: AuthenticationService = TestBed.get(AuthenticationService);
