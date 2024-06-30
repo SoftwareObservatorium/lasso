@@ -23,7 +23,6 @@ import de.uni_mannheim.swt.lasso.cluster.ClusterEngine;
 import de.uni_mannheim.swt.lasso.core.dto.ChatRequest;
 import de.uni_mannheim.swt.lasso.core.dto.ChatResponse;
 import de.uni_mannheim.swt.lasso.core.dto.SearchRequestResponse;
-import de.uni_mannheim.swt.lasso.core.dto.SrmQueryRequest;
 import de.uni_mannheim.swt.lasso.engine.LassoConfiguration;
 import de.uni_mannheim.swt.lasso.intelligence.RagService;
 import de.uni_mannheim.swt.lasso.service.controller.BaseApi;
@@ -50,7 +49,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -143,6 +141,23 @@ public class ChatController extends BaseApi {
                 .temperature(chatRequest.getTemperature())
                 .build();
 
+        DataFrame srm = null;
+        if(StringUtils.isNotBlank(chatRequest.getSearchQueryRequest().getExecutionId())) {
+            // FIXME arena id (let's assume arena "execute" for now)
+            try {
+                srm = srhRepository.getActuationSheets(chatRequest.getSearchQueryRequest().getExecutionId(),
+                        SRHRepository.ARENA_DEFAULT, SRHRepository.TYPE_VALUE, chatRequest.getSearchQueryRequest().getOracleFilters());
+
+                // FIXME pass to RAG + original sequence sheet?
+
+                // Stimulus Sheet (written against SPEC) - input->operation->output
+                // Actuation Sheet (written against IMPL)
+            } catch (Throwable e) {
+                LOG.warn("Getting SRM failed", e);
+            }
+
+        }
+
         RagService ragService = new RagService(ollamaChatModel);
         RagService.Assistant assistant = ragService.create(new ArrayList<>(response.getImplementations().values()));
         Result<String> answer = assistant.chat(chatRequest.getMessage());
@@ -156,72 +171,5 @@ public class ChatController extends BaseApi {
         chatResponse.setMessage(chatRequest.getMessage());
 
         return chatResponse;
-    }
-
-    @Operation(summary = "Questions about observations", description = "Questions about observations")
-    @RequestMapping(value = "/observations/{executionId}", method = RequestMethod.POST, consumes = "application/json;charset=UTF-8", produces = "application/json;charset=UTF-8")
-    @ResponseBody
-    public ChatResponse askObservations(
-            @PathVariable("executionId") String executionId,
-            @RequestBody SrmQueryRequest srmQueryRequest,
-            /*@ApiIgnore*/ @AuthenticationPrincipal UserDetails userDetails,
-            HttpServletRequest httpServletRequest) {
-        // get user details
-        UserInfo userInfo = getUserInfo(httpServletRequest, userDetails);
-
-        ChatResponse chatResponse = new ChatResponse();
-        try {
-            try {
-                // FIXME arena id (let's assume arena "execute" for now)
-                DataFrame df = srhRepository.getActuationSheets(executionId, SRHRepository.ARENA_DEFAULT, srmQueryRequest.getType(), srmQueryRequest.getOracleFilters());
-
-                //askAssistantForObservations(chatRequest, srmQueryRequest);
-
-                // FIXME realize
-
-            } catch (Exception e) {
-                throw new IOException(e);
-            }
-
-            if (LOG.isInfoEnabled()) {
-                LOG.info("Returning askObservations response to '{}'",
-                        userInfo.getRemoteIpAddress());
-            }
-
-            // 200
-            return chatResponse;
-        } catch (Throwable e) {
-            if (LOG.isWarnEnabled()) {
-                LOG.warn(String.format("Could not get askObservations response"), e);
-            }
-
-            // bad request
-            throw new RuntimeException(String.format("Could not get askObservations response"), e);
-        }
-    }
-
-    // FIXME realize for observations
-    private ChatResponse askAssistantForObservations(ChatRequest chatRequest, SrmQueryRequest srmQueryRequest) {
-//        OllamaChatModel ollamaChatModel = OllamaChatModel.builder()
-//                .baseUrl(env.getProperty("intelligence.ollama.url"))
-//                .modelName(chatRequest.getModelName())
-//                .temperature(chatRequest.getTemperature())
-//                .build();
-//
-//        RagService ragService = new RagService(ollamaChatModel);
-//        RagService.Assistant assistant = ragService.create(new ArrayList<>(response.getImplementations().values()));
-//        Result<String> answer = assistant.chat(chatRequest.getMessage());
-//
-//        if(LOG.isDebugEnabled()) {
-//            LOG.debug(answer.content());
-//        }
-//
-//        ChatResponse chatResponse = new ChatResponse();
-//        chatResponse.setContent(answer.content());
-//        chatResponse.setMessage(chatRequest.getMessage());
-//
-//        return chatResponse;
-
-        return null;
     }
 }

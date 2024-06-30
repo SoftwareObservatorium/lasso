@@ -14,6 +14,8 @@ import dev.langchain4j.rag.content.injector.ContentInjector;
 import dev.langchain4j.rag.content.injector.DefaultContentInjector;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
+import dev.langchain4j.rag.query.router.DefaultQueryRouter;
+import dev.langchain4j.rag.query.router.QueryRouter;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.service.Result;
 import dev.langchain4j.store.embedding.EmbeddingStoreIngestor;
@@ -56,18 +58,31 @@ public class RagService {
     }
 
     public Assistant create(List<CodeUnit> codeUnits) {
-        ContentRetriever contentRetriever = createContentRetriever(fromQueryResult(codeUnits));
+        ContentRetriever codeUnitRetriever = createCodeUnitRetriever(fromQueryResult(codeUnits));
 
         ContentInjector contentInjector = DefaultContentInjector.builder()
-                // .promptTemplate(...) // Formatting can also be changed
-                .metadataKeysToInclude(asList("id", "fullyQualifiedName", "mavenCoordinates", "type", "score",
-                        "measureTotalBranches", "measureTotalCLOC", "measureTotalLOC", "measureTotalCyclomaticComplexity"))
-                .build();
+        // .promptTemplate(...) // Formatting can also be changed
+        .metadataKeysToInclude(asList("id", "fullyQualifiedName", "mavenCoordinates", "type", "score",
+                "measureTotalBranches", "measureTotalCLOC", "measureTotalLOC", "measureTotalCyclomaticComplexity"))
+        .build();
 
-        RetrievalAugmentor retrievalAugmentor = DefaultRetrievalAugmentor.builder()
-                .contentRetriever(contentRetriever)
-                .contentInjector(contentInjector)
-                .build();
+        // observations
+        ContentRetriever observationsRetriever = null;
+
+        RetrievalAugmentor retrievalAugmentor;
+        if(observationsRetriever != null) {
+            QueryRouter queryRouter = new DefaultQueryRouter(codeUnitRetriever, observationsRetriever);
+
+            retrievalAugmentor = DefaultRetrievalAugmentor.builder()
+                    .queryRouter(queryRouter)
+                    .contentInjector(contentInjector)
+                    .build();
+        } else {
+            retrievalAugmentor = DefaultRetrievalAugmentor.builder()
+                    .contentRetriever(codeUnitRetriever)
+                    .contentInjector(contentInjector)
+                    .build();
+        }
 
         Assistant assistant = AiServices.builder(Assistant.class)
                 .chatLanguageModel(chatLanguageModel)
@@ -123,14 +138,7 @@ public class RagService {
         }
     }
 
-    protected Document fromObservation() {
-        // FIXME either we need a router with two retrievers https://github.com/langchain4j/langchain4j-examples/blob/main/rag-examples/src/main/java/_3_advanced/_07_Advanced_RAG_Multiple_Retrievers_Example.java
-        // or merge into one document
-
-        return null;
-    }
-
-    private static ContentRetriever createContentRetriever(List<Document> documents) {
+    private static ContentRetriever createCodeUnitRetriever(List<Document> documents) {
         // Here, we create and empty in-memory store for our documents and their embeddings.
         InMemoryEmbeddingStore<TextSegment> embeddingStore = new InMemoryEmbeddingStore<>();
 
@@ -139,6 +147,31 @@ public class RagService {
         EmbeddingStoreIngestor.ingest(documents, embeddingStore);
 
         // Lastly, let's create a content retriever from an embedding store.
-        return EmbeddingStoreContentRetriever.builder().embeddingStore(embeddingStore).maxResults(documents.size()).build();
+        return EmbeddingStoreContentRetriever.builder().embeddingStore(embeddingStore)
+                .maxResults(documents.size())
+                //.minScore(someVal)
+                .build();
+    }
+
+    private static ContentRetriever createObservationsRetriever(List<Document> documents) {
+        // Here, we create and empty in-memory store for our documents and their embeddings.
+        InMemoryEmbeddingStore<TextSegment> embeddingStore = new InMemoryEmbeddingStore<>();
+
+        // Here, we are ingesting our documents into the store.
+        // Under the hood, a lot of "magic" is happening, but we can ignore it for now.
+        EmbeddingStoreIngestor.ingest(documents, embeddingStore);
+
+        // Lastly, let's create a content retriever from an embedding store.
+        return EmbeddingStoreContentRetriever.builder().embeddingStore(embeddingStore)
+                .maxResults(documents.size())
+                //.minScore(someVal)
+                .build();
+    }
+
+    protected Document fromObservation() {
+        // FIXME either we need a router with two retrievers https://github.com/langchain4j/langchain4j-examples/blob/main/rag-examples/src/main/java/_3_advanced/_07_Advanced_RAG_Multiple_Retrievers_Example.java
+        // or merge into one document
+
+        return null;
     }
 }
