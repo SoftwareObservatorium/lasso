@@ -1,0 +1,30 @@
+<!-- src/app/chatbot/chatbot.component.html -->
+<div class="chat-container">
+    <div class="chat-window">
+      <mat-card style="background-color:rgb(216, 246, 245) ; height: 400px;">
+        <mat-card-header>
+          <mat-card-title>Ask our Assistant</mat-card-title>
+        </mat-card-header>
+        <mat-card-content *ngIf="context.chatResponse">
+          <markdown [data]="context.chatResponse.content"></markdown>
+        </mat-card-content>
+        <mat-card-actions>
+        </mat-card-actions>
+      </mat-card>
+
+      <mat-divider></mat-divider>
+      <br>
+
+      <div>
+        <mat-form-field style="width: 100%;">
+            <mat-label>Question</mat-label>
+            <textarea matInput placeholder="Your question" [(ngModel)]="context.userQuestion"></textarea>
+        </mat-form-field>
+      </div>
+      
+      <input matInput [(ngModel)]="context.userModel"/>
+      <input matInput [(ngModel)]="context.userModelTemperature"/>
+      <button mat-raised-button (click)="context.askQuestion()">Ask</button>
+      <button mat-raised-button (click)="toggleChat()">Close</button>
+    </div>
+</div>

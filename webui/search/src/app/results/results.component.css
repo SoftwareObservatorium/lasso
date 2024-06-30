@@ -50,3 +50,23 @@
   font-weight: bold;
   color: #3f51b5;
 }
+
+.chat-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 200px;
+  height: 300px;
+  background: rgba(187, 67, 67, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2;
+}
+
+.chat-fab {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  z-index: 2;
+}

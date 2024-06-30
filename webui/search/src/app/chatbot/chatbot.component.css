@@ -1,0 +1,30 @@
+/* src/app/chatbot/chatbot.component.css */
+.chat-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 600px;
+    background-color: white;
+    border: 1px solid #ccc;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-window {
+height: 600px;
+overflow-y: auto;
+padding: 10px;
+}
+
+.message {
+margin-bottom: 10px;
+}
+
+button {
+background-color: #007bff;
+color: white;
+border: none;
+padding: 10px;
+cursor: pointer;
+}

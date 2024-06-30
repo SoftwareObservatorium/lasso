@@ -72,6 +72,7 @@ import { DatasourcesComponent } from './datasources/datasources.component';
 import { CodeComponent } from './code/code.component';
 import { DbComponent } from './db/db.component';
 import { MarkdownModule } from 'ngx-markdown';
+import { ChatbotComponent } from './chatbot/chatbot.component';
 
 export function configureMonaco() {
   console.log((<any>window).monaco); 
@@ -231,7 +232,8 @@ const monacoConfig: NgxMonacoEditorConfig = {
     DfsComponent,
     ProfileComponent,
     DatasourcesComponent,
-    DbComponent
+    DbComponent,
+    ChatbotComponent
   ],
   imports: [
     BrowserModule,

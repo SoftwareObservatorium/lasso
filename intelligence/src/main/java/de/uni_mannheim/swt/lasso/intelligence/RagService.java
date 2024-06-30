@@ -18,6 +18,9 @@ import dev.langchain4j.service.AiServices;
 import dev.langchain4j.service.Result;
 import dev.langchain4j.store.embedding.EmbeddingStoreIngestor;
 import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
+import org.apache.commons.collections4.MapUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.List;
@@ -38,6 +41,9 @@ import static java.util.Arrays.asList;
  */
 public class RagService {
 
+    private static final Logger LOG = LoggerFactory
+            .getLogger(RagService.class);
+
     private final ChatLanguageModel chatLanguageModel;
 
     public RagService(ChatLanguageModel chatLanguageModel) {
@@ -54,7 +60,8 @@ public class RagService {
 
         ContentInjector contentInjector = DefaultContentInjector.builder()
                 // .promptTemplate(...) // Formatting can also be changed
-                .metadataKeysToInclude(asList("id", "fullyQualifiedName", "mavenCoordinates", "type", "score"))
+                .metadataKeysToInclude(asList("id", "fullyQualifiedName", "mavenCoordinates", "type", "score",
+                        "measureTotalBranches", "measureTotalCLOC", "measureTotalLOC", "measureTotalCyclomaticComplexity"))
                 .build();
 
         RetrievalAugmentor retrievalAugmentor = DefaultRetrievalAugmentor.builder()
@@ -90,7 +97,30 @@ public class RagService {
         meta.put("type", codeUnit.getDocType());
         meta.put("score", codeUnit.getScore());
 
+        if(MapUtils.isNotEmpty(codeUnit.getMeasures())) {
+            String prefix = "m_static_";
+//            codeUnit.getMetaData().keySet().stream()
+//                    .filter(s -> StringUtils.startsWith(s, prefix))
+//                    .forEach(s -> {
+//                        meta.put(StringUtils.substringBetween(s, prefix, "_td"), codeUnit.getMetaData().get(s));
+//                    });
+            // XXX manual for better naming
+            putMeasureSafely("m_static_branch_td", "measureTotalBranches", codeUnit.getMeasures(), meta);
+            putMeasureSafely("m_static_cloc_td", "measureTotalCLOC", codeUnit.getMeasures(), meta);
+            putMeasureSafely("m_static_loc_td", "measureTotalLOC", codeUnit.getMeasures(), meta);
+            putMeasureSafely("m_static_complexity_td", "measureTotalCyclomaticComplexity", codeUnit.getMeasures(), meta);
+        }
+
         return Document.from(SignatureUtils.create(codeUnit).toLQL(true), Metadata.from(meta));
+    }
+
+    private static void putMeasureSafely(String key, String newKey, Map<String, Double> from, Map<String, Object> to) {
+        try {
+            to.put(newKey, from.get(key));
+        } catch (Throwable e) {
+            //
+            LOG.warn("Put measure failed", e);
+        }
     }
 
     protected Document fromObservation() {

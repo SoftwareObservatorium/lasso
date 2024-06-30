@@ -85,6 +85,12 @@ export class ResultsComponent implements AfterViewChecked {
   userModel: string = "llama3:latest"
   userModelTemperature: number = 0.7
 
+  isChatOpen = false;
+
+  toggleChat() {
+    this.isChatOpen = !this.isChatOpen;
+  }
+
   constructor(private route: ActivatedRoute,
     private router: Router,
     private changeDetectorRef: ChangeDetectorRef,
