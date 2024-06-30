@@ -91,7 +91,7 @@
         <resources>
             <resource>
                 <filtering>false</filtering>
-                <directory>search/dist/search</directory>
+		<directory>search/dist/search/browser</directory>
             </resource>
         </resources>
     </build>
