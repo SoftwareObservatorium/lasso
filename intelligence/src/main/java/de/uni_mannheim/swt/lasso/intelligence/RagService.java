@@ -18,15 +18,17 @@ import dev.langchain4j.rag.query.router.DefaultQueryRouter;
 import dev.langchain4j.rag.query.router.QueryRouter;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.service.Result;
+import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.store.embedding.EmbeddingStoreIngestor;
 import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
+import joinery.DataFrame;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
@@ -54,20 +56,29 @@ public class RagService {
 
     public interface Assistant {
 
+        // FIXME system message
+        @SystemMessage("You are a professional software engineer. Your task is to analyze a list of software code candidates based on their differences, each having a unique identifier (id).")
         Result<String> chat(String userMessage);
     }
 
     public Assistant create(List<CodeUnit> codeUnits) {
+        return create(codeUnits, null);
+    }
+
+    public Assistant create(List<CodeUnit> codeUnits, DataFrame observations) {
         ContentRetriever codeUnitRetriever = createCodeUnitRetriever(fromQueryResult(codeUnits));
 
         ContentInjector contentInjector = DefaultContentInjector.builder()
         // .promptTemplate(...) // Formatting can also be changed
-        .metadataKeysToInclude(asList("id", "fullyQualifiedName", "mavenCoordinates", "type", "score",
-                "measureTotalBranches", "measureTotalCLOC", "measureTotalLOC", "measureTotalCyclomaticComplexity"))
+        .metadataKeysToInclude(asList("codeCandidateId", "fullyQualifiedName", "mavenCoordinates", "codeUnit", "score",
+                "measureTotalBranches", "measureTotalCLOC", "measureTotalLOC", "measureTotalCyclomaticComplexity", "codeAdapterId", "isOracle"))
         .build();
 
         // observations
         ContentRetriever observationsRetriever = null;
+        if(observations != null && !observations.isEmpty()) {
+            observationsRetriever = createCodeUnitRetriever(fromDataFrameResult("output", observations));
+        }
 
         RetrievalAugmentor retrievalAugmentor;
         if(observationsRetriever != null) {
@@ -106,10 +117,10 @@ public class RagService {
 
     protected Document fromCodeUnit(CodeUnit codeUnit) {
         Map<String, Object> meta = new HashMap<>();
-        meta.put("id", codeUnit.getId());
+        meta.put("codeCandidateId", codeUnit.getId());
         meta.put("fullyQualifiedName", codeUnit.toFQName());
         meta.put("mavenCoordinates", codeUnit.toUri());
-        meta.put("type", codeUnit.getDocType());
+        meta.put("codeUnit", codeUnit.getDocType());
         meta.put("score", codeUnit.getScore());
 
         if(MapUtils.isNotEmpty(codeUnit.getMeasures())) {
@@ -126,7 +137,12 @@ public class RagService {
             putMeasureSafely("m_static_complexity_td", "measureTotalCyclomaticComplexity", codeUnit.getMeasures(), meta);
         }
 
-        return Document.from(SignatureUtils.create(codeUnit).toLQL(true), Metadata.from(meta));
+        StringBuilder sb = new StringBuilder();
+        sb.append("Interface signature specification (similar to python notation) using format: [ClassName] { [method name]([list of input parameter types]:[output parameter types] }\n");
+        sb.append(SignatureUtils.create(codeUnit).toLQL(true));
+        sb.append("\n");
+
+        return Document.from(sb.toString(), Metadata.from(meta));
     }
 
     private static void putMeasureSafely(String key, String newKey, Map<String, Double> from, Map<String, Object> to) {
@@ -153,25 +169,55 @@ public class RagService {
                 .build();
     }
 
-    private static ContentRetriever createObservationsRetriever(List<Document> documents) {
-        // Here, we create and empty in-memory store for our documents and their embeddings.
-        InMemoryEmbeddingStore<TextSegment> embeddingStore = new InMemoryEmbeddingStore<>();
+    protected List<Document> fromDataFrameResult(String type, DataFrame dataFrame) {
+        List<Document> documents = new LinkedList<>();
+        for(String column : (Set<String>) dataFrame.columns()) {
+            if(StringUtils.equalsAnyIgnoreCase(column, "statement")) {
+                continue;
+            }
 
-        // Here, we are ingesting our documents into the store.
-        // Under the hood, a lot of "magic" is happening, but we can ignore it for now.
-        EmbeddingStoreIngestor.ingest(documents, embeddingStore);
+            String id = StringUtils.substringBeforeLast(column, "_");
+            String adapter = StringUtils.substringAfterLast(column, "_");
 
-        // Lastly, let's create a content retriever from an embedding store.
-        return EmbeddingStoreContentRetriever.builder().embeddingStore(embeddingStore)
-                .maxResults(documents.size())
-                //.minScore(someVal)
-                .build();
-    }
+            Map<String, Object> meta = new HashMap<>();
+            meta.put("codeCandidateId", id);
+            meta.put("codeAdapterId", adapter);
+            // FIXME is oracle
+            meta.put("isOracle", BooleanUtils.toStringYesNo(StringUtils.equalsIgnoreCase(id, "oracle")));
 
-    protected Document fromObservation() {
-        // FIXME either we need a router with two retrievers https://github.com/langchain4j/langchain4j-examples/blob/main/rag-examples/src/main/java/_3_advanced/_07_Advanced_RAG_Multiple_Retrievers_Example.java
-        // or merge into one document
+            StringBuilder sb = new StringBuilder();
+            sb.append("Observations of test outputs for each test case statement using the format: [test case name] = [output]\n");
+            int c = 0;
+            List implCol = dataFrame.col(column);
+            for(Object stmt : dataFrame.col("STATEMENT")) {
+                sb.append(stmt);
+                sb.append(" = ");
+                sb.append(implCol.get(c++));
+                sb.append("\n");
+            }
 
-        return null;
+            LOG.info("Document for {} is = {}, meta = {}", column, sb, meta);
+
+            documents.add(Document.from(sb.toString(), Metadata.from(meta)));
+        }
+
+//        ByteArrayOutputStream out = new ByteArrayOutputStream();
+////        try {
+////            dataFrame.writeCsv(out);
+////        } catch (IOException e) {
+////            LOG.warn("failed to write out dataframe", e);
+////        }
+//
+////        try (JsonGenerator jg = new ObjectMapper().getFactory().createGenerator(
+////                out, JsonEncoding.UTF8)) {
+////            writeDataFrameToJson(dataFrame, jg);
+////            jg.flush();
+////        } catch (IOException e) {
+////            throw new RuntimeException(e);
+////        }
+//
+//        LOG.info("Written: {}", out.toString());
+
+        return documents;
     }
 }

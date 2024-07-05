@@ -49,6 +49,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 
 /**
@@ -150,6 +151,11 @@ public class ChatController extends BaseApi {
 
                 // FIXME pass to RAG + original sequence sheet?
 
+                // re-construct actuation sheet
+                // TODO input_value for actual inputs (but here it is not statements, but multiple input parameters .. so should be concatenated
+                // TODO op
+
+
                 // Stimulus Sheet (written against SPEC) - input->operation->output
                 // Actuation Sheet (written against IMPL)
             } catch (Throwable e) {
@@ -159,7 +165,7 @@ public class ChatController extends BaseApi {
         }
 
         RagService ragService = new RagService(ollamaChatModel);
-        RagService.Assistant assistant = ragService.create(new ArrayList<>(response.getImplementations().values()));
+        RagService.Assistant assistant = ragService.create(new ArrayList<>(response.getImplementations().values()), srm);
         Result<String> answer = assistant.chat(chatRequest.getMessage());
 
         if(LOG.isDebugEnabled()) {
