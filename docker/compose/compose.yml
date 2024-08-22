@@ -1,0 +1,46 @@
+services:
+  lasso-service:
+    build:
+      context: .
+      dockerfile: ./service.Dockerfile
+      args:
+        - "SERVICE_JAR=service/target/service-1.0.0-SNAPSHOT.jar"
+        - "ARENA_JAR=arena/target/arena-1.0.0-SNAPSHOT.jar"
+    ports:
+      - "10222:10222"
+    depends_on:
+      - solr
+    networks:
+      - lasso-network
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${LASSO_WORK}/work/:/opt/lasso/work/
+      - ${LASSO_WORK}/config/:/opt/lasso/config/
+    environment:
+      - "DIND_SUPPORT_LIBS=${LASSO_WORK}"
+      - "JAVA_OPTS=-server -ea -Xms2G -Xmx4G -Djava.net.preferIPv4Stack=true"
+
+  solr:
+    image: solr:latest
+    ports:
+      - "8983:8983"
+    command:
+      - solr-precreate lasso_quickstart
+    volumes:
+      - ./lasso/lassoindex:/var/solr
+    networks:
+      - lasso-network
+
+#  nexus:
+#    build: ./nexus
+#    environment:
+#      - NEXUS_CONTEXT=nexus
+#      - NEXUS_PORT=8081
+#    ports:
+#      - "8081:8081"
+#    networks:
+#      - lasso-network
+
+networks:
+  lasso-network:
+    driver: bridge

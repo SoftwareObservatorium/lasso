@@ -193,7 +193,7 @@ public class CodeSearch {
         return impls.get(0);
     }
 
-    public List<InterfaceSpecification> fromLQL(String lql) throws IOException {
+    public static List<InterfaceSpecification> fromLQL(String lql) throws IOException {
         // LQL
         LQLParseResult lqlParseResult = parseLQL(lql);
 
@@ -248,7 +248,7 @@ public class CodeSearch {
         return parseResults;
     }
 
-    public LQLParseResult parseLQL(String lql) throws IOException {
+    public static LQLParseResult parseLQL(String lql) throws IOException {
         //
 
         LQLParseResult parseResult = LQL.parse(lql);
