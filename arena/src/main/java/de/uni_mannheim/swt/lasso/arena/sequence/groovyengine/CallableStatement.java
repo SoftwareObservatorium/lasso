@@ -20,6 +20,8 @@ public class CallableStatement {
     private InterfaceSpecification interfaceSpecification;
     private int operationId;
 
+    private boolean inline = false;
+
     public CallableStatement(int index, String code) {
         this.index = index;
         this.code = code;
@@ -63,5 +65,13 @@ public class CallableStatement {
 
     public void setOperationId(int operationId) {
         this.operationId = operationId;
+    }
+
+    public boolean isInline() {
+        return inline;
+    }
+
+    public void setInline(boolean inline) {
+        this.inline = inline;
     }
 }

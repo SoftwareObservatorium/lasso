@@ -1,6 +1,7 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.groovyengine;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -25,6 +26,10 @@ public class ExecutedSequence {
 
     public ExecutedStatement getStatement(int index) {
         return statements.get(index);
+    }
+
+    public List<ExecutedStatement> getRowStatements() {
+        return statements.stream().filter(s -> !s.getCallableStatement().isInline()).collect(Collectors.toList());
     }
 
     public List<ExecutedStatement> getStatements() {

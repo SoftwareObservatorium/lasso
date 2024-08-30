@@ -28,11 +28,9 @@ import de.uni_mannheim.swt.lasso.arena.sequence.*;
 import de.uni_mannheim.swt.lasso.arena.sequence.groovyengine.CallableSequence;
 import de.uni_mannheim.swt.lasso.arena.sequence.groovyengine.CallableStatement;
 import de.uni_mannheim.swt.lasso.arena.sequence.parser.sheet.SpreadSheet;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellAddress;
 import org.apache.poi.ss.util.CellReference;
 import org.slf4j.Logger;
@@ -227,6 +225,7 @@ public class SequenceSheetParser {
             // alternative notion by starting it with $ to denote a class under search
             if(StringUtils.startsWith(operationName, "$")) {
                 String className = StringUtils.substringBetween(operationName, "$", "(");
+
                 if (!interfaces.containsKey(className)) {
                     InterfaceSpecification interfaceSpecification = new InterfaceSpecification();
                     interfaceSpecification.setConstructors(new LinkedList<>());
@@ -239,29 +238,65 @@ public class SequenceSheetParser {
                 InterfaceSpecification interfaceSpecification = interfaces.get(className);
 
                 // identify constructor signatures
-                MethodSignature cSigMatched;
-                try {
-                    List<InterfaceSpecification> specs = CodeSearch.fromLQL("$ {" + StringUtils.substringAfter(operationName, "$") + "}");
-                    LOG.debug(specs.get(0).getConstructors().get(0).toLQL());
+                MethodSignature cSigMatched = null;
 
-                    MethodSignature cSig = specs.get(0).getConstructors().get(0);
-                    if (!cSigsSeen.contains(cSig.toLQL())) {
-                        interfaceSpecification.getConstructors().add(cSig);
-                        cSigsSeen.add(cSig.toLQL());
+                // is fully qualified? likely existing class from JDK etc.
+                if(StringUtils.contains(className, ".")) {
+                    // FIXME
+                    // reflection stuff
+                    try {
+                        Class clazz = classUnderTest.getProject().getContainer().loadClass(className);
+                        LOG.debug("Resolved constructor class '{}'", clazz);
 
-                        cSigMatched = cSig;
-                    } else {
-                        cSigMatched = interfaceSpecification.getConstructors().stream().filter(s -> StringUtils.equals(s.toLQL(), cSig.toLQL())).findFirst().get();
+                        // FIXME do same as for LQL
+
+                        // afterwards, try to resolve OriginalImplementation instead of AdaptedImplementation
+
+                    } catch (ClassNotFoundException e) {
+                        throw new RuntimeException(e);
                     }
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
+
+
+                } else {
+                    // LQL - class under search
+                    try {
+                        List<InterfaceSpecification> specs = CodeSearch.fromLQL("$ {" + StringUtils.substringAfter(operationName, "$") + "}");
+                        LOG.debug(specs.get(0).getConstructors().get(0).toLQL());
+
+                        MethodSignature cSig = specs.get(0).getConstructors().get(0);
+                        if (!cSigsSeen.contains(cSig.toLQL())) {
+                            interfaceSpecification.getConstructors().add(cSig);
+                            cSigsSeen.add(cSig.toLQL());
+
+                            cSigMatched = cSig;
+                        } else {
+                            cSigMatched = interfaceSpecification.getConstructors().stream().filter(s -> StringUtils.equals(s.toLQL(), cSig.toLQL())).findFirst().get();
+                        }
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+
+                // inputs (in addition to instance)
+                List<CallableStatement> inputStmts = new LinkedList<>();
+
+                if(!inputs.isEmpty()) {
+                    List<CallableStatement> resolvedStmts = resolveInputs(inputs, callableSequence);
+                    if(CollectionUtils.isNotEmpty(resolvedStmts)) {
+                        inputStmts.addAll(resolvedStmts);
+                    }
                 }
 
                 // callable statement
-                // FIXME args
-                CallableStatement c = callableSequence.fromCode(interfaceSpecification.getClassName() + "()"/*, Arrays.asList(stmt0)*/);
+                CallableStatement c = callableSequence.fromCode(interfaceSpecification.getClassName() + "()", inputStmts);
                 c.setInterfaceSpecification(interfaceSpecification);
                 c.setOperationId(interfaceSpecification.getConstructors().indexOf(cSigMatched));
+            } else if(StringUtils.startsWith(operationName, "#")) {
+                // FIXME remove
+
+                // code
+                String code = StringUtils.substringAfter(operationName, "#");
+                callableSequence.fromCode(code);
             } else {
                 // looking for method
 
@@ -277,12 +312,14 @@ public class SequenceSheetParser {
                 LOG.debug("resolved receiver is {}", resolvedReceiver.getRow());
 
                 // self/this instance (object)
-                CallableStatement receiverStmt = callableSequence.getStatements().get(resolvedReceiver.getRow());
+                CallableStatement receiverStmt = callableSequence.getRowStatement(resolvedReceiver.getRow());
+
+                LOG.debug("resolve stmt {}", receiverStmt.getCode());
 
                 InterfaceSpecification interfaceSpecification = receiverStmt.getInterfaceSpecification();
 
                 // identify method signature
-                MethodSignature mSigMatched;
+                MethodSignature mSigMatched = null;
                 try {
                     List<InterfaceSpecification> specs = CodeSearch.fromLQL("$ {"+ operationName +"}");
                     LOG.debug(specs.get(0).getMethods().get(0).toLQL());
@@ -305,37 +342,13 @@ public class SequenceSheetParser {
                 inputStmts.add(receiverStmt);
 
                 if(inputs.size() > 1) {
-                    int p = 0;
-                    for (Cell input : inputs.subList(1, inputs.size())) {
-                        // reference
-                        if (isCellReference(input)) {
-                            LOG.debug("Method arg cell ref {}", input);
-
-                            CellAddress inputRef = new CellAddress(input.getStringCellValue());
-                            CallableStatement inputStmt = callableSequence.getStatements().get(inputRef.getRow());
-                            inputStmts.add(inputStmt);
-                        } else {
-                            LOG.debug("Value arg cell {}", input);
-
-                            // FIXME santitize value
-                            String stringValue = input.getStringCellValue();
-                            // Excel encoding “Hello World!”
-                            if(StringUtils.startsWith(stringValue, "“") && StringUtils.endsWith(stringValue, "”")) {
-                                stringValue = StringUtils.wrap(stringValue.substring(1, stringValue.length() - 1), '"');
-                            }
-
-                            CallableStatement inputStmt = callableSequence.fromCode(stringValue);
-
-                            inputStmts.add(inputStmt);
-                        }
-
-                        p++;
+                    List<CallableStatement> resolvedStmts = resolveInputs(inputs.subList(1, inputs.size()), callableSequence);
+                    if(CollectionUtils.isNotEmpty(resolvedStmts)) {
+                        inputStmts.addAll(resolvedStmts);
                     }
                 }
 
-
                 // callable statement
-                // FIXME additional inputs args
                 CallableStatement c = callableSequence.fromCode(mSigMatched.getName() + "()", inputStmts);
                 c.setInterfaceSpecification(interfaceSpecification);
                 c.setOperationId(interfaceSpecification.getMethods().indexOf(mSigMatched));
@@ -344,6 +357,42 @@ public class SequenceSheetParser {
         }
 
         return testSpec;
+    }
+
+    List<CallableStatement> resolveInputs(List<Cell> inputs, CallableSequence callableSequence) {
+        List<CallableStatement> inputStmts = new LinkedList<>();
+        for (Cell input : inputs) {
+            if(input.getCellType() == CellType.BLANK) {
+                continue;
+            }
+
+            // reference
+            if (isCellReference(input)) {
+                LOG.debug("Method arg cell ref {}", input);
+
+                CellAddress inputRef = new CellAddress(input.getStringCellValue());
+                CallableStatement inputStmt = callableSequence.getRowStatement(inputRef.getRow());
+                inputStmts.add(inputStmt);
+            } else {
+                LOG.debug("Value arg cell {}", input);
+
+                // FIXME santitize value
+                DataFormatter dataFormatter = new DataFormatter(new java.util.Locale("en", "US"));
+                String stringValue = dataFormatter.formatCellValue(input);
+                //String stringValue = input.getStringCellValue();
+                // Excel encoding “Hello World!”
+                if(StringUtils.startsWith(stringValue, "“") && StringUtils.endsWith(stringValue, "”")) {
+                    stringValue = StringUtils.wrap(stringValue.substring(1, stringValue.length() - 1), '"');
+                }
+
+                // constant
+                CallableStatement inputStmt = callableSequence.fromConstant(stringValue);
+
+                inputStmts.add(inputStmt);
+            }
+        }
+
+        return inputStmts;
     }
 
     private ValueStatement processValue(TestSpecParseContext context, Class<?> expectedType, Cell cell) {

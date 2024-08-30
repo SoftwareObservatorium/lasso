@@ -4,6 +4,7 @@ import de.uni_mannheim.swt.lasso.arena.search.InterfaceSpecification;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -18,8 +19,31 @@ public class CallableSequence {
         return statements;
     }
 
+    /**
+     * Each non-"inline" {@link CallableStatement#isInline()}
+     *
+     * @param i
+     * @return
+     */
+    public CallableStatement getRowStatement(int i) {
+        return getRowStatements().get(i);
+    }
+
+    public List<CallableStatement> getRowStatements() {
+        return statements.stream().filter(s -> !s.isInline()).collect(Collectors.toList());
+    }
+
     public CallableStatement fromCode(String code) {
         CallableStatement callableStatement = new CallableStatement(statements.size(), code);
+        statements.add(callableStatement);
+
+        return callableStatement;
+    }
+
+    public CallableStatement fromConstant(String code) {
+        CallableStatement callableStatement = new CallableStatement(statements.size(), code);
+        callableStatement.setInline(true);
+
         statements.add(callableStatement);
 
         return callableStatement;

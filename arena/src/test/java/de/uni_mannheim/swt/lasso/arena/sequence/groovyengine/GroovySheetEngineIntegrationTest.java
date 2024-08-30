@@ -89,7 +89,7 @@ public class GroovySheetEngineIntegrationTest {
         CallableSequence callableSequence = new CallableSequence();
         CallableStatement stmt0 = callableSequence.fromCode("Stack()", interfaceSpecification, 0);
         // FIXME may also be inlined (string concat)
-        CallableStatement stmt1 = callableSequence.fromCode("\"Hello\"");
+        CallableStatement stmt1 = callableSequence.fromConstant("\"Hello\"");
         CallableStatement stmt2 = callableSequence.fromCode("push()", interfaceSpecification, 0, Arrays.asList(stmt0, stmt1));
         CallableStatement stmt3 = callableSequence.fromCode("size()", interfaceSpecification, 1, Arrays.asList(stmt0));
 
@@ -102,6 +102,13 @@ public class GroovySheetEngineIntegrationTest {
         Assertions.assertEquals("\"Hello\"", executedSequence.getStatement(1).getSerializedOutput());
         Assertions.assertEquals("\"Hello\"", executedSequence.getStatement(2).getSerializedOutput());
         Assertions.assertEquals("1", executedSequence.getStatement(3).getSerializedOutput());
+
+        // sheet rows
+        List<ExecutedStatement> rowStatements = executedSequence.getRowStatements();
+        Assertions.assertEquals(3, rowStatements.size());
+        Assertions.assertEquals("[]", rowStatements.get(0).getSerializedOutput());
+        Assertions.assertEquals("\"Hello\"", rowStatements.get(1).getSerializedOutput());
+        Assertions.assertEquals("1", rowStatements.get(2).getSerializedOutput());
     }
 
     @Test
@@ -132,10 +139,10 @@ public class GroovySheetEngineIntegrationTest {
         GroovySheetEngine groovySheetEngine = new GroovySheetEngine(classUnderTest.getProject().getContainer());
 
         CallableSequence callableSequence = new CallableSequence();
-        CallableStatement stmt0 = callableSequence.fromCode("1");
+        CallableStatement stmt0 = callableSequence.fromConstant("1");
         CallableStatement stmt1 = callableSequence.fromCode("List()", interfaceSpecification, 0, Arrays.asList(stmt0)); // FIXME get instance
         // FIXME may also be inlined (string concat) / or provided as code "add(\"Hello\")"
-        CallableStatement stmt2 = callableSequence.fromCode("\"Hello\"");
+        CallableStatement stmt2 = callableSequence.fromConstant("\"Hello\"");
         CallableStatement stmt3 = callableSequence.fromCode("add()", interfaceSpecification, 0, Arrays.asList(stmt1, stmt2));
         CallableStatement stmt4 = callableSequence.fromCode("size()", interfaceSpecification, 1, Arrays.asList(stmt1));
 
@@ -149,6 +156,13 @@ public class GroovySheetEngineIntegrationTest {
         Assertions.assertEquals("\"Hello\"", executedSequence.getStatement(2).getSerializedOutput());
         Assertions.assertEquals("true", executedSequence.getStatement(3).getSerializedOutput());
         Assertions.assertEquals("1", executedSequence.getStatement(4).getSerializedOutput());
+
+        // sheet rows
+        List<ExecutedStatement> rowStatements = executedSequence.getRowStatements();
+        Assertions.assertEquals(3, rowStatements.size());
+        Assertions.assertEquals("[]", rowStatements.get(0).getSerializedOutput());
+        Assertions.assertEquals("true", rowStatements.get(1).getSerializedOutput());
+        Assertions.assertEquals("1", rowStatements.get(2).getSerializedOutput());
     }
 
     public static ClassUnderTest createExample(Class<?> exampleClass) {
