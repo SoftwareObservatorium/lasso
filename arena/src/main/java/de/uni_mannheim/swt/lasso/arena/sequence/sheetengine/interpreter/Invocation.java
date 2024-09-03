@@ -1,5 +1,7 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.lang.reflect.Member;
 import java.util.List;
 
@@ -18,6 +20,8 @@ public class Invocation {
     private Parameter target;
 
     private List<Parameter> parameters;
+
+    private String codeExpression;
 
     public Invocation(int index) {
         this.index = index;
@@ -54,6 +58,7 @@ public class Invocation {
                 ", member=" + member +
                 ", targetClass=" + targetClass +
                 ", parameters=" + parameters +
+                ", codeExpression=" + codeExpression +
                 '}';
     }
 
@@ -63,5 +68,17 @@ public class Invocation {
 
     public void setTarget(Parameter target) {
         this.target = target;
+    }
+
+    public String getCodeExpression() {
+        return codeExpression;
+    }
+
+    public void setCodeExpression(String codeExpression) {
+        this.codeExpression = codeExpression;
+    }
+
+    public boolean isCodeExpression() {
+        return StringUtils.isNotBlank(codeExpression);
     }
 }

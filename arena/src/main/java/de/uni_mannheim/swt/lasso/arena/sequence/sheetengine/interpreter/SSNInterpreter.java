@@ -37,8 +37,14 @@ public class SSNInterpreter {
 
     private static final Logger LOG = LoggerFactory
             .getLogger(SSNInterpreter.class);
-    public static final String CODE_PREFIX = "#{";
-    public static final String CODE_POSTFIX = "}";
+
+    /**
+     * Alias because of historical reasons
+     */
+    public static final String CREATE = "create";
+
+    public static final String $_CREATE = "$create";
+    public static final String $_EVAL = "$eval";
 
     /**
      * Interpret sheet specifications.
@@ -97,7 +103,7 @@ public class SSNInterpreter {
                 inputArgs = inputs.subList(1, inputs.size()); // remaining input parameters
             }
 
-            if(StringUtils.equalsIgnoreCase(operationName, "create")) {
+            if(StringUtils.equalsAnyIgnoreCase(operationName, CREATE, $_CREATE)) {
                 // create invocation
                 LOG.debug("create invocation = {}", operationName);
 
@@ -105,15 +111,14 @@ public class SSNInterpreter {
                 // create instance
                 Invocation createInstance = instanceInvocation(bsh, invocations, className, inputArgs);
 
-            } else if(StringUtils.startsWith(operationName, CODE_PREFIX) && StringUtils.startsWith(operationName, CODE_POSTFIX)) {
+            } else if(StringUtils.equalsAnyIgnoreCase(operationName, $_EVAL)) {
                 // code to evaluate
 
                 // FIXME code to eval
                 // -- use "eval" command? or some simple syntax like in SpEL #{ <expression string> }
 
                 LOG.debug("code invocation = {}", operationName);
-
-                String codeToEvaluate = StringUtils.substringBetween(operationName, CODE_PREFIX, CODE_POSTFIX);
+                Invocation codeInvocation = codeInvocation(invocations, clazzCell);
 
             } else {
                 // method invocation
@@ -140,6 +145,15 @@ public class SSNInterpreter {
 
         for(Invocation invocation : invocations.getSequence()) {
             ExecutedInvocation executedInvocation = executedInvocations.create(invocation);
+
+            // is code expression?
+            if(invocation.isCodeExpression()) {
+                // execute
+                Object outVal = evalCode(executedInvocation, invocations.getBsh());
+                executedInvocation.setOutput(Output.fromValue(outVal));
+
+                continue;
+            }
 
             // is CUT?
             Member member = invocation.getMember();
@@ -502,15 +516,66 @@ public class SSNInterpreter {
     }
 
     /**
+     * Create a code expression invocation.
+     *
+     * @param invocations
+     * @param codeCell
+     * @return
+     */
+    Invocation codeInvocation(Invocations invocations, ParsedCell codeCell) {
+        String codeExpression = codeCell.getNodeValue().textValue();
+
+        Invocation invocation = invocations.create();
+        invocation.setCodeExpression(codeExpression);
+
+        // FIXME execute code expression to obtain Type .. is this desired to do upfront?
+        try {
+            Object outVal = eval(invocations.getBsh(), codeExpression);
+
+            Class type = outVal == null ? null : outVal.getClass();
+            invocation.setTargetClass(type);
+        } catch (EvalError e) {
+            throw new RuntimeException(e);
+        }
+
+        return invocation;
+    }
+
+    /**
+     * Execute (evaluate) a code expression.
+     *
+     * @param executedInvocation
+     * @param bsh
+     * @return
+     */
+    Object evalCode(ExecutedInvocation executedInvocation, Interpreter bsh) {
+        Invocation invocation = executedInvocation.getInvocation();
+        if(!invocation.isCodeExpression()) {
+            throw new IllegalArgumentException("not a code expression invocation");
+        }
+
+        String codeExpression = invocation.getCodeExpression();
+        try {
+            Object outVal = eval(bsh, codeExpression);
+
+            //LOG.debug("exp out '{}'", outVal);
+            return outVal;
+        } catch (EvalError e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
      * Evaluate a code expression in BSH
      *
      * @param bsh
      * @param expr
+     * @return
      * @throws EvalError
      */
-    void eval(Interpreter bsh, String expr) throws EvalError {
+    Object eval(Interpreter bsh, String expr) throws EvalError {
         LOG.debug("EVAL:\n {}", expr);
-        bsh.eval(expr);
+        return bsh.eval(expr);
     }
 
     /**

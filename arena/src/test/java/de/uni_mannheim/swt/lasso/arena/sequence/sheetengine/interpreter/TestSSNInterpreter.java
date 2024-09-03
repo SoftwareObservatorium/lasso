@@ -40,7 +40,7 @@ public class TestSSNInterpreter {
         String ssnJsonlStr = "{\"sheet\": \"Sheet 1\", \"header\": \"Row 1\", \"cells\": {\"A1\": null, \"B1\": \"create\", \"C1\": \"Stack\"}}\n" +
                 "{\"sheet\": \"Sheet 1\", \"header\": \"Row 2\", \"cells\": {\"A2\": null, \"B2\": \"create\", \"C2\": \"java.lang.String\", \"D2\": \"'Hello World!'\"}}\n" +
                 "{\"sheet\": \"Sheet 1\", \"header\": \"Row 3\", \"cells\": {\"A3\": null, \"B3\": \"push\", \"C3\": \"A1\", \"D3\": \"A2\"}}\n" +
-                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 3\", \"cells\": {\"A3\": null, \"B3\": \"size\", \"C3\": \"A1\"}}\n";
+                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 3\", \"cells\": {\"A4\": null, \"B4\": \"size\", \"C4\": \"A1\"}}\n";
 
         SSNParser ssnParser = new SSNParser();
         ParsedSheet parsedSheet = ssnParser.parseJsonl(ssnJsonlStr);
