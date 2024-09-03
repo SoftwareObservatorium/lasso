@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * A sequence of {@link ExecutedInvocation}s.
  *
  * @author Marcus Kessel
  */
@@ -34,5 +35,26 @@ public class ExecutedInvocations {
 
     public ExecutedInvocation getExecutedInvocation(int index) {
         return executedSequence.get(index);
+    }
+
+    /**
+     * Return code statement for this executed sequence of invocations
+     *
+     * @return
+     */
+    public String toCode() {
+        // FIXME implement
+        return "TODO";
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for(ExecutedInvocation executedInvocation : getExecutedSequence()) {
+            sb.append(executedInvocation.toString());
+            sb.append("\n");
+        }
+
+        return sb.toString();
     }
 }

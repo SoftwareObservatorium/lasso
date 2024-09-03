@@ -4,6 +4,7 @@ import java.lang.reflect.Member;
 import java.util.List;
 
 /**
+ * Represents an invocation of an operation (e.g., method etc.).
  *
  * @author Marcus Kessel
  */

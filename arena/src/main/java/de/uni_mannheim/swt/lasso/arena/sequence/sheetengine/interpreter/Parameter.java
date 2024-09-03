@@ -2,6 +2,11 @@ package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter;
 
 import org.apache.commons.lang3.ArrayUtils;
 
+/**
+ * Represents an (input) parameter by its type and value.
+ *
+ * @author Marcus Kessel
+ */
 public class Parameter {
 
     private Class targetClass;

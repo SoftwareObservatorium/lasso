@@ -98,6 +98,42 @@ public class PermutatorAdaptedImplementation extends AdaptedImplementation {
         return adaptedInitializer;
     }
 
+    public AdaptedInitializer resolveAdaptedInitializer(InterfaceSpecification interfaceSpecification, MethodSignature signature) {
+        int c = interfaceSpecification.getConstructors().indexOf(signature);
+        List<Candidate> candidates = adapter.getConstructors().get(c);
+        Candidate candidate = candidates.get(0); // best match
+
+        // FIXME can be any "Member"
+        PermutatorAdaptedInitializer adaptedInitializer = new PermutatorAdaptedInitializer(
+                signature,
+                getAdaptee(),
+                candidate.getMethod(),
+                javaConverterStrategy,
+                candidate);
+        adaptedInitializer.setPositions(candidate.getPositions());
+
+        return adaptedInitializer;
+    }
+
+    public AdaptedMethod resolveAdaptedMethod(InterfaceSpecification specification, MethodSignature signature) {
+        int c = specification.getMethods().indexOf(signature);
+        Candidate candidate = adapter.getMethods().get(c);
+
+        if(candidate == null) {
+            throw new MissingCandidateMethodException(String.format("Missing method for signature '%s'", signature.toLQL()));
+        }
+
+        PermutatorAdaptedMethod adaptedMethod = new PermutatorAdaptedMethod(
+                signature,
+                getAdaptee(),
+                (Method) candidate.getMethod(),
+                javaConverterStrategy);
+
+        adaptedMethod.setPositions(candidate.getPositions());
+
+        return adaptedMethod;
+    }
+
     @Override
     public AdaptedInitializer getDefaultInitializer() {
         // FIXME which is the default?

@@ -25,8 +25,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -118,47 +116,6 @@ public class MethodSignature {
 
             throw e;
         }
-
-        return sb.toString();
-    }
-
-    public String toJava() {
-        StringBuilder sb = new StringBuilder();
-//        sb.append(className);
-//        sb.append("(");
-
-        if(StringUtils.equalsIgnoreCase(getName(), "<init>")) {
-            sb.append(getParent().getClassName());
-        } else {
-            try {
-                sb.append(toReturnString());
-
-                sb.append(" ");
-                sb.append(getName());
-            } catch (Throwable e) {
-                System.err.println("invalid LQL: " + sb.toString());
-
-                e.printStackTrace();
-
-                throw e;
-            }
-        }
-
-        sb.append("(");
-        //sb.append(String.join(",", toParameterString()));
-        if(!ArrayUtils.isEmpty(getParameterTypes())) {
-            String[] inputs = Arrays.stream(getParameterTypes())
-                    .map(Class::getCanonicalName)
-                    .toArray(String[]::new);
-            List<String> in = new LinkedList<>();
-            for(int i = 0; i < inputs.length; i++) {
-                in.add(inputs[i] + " arg" + i);
-            }
-
-            sb.append(String.join(",", in));
-        }
-
-        sb.append("){}");
 
         return sb.toString();
     }

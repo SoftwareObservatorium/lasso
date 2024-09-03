@@ -1,7 +1,5 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter;
 
-import bsh.Interpreter;
-import bsh.UtilEvalError;
 import de.uni_mannheim.swt.lasso.arena.CandidatePool;
 import de.uni_mannheim.swt.lasso.arena.ClassUnderTest;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptationStrategy;
@@ -17,7 +15,6 @@ import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.SSNParser;
 import de.uni_mannheim.swt.lasso.core.model.CodeUnit;
 import org.eclipse.aether.resolution.DependencyRequest;
 import org.eclipse.aether.resolution.DependencyResult;
-import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,9 +22,14 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public class TestSSNInterpreter {
+/**
+ *
+ *
+ * @author Marcus Kessel
+ */
+public class SSNTestDriver {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TestSSNInterpreter.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SSNTestDriver.class);
 
     String mavenRepoUrl = NexusInstance.LOCAL_URL;
     File localRepo = new File("/tmp/lalalamvn/local-repo");
@@ -35,74 +37,34 @@ public class TestSSNInterpreter {
     DependencyResolver resolver = new DependencyResolver(mavenRepoUrl, localRepo.getAbsolutePath());
     MavenRepository mavenRepository = new MavenRepository(resolver);
 
-    @Test
-    public void test() throws IOException {
-        String ssnJsonlStr = "{\"sheet\": \"Sheet 1\", \"header\": \"Row 1\", \"cells\": {\"A1\": null, \"B1\": \"create\", \"C1\": \"Stack\"}}\n" +
-                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 2\", \"cells\": {\"A2\": null, \"B2\": \"create\", \"C2\": \"java.lang.String\", \"D2\": \"'Hello World!'\"}}\n" +
-                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 3\", \"cells\": {\"A3\": null, \"B3\": \"push\", \"C3\": \"A1\", \"D3\": \"A2\"}}\n" +
-                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 3\", \"cells\": {\"A3\": null, \"B3\": \"size\", \"C3\": \"A1\"}}\n";
-
+    public ExecutedInvocations runSheet(String ssnJsonlStr, String lql, Class cutClass, int limitAdapters) throws IOException {
         SSNParser ssnParser = new SSNParser();
         ParsedSheet parsedSheet = ssnParser.parseJsonl(ssnJsonlStr);
 
-        String lql = "Stack {\n" +
-                "push(java.lang.String)->java.lang.String\n" +
-                "size()->int\n" +
-                "}";
         Engine engine = new Engine();
         Map<String, InterfaceSpecification> interfaceSpecificationMap = engine.lqlToMap(lql);
 
         SSNInterpreter interpreter = new SSNInterpreter();
-
-        // TODO call with classundertest to set classloader
-        Invocations invocations = interpreter.interpret(parsedSheet, interfaceSpecificationMap);
-
-        LOG.debug("Invocations\n{}", invocations);
-
-        // now take it and adapt! we can directly inject an adapter and delegate dynamically
-        // Option 1. Stack { push(..) { delegate.XXX("push", args ...); } }
-        // Option 2. just use invocation as a template and directly call adaptee! (like in randoop)
 
         ClassUnderTest classUnderTest = createExample(Stack.class);
         CandidatePool pool = new CandidatePool(mavenRepository, Collections.singletonList(classUnderTest));
         // automatically resolves project-related artifacts
         pool.initProjects();
 
-        AdaptationStrategy adaptationStrategy = new DefaultAdaptationStrategy();
-        int limitAdapters = 1;
+        // TODO call with classundertest to set classloader
+        Invocations invocations = interpreter.interpret(parsedSheet, interfaceSpecificationMap, classUnderTest);
 
-        List<AdaptedImplementation> adaptedImplementations = adaptationStrategy.adapt(interfaceSpecificationMap.get("Stack"), classUnderTest, limitAdapters);
+        AdaptationStrategy adaptationStrategy = new DefaultAdaptationStrategy();
+
+        // FIXME for all CUTs .. here only one
+        String faName = interfaceSpecificationMap.keySet().stream().findFirst().get();
+
+        List<AdaptedImplementation> adaptedImplementations = adaptationStrategy.adapt(interfaceSpecificationMap.get(faName), classUnderTest, limitAdapters);
 
         // run
         ExecutedInvocations executedInvocations = interpreter.run(invocations, adaptedImplementations.get(0));
-        LOG.debug("Executed Invocations\n{}", executedInvocations);
-    }
 
-    @Test
-    public void testLqlToJava() throws IOException, UtilEvalError, NoSuchMethodException {
-        String lql = "Stack {\n" +
-                "push(java.lang.String)->java.lang.String\n" +
-                "size()->int\n" +
-                "}";
-        Engine engine = new Engine();
-        Map<String, InterfaceSpecification> interfaceSpecificationMap = engine.lqlToMap(lql);
-
-        SSNInterpreter interpreter = new SSNInterpreter();
-
-        Interpreter bsh = new Interpreter();
-        interpreter.lqlToJava(bsh, interfaceSpecificationMap.get("Stack"));
-
-        Class clazz = bsh.getNameSpace().getClass("Stack");
-        clazz.getMethods();
-        LOG.debug(clazz.getDeclaredConstructor().toString());
-        LOG.debug(clazz.getDeclaredConstructor().toGenericString());
-
-        // FIXME we could use the method prefix to ship the ID in order to link to LQL
-        // encode ID: __ID__methodName(...) -- or __A_XXX__
-        // or SORT: sort LQL to Java, each sig, then sort reflected ones
-
-        LOG.debug("class = {}", clazz);
-        //LOG.debug("class = {}",          bsh.getNameSpace().);
+        return executedInvocations;
     }
 
     public static ClassUnderTest createExample(Class<?> exampleClass) {

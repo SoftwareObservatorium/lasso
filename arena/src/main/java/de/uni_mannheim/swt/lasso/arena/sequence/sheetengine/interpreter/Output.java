@@ -1,5 +1,10 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter;
 
+/**
+ * Represents the outcome (i.e., result) of an execution of an {@link Invocation}.
+ *
+ * @author Marcus Kessel
+ */
 public class Output {
 
     private Object value;
@@ -34,5 +39,13 @@ public class Output {
 
     public void setException(Throwable exception) {
         this.exception = exception;
+    }
+
+    @Override
+    public String toString() {
+        return "Output{" +
+                "value=" + value +
+                ", exception=" + exception +
+                '}';
     }
 }

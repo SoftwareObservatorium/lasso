@@ -101,33 +101,6 @@ public class InterfaceSpecification {
         return sb.toString();
     }
 
-    public String toJava() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("class ");
-        sb.append(className);
-        sb.append("{\n");
-        if(CollectionUtils.isNotEmpty(constructors)) {
-//            // make sure to use Clazz name and not <init>
-//            constructors.forEach(c -> {
-//                c.setName(c.getName());
-//                c.setReturnType("void");
-//            });
-
-            sb.append(constructors.stream().map(MethodSignature::toJava).collect(Collectors.joining("\n")));
-
-            sb.append("\n");
-        }
-        if(CollectionUtils.isNotEmpty(methods)) {
-            sb.append(methods.stream().map(MethodSignature::toJava).collect(Collectors.joining("\n")));
-
-            sb.append("\n");
-        }
-
-        sb.append("}");
-
-        return sb.toString();
-    }
-
     public InterfaceDesc toDescription() {
         InterfaceDesc interfaceDesc = new InterfaceDesc();
         interfaceDesc.setName(getClassName());

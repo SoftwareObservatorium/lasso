@@ -1,14 +1,7 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter;
 
-import bsh.Interpreter;
-import de.uni_mannheim.swt.lasso.arena.search.InterfaceSpecification;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.ParsedSheet;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 /**
+ * An executed {@link Invocation} that records the output.
  *
  * @author Marcus Kessel
  */
@@ -31,5 +24,23 @@ public class ExecutedInvocation {
 
     public void setOutput(Output output) {
         this.output = output;
+    }
+
+    /**
+     * Return code statement for this executed invocation
+     *
+     * @return
+     */
+    public String toCode() {
+        // FIXME implement
+        return "TODO";
+    }
+
+    @Override
+    public String toString() {
+        return "ExecutedInvocation{" +
+                "invocation=" + invocation +
+                ", output=" + output +
+                '}';
     }
 }
