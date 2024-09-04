@@ -38,6 +38,13 @@
 
     <dependencies>
 
+        <!-- beanshell -->
+        <dependency>
+            <groupId>beanshell</groupId>
+            <artifactId>beanshell</artifactId>
+            <version>2.1.1</version>
+        </dependency>
+
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>arena-support</artifactId>
