@@ -49,6 +49,8 @@ public class InstanceInvocation extends MemberInvocation {
 
         Constructor constructor = getAsConstructor();
 
+        // --- START ADAPTER LOGIC
+        // FIXME pre-produce code a) (GoF adapter) or b) adapt dynamically
         // CUT: adapted constructor call
         if(cut) {
             // FIXME adapt delegate
@@ -81,6 +83,7 @@ public class InstanceInvocation extends MemberInvocation {
             } catch (Throwable e) {
                 throw new RuntimeException(e);
             }
+            // --- END ADAPTER LOGIC
         } else {
             try {
                 if(!constructor.isAccessible()) {
@@ -101,5 +104,11 @@ public class InstanceInvocation extends MemberInvocation {
                 throw new RuntimeException(e);
             }
         }
+    }
+
+    @Override
+    public String toCode() {
+        // FIXME
+        return getMember().toString();
     }
 }

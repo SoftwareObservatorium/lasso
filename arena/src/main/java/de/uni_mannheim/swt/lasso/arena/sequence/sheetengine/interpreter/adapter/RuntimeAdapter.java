@@ -15,7 +15,7 @@ public class RuntimeAdapter {
 
     private AdaptedImplementation adaptedImplementation;
 
-    public Object adapt(String methodName, String... args) {
+    public Object adapt(String methodName, Object... args) {
         LOG.debug("method called '{}' with args '{}'", methodName, args);
 
         return null;

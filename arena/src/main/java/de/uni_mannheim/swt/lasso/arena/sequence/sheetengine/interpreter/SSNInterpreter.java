@@ -70,7 +70,7 @@ public class SSNInterpreter {
     }
 
     /**
-     * Interpret sheet specifications.
+     * Interpret
      *
      * @param parsedSheet
      * @param interfaceSpecificationMap
@@ -81,6 +81,19 @@ public class SSNInterpreter {
         // our interpreter that holds signatures on the fly for resolution
         Eval eval = new BshEval();
         eval.setClassLoader(classLoader);
+
+        return interpret(parsedSheet, interfaceSpecificationMap, eval);
+    }
+
+    /**
+     * Interpret sheet specifications.
+     *
+     * @param parsedSheet
+     * @param interfaceSpecificationMap
+     * @param eval
+     * @return
+     */
+    public Invocations interpret(ParsedSheet parsedSheet, Map<String, InterfaceSpecification> interfaceSpecificationMap, Eval eval) {
         // all LQL specs to Java (here classes)
         Map<Member, MethodSignature> resolvedMappings = lqlToJava(eval, interfaceSpecificationMap);
 
@@ -144,7 +157,7 @@ public class SSNInterpreter {
 
         try {
             LOG.debug("Execution listener 'visitBeforeSequence'");
-            executionListener.visitBeforeSequence(executedInvocations);
+            executionListener.visitBeforeSequence(executedInvocations, adaptedImplementation);
         } catch (Throwable e) {
             LOG.warn("Execution listener 'visitBeforeSequence' failed", e);
         }
@@ -154,7 +167,7 @@ public class SSNInterpreter {
 
             try {
                 LOG.debug("Execution listener 'visitBeforeStatement'");
-                executionListener.visitBeforeStatement(executedInvocations, executedInvocation.getInvocation().getIndex());
+                executionListener.visitBeforeStatement(executedInvocations, executedInvocation.getInvocation().getIndex(), adaptedImplementation);
             } catch (Throwable e) {
                 LOG.warn("Execution listener 'visitBeforeStatement' failed", e);
             }
@@ -170,7 +183,7 @@ public class SSNInterpreter {
 
             try {
                 LOG.debug("Execution listener 'visitAfterStatement'");
-                executionListener.visitAfterStatement(executedInvocations, executedInvocation.getInvocation().getIndex());
+                executionListener.visitAfterStatement(executedInvocations, executedInvocation.getInvocation().getIndex(), adaptedImplementation);
             } catch (Throwable e) {
                 LOG.warn("Execution listener 'visitAfterStatement' failed", e);
             }
@@ -178,7 +191,7 @@ public class SSNInterpreter {
 
         try {
             LOG.debug("Execution listener 'visitAfterSequence'");
-            executionListener.visitAfterSequence(executedInvocations);
+            executionListener.visitAfterSequence(executedInvocations, adaptedImplementation);
         } catch (Throwable e) {
             LOG.warn("Execution listener 'visitAfterSequence' failed", e);
         }

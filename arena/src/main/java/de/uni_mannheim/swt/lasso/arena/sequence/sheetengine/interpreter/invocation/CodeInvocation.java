@@ -40,6 +40,11 @@ public class CodeInvocation extends Invocation {
         }
     }
 
+    @Override
+    public String toCode() {
+        return codeExpression;
+    }
+
     /**
      * Evaluate code expression.
      *

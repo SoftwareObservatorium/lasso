@@ -61,4 +61,5 @@ public abstract class Invocation {
 
     public abstract void execute(ExecutedInvocations executedInvocations, ExecutedInvocation executedInvocation, AdaptedImplementation adaptedImplementation);
 
+    public abstract String toCode();
 }

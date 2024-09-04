@@ -53,6 +53,8 @@ public class MethodInvocation extends MemberInvocation {
         // either value (object) or reference
         List<Object> inputs = resolveInputs(invocations, executedInvocations);
 
+        // --- START ADAPTER LOGIC
+        // FIXME pre-produce code a) (GoF adapter) or b) adapt dynamically
         // CUT: adapted method invocation
         if(cut) {
             ExecutedInvocation ref = executedInvocations.getExecutedInvocation(target.getReference()[0]);
@@ -85,6 +87,7 @@ public class MethodInvocation extends MemberInvocation {
             } catch (Throwable e) {
                 throw new RuntimeException(e);
             }
+            // --- END ADAPTER LOGIC
         } else {
             // method invocation
             ExecutedInvocation ref = executedInvocations.getExecutedInvocation(target.getReference()[0]);
@@ -108,5 +111,11 @@ public class MethodInvocation extends MemberInvocation {
                 throw new RuntimeException(e);
             }
         }
+    }
+
+    @Override
+    public String toCode() {
+        // FIXME
+        return getMethod().toGenericString();
     }
 }
