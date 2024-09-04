@@ -10,6 +10,7 @@ import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.eval.Eva
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocation.CodeInvocation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocation.InstanceInvocation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocation.MethodInvocation;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.CodeExpressionUtils;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.ParsedCell;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.ParsedRow;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.ParsedSheet;

@@ -2,6 +2,7 @@ package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocat
 
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.*;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.eval.EvalException;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.CodeExpressionUtils;
 
 import java.lang.reflect.Member;
 import java.util.ArrayList;

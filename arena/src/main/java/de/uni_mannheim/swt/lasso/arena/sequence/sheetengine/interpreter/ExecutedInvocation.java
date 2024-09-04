@@ -10,6 +10,8 @@ public class ExecutedInvocation {
     private final Invocation invocation;
     private Output output = null;
 
+    private long executionTime;
+
     public ExecutedInvocation(Invocation invocation) {
         this.invocation = invocation;
     }
@@ -41,6 +43,15 @@ public class ExecutedInvocation {
         return "ExecutedInvocation{" +
                 "invocation=" + invocation +
                 ", output=" + output +
+                ", executionTime=" + executionTime +
                 '}';
+    }
+
+    public long getExecutionTime() {
+        return executionTime;
+    }
+
+    public void setExecutionTime(long executionTime) {
+        this.executionTime = executionTime;
     }
 }

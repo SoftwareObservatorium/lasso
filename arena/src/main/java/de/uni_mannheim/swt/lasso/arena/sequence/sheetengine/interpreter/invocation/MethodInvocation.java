@@ -5,6 +5,7 @@ import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedMethod;
 import de.uni_mannheim.swt.lasso.arena.adaptation.permutator.PermutatorAdaptedImplementation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.*;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.perf.Runner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,13 +72,17 @@ public class MethodInvocation extends MemberInvocation {
                 if(!adMethod.isAccessible()) {
                     adMethod.setAccessible(true);
                 }
-                Object out = adMethod.invoke(instance, inputs.toArray());
+                Runner runner = new Runner();
+                Object out = runner.run(() -> adMethod.invoke(instance, inputs.toArray()));
                 executedInvocation.setOutput(Output.fromValue(out));
+                executedInvocation.setExecutionTime(runner.getStopWatch().getExecutionNanoTime());
 
                 LOG.debug("cut method call '{}'", executedInvocation.getOutput().getValue());
             } catch (IllegalAccessException e) {
                 throw new RuntimeException(e);
             } catch (InvocationTargetException e) {
+                throw new RuntimeException(e);
+            } catch (Throwable e) {
                 throw new RuntimeException(e);
             }
         } else {
@@ -88,13 +93,18 @@ public class MethodInvocation extends MemberInvocation {
                 if(!method.isAccessible()) {
                     method.setAccessible(true);
                 }
-                Object out = method.invoke(instance, inputs.toArray());
+
+                Runner runner = new Runner();
+                Object out = runner.run(() -> method.invoke(instance, inputs.toArray()));
                 executedInvocation.setOutput(Output.fromValue(out));
+                executedInvocation.setExecutionTime(runner.getStopWatch().getExecutionNanoTime());
 
                 LOG.debug("non-cut method call '{}'", executedInvocation.getOutput().getValue());
             } catch (IllegalAccessException e) {
                 throw new RuntimeException(e);
             } catch (InvocationTargetException e) {
+                throw new RuntimeException(e);
+            } catch (Throwable e) {
                 throw new RuntimeException(e);
             }
         }

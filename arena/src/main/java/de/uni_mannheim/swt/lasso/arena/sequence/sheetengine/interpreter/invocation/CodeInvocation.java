@@ -7,6 +7,7 @@ import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Invocati
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Output;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.eval.Eval;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.eval.EvalException;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.perf.Runner;
 
 /**
  * A code expression that is "invoked" (i.e., evaluated).
@@ -23,18 +24,6 @@ public class CodeInvocation extends Invocation {
 
     @Override
     public void execute(ExecutedInvocations executedInvocations, ExecutedInvocation executedInvocation, AdaptedImplementation adaptedImplementation) {
-        Object outVal = evalCode(executedInvocation, executedInvocations.getInvocations().getEval());
-        executedInvocation.setOutput(Output.fromValue(outVal));
-    }
-
-    /**
-     * Execute (evaluate) a code expression.
-     *
-     * @param executedInvocation
-     * @param eval
-     * @return
-     */
-    public static Object evalCode(ExecutedInvocation executedInvocation, Eval eval) {
         Invocation invocation = executedInvocation.getInvocation();
         if(!(invocation instanceof CodeInvocation)) {
             throw new IllegalArgumentException("not a code expression invocation");
@@ -42,15 +31,23 @@ public class CodeInvocation extends Invocation {
 
         String codeExpression = ((CodeInvocation) invocation).getCodeExpression();
         try {
-            Object outVal = evalCode(eval, codeExpression);
-
-            //LOG.debug("exp out '{}'", outVal);
-            return outVal;
-        } catch (EvalException e) {
+            Runner runner = new Runner();
+            Object outVal = runner.run(() -> evalCode(executedInvocations.getInvocations().getEval(), codeExpression));
+            executedInvocation.setOutput(Output.fromValue(outVal));
+            executedInvocation.setExecutionTime(runner.getStopWatch().getExecutionNanoTime());
+        } catch (Throwable e) {
             throw new RuntimeException(e);
         }
     }
 
+    /**
+     * Evaluate code expression.
+     *
+     * @param eval
+     * @param codeExpression
+     * @return
+     * @throws EvalException
+     */
     public static Object evalCode(Eval eval, String codeExpression) throws EvalException {
         Object outVal = eval.eval(codeExpression);
 

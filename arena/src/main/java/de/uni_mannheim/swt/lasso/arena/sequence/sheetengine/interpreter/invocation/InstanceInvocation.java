@@ -5,6 +5,7 @@ import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedInitializer;
 import de.uni_mannheim.swt.lasso.arena.adaptation.permutator.PermutatorAdaptedImplementation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.*;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.perf.Runner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,8 +66,10 @@ public class InstanceInvocation extends MemberInvocation {
                     adaptedConstructor.setAccessible(true);
                 }
 
-                Object instance = adaptedConstructor.newInstance(inputs.toArray());
+                Runner runner = new Runner();
+                Object instance = runner.run(() -> adaptedConstructor.newInstance(inputs.toArray()));
                 executedInvocation.setOutput(Output.fromValue(instance));
+                executedInvocation.setExecutionTime(runner.getStopWatch().getExecutionNanoTime());
 
                 LOG.debug("cut constructor '{}'", executedInvocation.getOutput().getValue());
             } catch (InstantiationException e) {
@@ -75,6 +78,8 @@ public class InstanceInvocation extends MemberInvocation {
                 throw new RuntimeException(e);
             } catch (InvocationTargetException e) {
                 throw new RuntimeException(e);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
             }
         } else {
             try {
@@ -82,15 +87,17 @@ public class InstanceInvocation extends MemberInvocation {
                     constructor.setAccessible(true);
                 }
 
-                Object instance = constructor.newInstance(inputs.toArray());
+                Runner runner = new Runner();
+                Object instance = runner.run(() -> constructor.newInstance(inputs.toArray()));
                 executedInvocation.setOutput(Output.fromValue(instance));
+                executedInvocation.setExecutionTime(runner.getStopWatch().getExecutionNanoTime());
 
                 LOG.debug("non-cut constructor '{}'", executedInvocation.getOutput().getValue());
             } catch (InstantiationException e) {
                 throw new RuntimeException(e);
             } catch (IllegalAccessException e) {
                 throw new RuntimeException(e);
-            } catch (InvocationTargetException e) {
+            } catch (Throwable e) {
                 throw new RuntimeException(e);
             }
         }

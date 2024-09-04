@@ -1,4 +1,4 @@
-package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter;
+package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util;
 
 import org.apache.commons.lang3.StringUtils;
 

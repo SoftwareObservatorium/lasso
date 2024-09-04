@@ -1,4 +1,4 @@
-package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter;
+package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util;
 
 import de.uni_mannheim.swt.lasso.arena.ClassUnderTest;
 import de.uni_mannheim.swt.lasso.core.model.CodeUnit;

@@ -21,6 +21,7 @@ public class BshEval implements Eval {
         this(new Interpreter());
     }
 
+    // FIXME timeout handling?
     @Override
     public Object eval(String expression) throws EvalException {
         try {
