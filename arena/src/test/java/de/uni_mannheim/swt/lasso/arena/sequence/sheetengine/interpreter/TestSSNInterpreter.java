@@ -1,7 +1,5 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter;
 
-import bsh.Interpreter;
-import bsh.UtilEvalError;
 import de.uni_mannheim.swt.lasso.arena.CandidatePool;
 import de.uni_mannheim.swt.lasso.arena.ClassUnderTest;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptationStrategy;
@@ -11,12 +9,11 @@ import de.uni_mannheim.swt.lasso.arena.repository.DependencyResolver;
 import de.uni_mannheim.swt.lasso.arena.repository.MavenRepository;
 import de.uni_mannheim.swt.lasso.arena.repository.NexusInstance;
 import de.uni_mannheim.swt.lasso.arena.search.InterfaceSpecification;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.Engine;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.eval.BshEval;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.eval.Eval;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.ParsedSheet;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.SSNParser;
-import de.uni_mannheim.swt.lasso.core.model.CodeUnit;
-import org.eclipse.aether.resolution.DependencyRequest;
-import org.eclipse.aether.resolution.DependencyResult;
+
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,8 +46,7 @@ public class TestSSNInterpreter {
                 "push(java.lang.String)->java.lang.String\n" +
                 "size()->int\n" +
                 "}";
-        Engine engine = new Engine();
-        Map<String, InterfaceSpecification> interfaceSpecificationMap = engine.lqlToMap(lql);
+        Map<String, InterfaceSpecification> interfaceSpecificationMap = LQLUtils.lqlToMap(lql);
 
         SSNInterpreter interpreter = new SSNInterpreter();
 
@@ -63,7 +59,7 @@ public class TestSSNInterpreter {
         // Option 1. Stack { push(..) { delegate.XXX("push", args ...); } }
         // Option 2. just use invocation as a template and directly call adaptee! (like in randoop)
 
-        ClassUnderTest classUnderTest = createExample(Stack.class);
+        ClassUnderTest classUnderTest = CutUtils.createExample(Stack.class);
         CandidatePool pool = new CandidatePool(mavenRepository, Collections.singletonList(classUnderTest));
         // automatically resolves project-related artifacts
         pool.initProjects();
@@ -73,26 +69,26 @@ public class TestSSNInterpreter {
 
         List<AdaptedImplementation> adaptedImplementations = adaptationStrategy.adapt(interfaceSpecificationMap.get("Stack"), classUnderTest, limitAdapters);
 
+        ExecutionListener executionListener = new ExecutionListener();
         // run
-        ExecutedInvocations executedInvocations = interpreter.run(invocations, adaptedImplementations.get(0));
+        ExecutedInvocations executedInvocations = interpreter.run(invocations, adaptedImplementations.get(0), executionListener);
         LOG.debug("Executed Invocations\n{}", executedInvocations);
     }
 
     @Test
-    public void testLqlToJava() throws IOException, UtilEvalError, NoSuchMethodException {
+    public void testLqlToJava() throws IOException, NoSuchMethodException, ClassNotFoundException {
         String lql = "Stack {\n" +
                 "push(java.lang.String)->java.lang.String\n" +
                 "size()->int\n" +
                 "}";
-        Engine engine = new Engine();
-        Map<String, InterfaceSpecification> interfaceSpecificationMap = engine.lqlToMap(lql);
+        Map<String, InterfaceSpecification> interfaceSpecificationMap = LQLUtils.lqlToMap(lql);
 
         SSNInterpreter interpreter = new SSNInterpreter();
 
-        Interpreter bsh = new Interpreter();
-        interpreter.lqlToJava(bsh, interfaceSpecificationMap.get("Stack"));
+        Eval eval = new BshEval();
+        interpreter.lqlToJava(eval, interfaceSpecificationMap.get("Stack"));
 
-        Class clazz = bsh.getNameSpace().getClass("Stack");
+        Class clazz = eval.resolveClass("Stack");
         clazz.getMethods();
         LOG.debug(clazz.getDeclaredConstructor().toString());
         LOG.debug(clazz.getDeclaredConstructor().toGenericString());
@@ -103,22 +99,5 @@ public class TestSSNInterpreter {
 
         LOG.debug("class = {}", clazz);
         //LOG.debug("class = {}",          bsh.getNameSpace().);
-    }
-
-    public static ClassUnderTest createExample(Class<?> exampleClass) {
-        CodeUnit implementation = new CodeUnit();
-        implementation.setId(UUID.randomUUID().toString());
-        implementation.setName(exampleClass.getSimpleName());
-        implementation.setPackagename(exampleClass.getPackage().getName());
-        implementation.setGroupId("examples.lasso");
-        implementation.setArtifactId("examples");
-        implementation.setVersion("1.0.0-SNAPSHOT");
-        ClassUnderTest classUnderTest = new ClassUnderTest(new de.uni_mannheim.swt.lasso.core.model.System(implementation));
-        //classUnderTest.setPseudo(true);
-
-        // one workaround to avoid resolution of artifacts
-        classUnderTest.getProject().setDependencyResult(new DependencyResult(new DependencyRequest()));
-
-        return classUnderTest;
     }
 }

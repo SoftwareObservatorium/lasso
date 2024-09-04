@@ -35,9 +35,10 @@ public class SSNTestDriverTest {
                 "push(java.lang.String)->java.lang.String\n" +
                 "size()->int\n" +
                 "}";
+        ExecutionListener executionListener = new ExecutionListener();
 
         SSNTestDriver testDriver = new SSNTestDriver();
-        ExecutedInvocations executedInvocations = testDriver.runSheet(ssnJsonlStr, lql, Stack.class, 1);
+        ExecutedInvocations executedInvocations = testDriver.runSheet(ssnJsonlStr, lql, Stack.class, 1, executionListener);
         LOG.debug("executed invocations\n{}", executedInvocations);
     }
 
@@ -62,11 +63,10 @@ public class SSNTestDriverTest {
                 "push(java.lang.String)->java.lang.String\n" +
                 "size()->int\n" +
                 "}";
-
-        Objects.toString(new char[]{'a', 'b'});
+        ExecutionListener executionListener = new ExecutionListener();
 
         SSNTestDriver testDriver = new SSNTestDriver();
-        ExecutedInvocations executedInvocations = testDriver.runSheet(ssnJsonlStr, lql, Stack.class, 1);
+        ExecutedInvocations executedInvocations = testDriver.runSheet(ssnJsonlStr, lql, Stack.class, 1, executionListener);
         LOG.debug("executed invocations\n{}", executedInvocations);
     }
 

@@ -1,8 +1,7 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter;
 
-import org.apache.commons.lang3.StringUtils;
+import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
 
-import java.lang.reflect.Member;
 import java.util.List;
 
 /**
@@ -10,18 +9,14 @@ import java.util.List;
  *
  * @author Marcus Kessel
  */
-public class Invocation {
+public abstract class Invocation {
 
     private final int index;
-
-    private Member member;
 
     private Class targetClass;
     private Parameter target;
 
     private List<Parameter> parameters;
-
-    private String codeExpression;
 
     public Invocation(int index) {
         this.index = index;
@@ -33,14 +28,6 @@ public class Invocation {
 
     public void setTargetClass(Class targetClass) {
         this.targetClass = targetClass;
-    }
-
-    public Member getMember() {
-        return member;
-    }
-
-    public void setMember(Member member) {
-        this.member = member;
     }
 
     public List<Parameter> getParameters() {
@@ -55,10 +42,8 @@ public class Invocation {
     public String toString() {
         return "Invocation{" +
                 "index=" + index +
-                ", member=" + member +
                 ", targetClass=" + targetClass +
                 ", parameters=" + parameters +
-                ", codeExpression=" + codeExpression +
                 '}';
     }
 
@@ -70,15 +55,10 @@ public class Invocation {
         this.target = target;
     }
 
-    public String getCodeExpression() {
-        return codeExpression;
+    public int getIndex() {
+        return index;
     }
 
-    public void setCodeExpression(String codeExpression) {
-        this.codeExpression = codeExpression;
-    }
+    public abstract void execute(ExecutedInvocations executedInvocations, ExecutedInvocation executedInvocation, AdaptedImplementation adaptedImplementation);
 
-    public boolean isCodeExpression() {
-        return StringUtils.isNotBlank(codeExpression);
-    }
 }

@@ -1,15 +1,15 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter;
 
-import bsh.EvalError;
-import bsh.Interpreter;
-import bsh.UtilEvalError;
 import de.uni_mannheim.swt.lasso.arena.ClassUnderTest;
 import de.uni_mannheim.swt.lasso.arena.MethodSignature;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
-import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedInitializer;
-import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedMethod;
-import de.uni_mannheim.swt.lasso.arena.adaptation.permutator.PermutatorAdaptedImplementation;
 import de.uni_mannheim.swt.lasso.arena.search.InterfaceSpecification;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.eval.BshEval;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.eval.Eval;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.eval.EvalException;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocation.CodeInvocation;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocation.InstanceInvocation;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocation.MethodInvocation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.ParsedCell;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.ParsedRow;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.ParsedSheet;
@@ -22,14 +22,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Sequence Sheet Notation backed by BSH (see {@link Interpreter}).
+ * Sequence Sheet Notation backed by {@link Eval} instance.
  *
  * @author Marcus Kessel
  */
@@ -79,12 +78,12 @@ public class SSNInterpreter {
      */
     public Invocations interpret(ParsedSheet parsedSheet, Map<String, InterfaceSpecification> interfaceSpecificationMap, ClassLoader classLoader) {
         // our interpreter that holds signatures on the fly for resolution
-        Interpreter bsh = new Interpreter();
-        bsh.setClassLoader(classLoader);
+        Eval eval = new BshEval();
+        eval.setClassLoader(classLoader);
         // all LQL specs to Java (here classes)
-        Map<Member, MethodSignature> resolvedMappings = lqlToJava(bsh, interfaceSpecificationMap);
+        Map<Member, MethodSignature> resolvedMappings = lqlToJava(eval, interfaceSpecificationMap);
 
-        Invocations invocations = new Invocations(interfaceSpecificationMap, parsedSheet, resolvedMappings, bsh);
+        Invocations invocations = new Invocations(interfaceSpecificationMap, parsedSheet, resolvedMappings, eval);
 
         // now build the call sequence
         for(ParsedRow row : parsedSheet.getRows()) {
@@ -109,7 +108,7 @@ public class SSNInterpreter {
 
                 String className = clazz;
                 // create instance
-                Invocation createInstance = instanceInvocation(bsh, invocations, className, inputArgs);
+                Invocation createInstance = instanceInvocation(eval, invocations, className, inputArgs);
 
             } else if(StringUtils.equalsAnyIgnoreCase(operationName, $_EVAL)) {
                 // code to evaluate
@@ -123,7 +122,7 @@ public class SSNInterpreter {
             } else {
                 // method invocation
                 LOG.debug("method invocation = {}", operationName);
-                Invocation methodInvocation = methodInvocation(bsh, invocations, clazzCell, operationName, inputArgs);
+                Invocation methodInvocation = methodInvocation(eval, invocations, clazzCell, operationName, inputArgs);
             }
         }
 
@@ -135,189 +134,68 @@ public class SSNInterpreter {
      *
      * @param invocations
      * @param adaptedImplementation
+     * @param executionListener
      * @return
      */
-    public ExecutedInvocations run(Invocations invocations, AdaptedImplementation adaptedImplementation) {
-        //Interpreter bsh = invocations.getBsh();
-
+    public ExecutedInvocations run(Invocations invocations, AdaptedImplementation adaptedImplementation, ExecutionListener executionListener) {
         //
         ExecutedInvocations executedInvocations = new ExecutedInvocations(invocations);
+
+        try {
+            LOG.debug("Execution listener 'visitBeforeSequence'");
+            executionListener.visitBeforeSequence(executedInvocations);
+        } catch (Throwable e) {
+            LOG.warn("Execution listener 'visitBeforeSequence' failed", e);
+        }
 
         for(Invocation invocation : invocations.getSequence()) {
             ExecutedInvocation executedInvocation = executedInvocations.create(invocation);
 
-            // is code expression?
-            if(invocation.isCodeExpression()) {
-                // execute
-                Object outVal = evalCode(executedInvocation, invocations.getBsh());
-                executedInvocation.setOutput(Output.fromValue(outVal));
-
-                continue;
+            try {
+                LOG.debug("Execution listener 'visitBeforeStatement'");
+                executionListener.visitBeforeStatement(executedInvocations, executedInvocation.getInvocation().getIndex());
+            } catch (Throwable e) {
+                LOG.warn("Execution listener 'visitBeforeStatement' failed", e);
             }
 
-            // is CUT?
-            Member member = invocation.getMember();
-            Class targetClass = member.getDeclaringClass();
-            boolean cut = false;
-            if(invocations.getInterfaceSpecifications().containsKey(targetClass.getCanonicalName())) {
-                cut = true;
+            // execute invocation
+            try {
+                LOG.debug("Execution invocation '{}'", invocation.getClass().getCanonicalName());
 
-                LOG.debug("Found cut '{}'", targetClass);
+                invocation.execute(executedInvocations, executedInvocation, adaptedImplementation);
+            } catch (Throwable e) {
+                LOG.warn("Execution invocation failed", e);
             }
 
-            // either value (object) or reference
-            List<Object> inputs = resolveInputs(invocations, invocation, executedInvocations);
-
-            if(invocation.getMember() instanceof Constructor) {
-                Constructor constructor = (Constructor) invocation.getMember();
-
-                // CUT: adapted constructor call
-                if(cut) {
-                    // FIXME adapt delegate
-                    MethodSignature constructorSig = invocations.resolve(constructor);
-                    // FIXME dangerous cast
-                    PermutatorAdaptedImplementation pImpl = (PermutatorAdaptedImplementation) adaptedImplementation;
-                    AdaptedInitializer adaptedInitializer = pImpl.resolveAdaptedInitializer(
-                            invocations.getInterfaceSpecifications().get(targetClass.getCanonicalName()),
-                                    constructorSig);
-
-                    try {
-                        //
-                        Constructor adaptedConstructor = adaptedInitializer.getAsConstructor();
-                        if(!adaptedConstructor.isAccessible()) {
-                            adaptedConstructor.setAccessible(true);
-                        }
-
-                        Object instance = adaptedConstructor.newInstance(inputs.toArray());
-                        executedInvocation.setOutput(Output.fromValue(instance));
-
-                        LOG.debug("cut constructor '{}'", executedInvocation.getOutput().getValue());
-                    } catch (InstantiationException e) {
-                        throw new RuntimeException(e);
-                    } catch (IllegalAccessException e) {
-                        throw new RuntimeException(e);
-                    } catch (InvocationTargetException e) {
-                        throw new RuntimeException(e);
-                    }
-                } else {
-                    try {
-                        if(!constructor.isAccessible()) {
-                            constructor.setAccessible(true);
-                        }
-
-                        Object instance = constructor.newInstance(inputs.toArray());
-                        executedInvocation.setOutput(Output.fromValue(instance));
-
-                        LOG.debug("non-cut constructor '{}'", executedInvocation.getOutput().getValue());
-                    } catch (InstantiationException e) {
-                        throw new RuntimeException(e);
-                    } catch (IllegalAccessException e) {
-                        throw new RuntimeException(e);
-                    } catch (InvocationTargetException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            } else {
-                Method method = (Method) invocation.getMember();
-
-                // invoke method
-                Parameter target = invocation.getTarget();
-
-                // CUT: adapted method invocation
-                if(cut) {
-                    ExecutedInvocation ref = executedInvocations.getExecutedInvocation(target.getReference()[0]);
-                    Object instance = ref.getOutput().getValue();
-
-                    MethodSignature methodSig = invocations.resolve(method);
-                    // FIXME dangerous cast
-                    PermutatorAdaptedImplementation pImpl = (PermutatorAdaptedImplementation) adaptedImplementation;
-                    AdaptedMethod adaptedMethod = pImpl.resolveAdaptedMethod(
-                            invocations.getInterfaceSpecifications().get(targetClass.getCanonicalName()),
-                            methodSig);
-
-                    // FIXME adaptation logic
-                    try {
-                        Method adMethod = adaptedMethod.getMethod();
-
-                        if(!adMethod.isAccessible()) {
-                            adMethod.setAccessible(true);
-                        }
-                        Object out = adMethod.invoke(instance, inputs.toArray());
-                        executedInvocation.setOutput(Output.fromValue(out));
-
-                        LOG.debug("cut method call '{}'", executedInvocation.getOutput().getValue());
-                    } catch (IllegalAccessException e) {
-                        throw new RuntimeException(e);
-                    } catch (InvocationTargetException e) {
-                        throw new RuntimeException(e);
-                    }
-                } else {
-                    // method invocation
-                    ExecutedInvocation ref = executedInvocations.getExecutedInvocation(target.getReference()[0]);
-                    Object instance = ref.getOutput().getValue();
-                    try {
-                        if(!method.isAccessible()) {
-                            method.setAccessible(true);
-                        }
-                        Object out = method.invoke(instance, inputs.toArray());
-                        executedInvocation.setOutput(Output.fromValue(out));
-
-                        LOG.debug("non-cut method call '{}'", executedInvocation.getOutput().getValue());
-                    } catch (IllegalAccessException e) {
-                        throw new RuntimeException(e);
-                    } catch (InvocationTargetException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
+            try {
+                LOG.debug("Execution listener 'visitAfterStatement'");
+                executionListener.visitAfterStatement(executedInvocations, executedInvocation.getInvocation().getIndex());
+            } catch (Throwable e) {
+                LOG.warn("Execution listener 'visitAfterStatement' failed", e);
             }
+        }
+
+        try {
+            LOG.debug("Execution listener 'visitAfterSequence'");
+            executionListener.visitAfterSequence(executedInvocations);
+        } catch (Throwable e) {
+            LOG.warn("Execution listener 'visitAfterSequence' failed", e);
         }
 
         return executedInvocations;
     }
 
     /**
-     * Resolve input values.
-     *
-     * @param invocations
-     * @param invocation
-     * @param executedInvocations
-     * @return
-     */
-    List<Object> resolveInputs(Invocations invocations, Invocation invocation, ExecutedInvocations executedInvocations) {
-        // either value (object) or reference
-        List<Object> inputs = new ArrayList<>(invocation.getParameters().size());
-        for(Parameter parameter : invocation.getParameters()) {
-
-            if(parameter.isReference()) {
-                // by row
-                // get value from ExecutedInvocation
-                ExecutedInvocation ref = executedInvocations.getExecutedInvocation(parameter.getReference()[0]);
-                inputs.add(ref.getOutput().getValue());
-            } else {
-                // just interpret expression
-                try {
-                    Object value = invocations.getBsh().eval(cleanExpression(parameter.getExpression()));
-                    inputs.add(value);
-                } catch (EvalError e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        }
-
-        return inputs;
-    }
-
-    /**
      * Translate LQL into a concrete Java class and return a mapping.
      *
-     * @param bsh
+     * @param eval
      * @param interfaceSpecificationMap
      * @return
      */
-    Map<Member, MethodSignature> lqlToJava(Interpreter bsh, Map<String, InterfaceSpecification> interfaceSpecificationMap) {
+    Map<Member, MethodSignature> lqlToJava(Eval eval, Map<String, InterfaceSpecification> interfaceSpecificationMap) {
         Map<Member, MethodSignature> mappings = new LinkedHashMap<>();
         for(String clazz : interfaceSpecificationMap.keySet()) {
-            mappings.putAll(lqlToJava(bsh, interfaceSpecificationMap.get(clazz)));
+            mappings.putAll(lqlToJava(eval, interfaceSpecificationMap.get(clazz)));
         }
 
         return mappings;
@@ -326,11 +204,11 @@ public class SSNInterpreter {
     /**
      * Translate LQL into a concrete Java class and return a mapping.
      *
-     * @param bsh
+     * @param eval
      * @param interfaceSpecification
      * @return
      */
-    Map<Member, MethodSignature> lqlToJava(Interpreter bsh, InterfaceSpecification interfaceSpecification) {
+    Map<Member, MethodSignature> lqlToJava(Eval eval, InterfaceSpecification interfaceSpecification) {
         StringBuilder sb = new StringBuilder();
         sb.append("class ");
         sb.append(interfaceSpecification.getClassName());
@@ -354,14 +232,14 @@ public class SSNInterpreter {
         // evaluate
         String inter = "/* LQL */\n" + sb;
         try {
-            eval(bsh, inter);
-        } catch (EvalError e) {
+            eval.eval(inter);
+        } catch (EvalException e) {
             throw new RuntimeException(e);
         }
 
         // now resolve mappings
         try {
-            Class clazz = resolveClass(bsh, interfaceSpecification.getClassName());
+            Class clazz = eval.resolveClass(interfaceSpecification.getClassName());
 
             return Resolver.resolve(clazz, interfaceSpecification);
         } catch (Throwable e) {
@@ -416,25 +294,25 @@ public class SSNInterpreter {
     /**
      * Create an Instance {@link Invocation} (e.g., new constructor etc.)
      *
-     * @param bsh
+     * @param eval
      * @param invocations
      * @param className
      * @param inputs
      * @return
      */
-    Invocation instanceInvocation(Interpreter bsh, Invocations invocations, String className, List<ParsedCell> inputs) {
+    Invocation instanceInvocation(Eval eval, Invocations invocations, String className, List<ParsedCell> inputs) {
         LOG.debug("classname = {}, inputs = {}", className, inputs);
 
         try {
             // resolve class
-            Class resolvedClass = resolveClass(bsh, className);
+            Class resolvedClass = eval.resolveClass(className);
             LOG.debug("resolved clazz = {}", resolvedClass);
 
-            Invocation invocation = invocations.create();
+            InstanceInvocation invocation = invocations.createInstanceInvocation();
             invocation.setTargetClass(resolvedClass);
 
             // resolve parameters
-            List<Parameter> parameters = resolveParameterTypes(bsh, invocations, inputs);
+            List<Parameter> parameters = resolveParameterTypes(eval, invocations, inputs);
             invocation.setParameters(parameters);
 
             // FIXME can happen that we don't know all types (e.g., null)
@@ -448,7 +326,7 @@ public class SSNInterpreter {
             return invocation;
 
             // FIXME resolve constructor?
-        } catch (UtilEvalError | EvalError e) {
+        } catch (ClassNotFoundException | EvalException e) {
             throw new RuntimeException(e);
         } catch (NoSuchMethodException e) {
             throw new RuntimeException(e);
@@ -458,14 +336,14 @@ public class SSNInterpreter {
     /**
      * Create a method invocation
      *
-     * @param bsh
+     * @param eval
      * @param invocations
      * @param clazzCell
      * @param methodName
      * @param inputs
      * @return
      */
-    Invocation methodInvocation(Interpreter bsh, Invocations invocations, ParsedCell clazzCell, String methodName, List<ParsedCell> inputs) {
+    Invocation methodInvocation(Eval eval, Invocations invocations, ParsedCell clazzCell, String methodName, List<ParsedCell> inputs) {
         String clazz = clazzCell.getNodeValue().textValue();
         LOG.debug("this {}", clazz);
 
@@ -483,10 +361,10 @@ public class SSNInterpreter {
 
         try {
             // resolve method
-            Class resolvedClass = bsh.getNameSpace().getClass(className);
+            Class resolvedClass = eval.resolveClass(className);
             LOG.debug("resolved class for method:\n {}", resolvedClass);
 
-            Invocation invocation = invocations.create();
+            MethodInvocation invocation = invocations.createMethodInvocation();
             invocation.setTargetClass(resolvedClass);
 
             // set target
@@ -494,7 +372,7 @@ public class SSNInterpreter {
             invocation.setTarget(target);
 
             // resolve parameters
-            List<Parameter> parameters = resolveParameterTypes(bsh, invocations, inputs);
+            List<Parameter> parameters = resolveParameterTypes(eval, invocations, inputs);
             invocation.setParameters(parameters);
 
             // FIXME can happen that we don't know all types (e.g., null)
@@ -506,9 +384,9 @@ public class SSNInterpreter {
             invocation.setMember(method);
 
             return invocation;
-        } catch (UtilEvalError e) {
+        } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
-        } catch (EvalError e) {
+        } catch (EvalException e) {
             throw new RuntimeException(e);
         } catch (NoSuchMethodException e) {
             throw new RuntimeException(e);
@@ -525,16 +403,16 @@ public class SSNInterpreter {
     Invocation codeInvocation(Invocations invocations, ParsedCell codeCell) {
         String codeExpression = codeCell.getNodeValue().textValue();
 
-        Invocation invocation = invocations.create();
+        CodeInvocation invocation = invocations.createCodeInvocation();
         invocation.setCodeExpression(codeExpression);
 
         // FIXME execute code expression to obtain Type .. is this desired to do upfront?
         try {
-            Object outVal = eval(invocations.getBsh(), codeExpression);
+            Object outVal = CodeInvocation.evalCode(invocations.getEval(), codeExpression);
 
             Class type = outVal == null ? null : outVal.getClass();
             invocation.setTargetClass(type);
-        } catch (EvalError e) {
+        } catch (EvalException e) {
             throw new RuntimeException(e);
         }
 
@@ -542,71 +420,19 @@ public class SSNInterpreter {
     }
 
     /**
-     * Execute (evaluate) a code expression.
-     *
-     * @param executedInvocation
-     * @param bsh
-     * @return
-     */
-    Object evalCode(ExecutedInvocation executedInvocation, Interpreter bsh) {
-        Invocation invocation = executedInvocation.getInvocation();
-        if(!invocation.isCodeExpression()) {
-            throw new IllegalArgumentException("not a code expression invocation");
-        }
-
-        String codeExpression = invocation.getCodeExpression();
-        try {
-            Object outVal = eval(bsh, codeExpression);
-
-            //LOG.debug("exp out '{}'", outVal);
-            return outVal;
-        } catch (EvalError e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * Evaluate a code expression in BSH
-     *
-     * @param bsh
-     * @param expr
-     * @return
-     * @throws EvalError
-     */
-    Object eval(Interpreter bsh, String expr) throws EvalError {
-        LOG.debug("EVAL:\n {}", expr);
-        return bsh.eval(expr);
-    }
-
-    /**
-     * Resolve a {@link Class} from BSH
-     *
-     * @param bsh
-     * @param className
-     * @return
-     * @throws UtilEvalError
-     */
-    Class resolveClass(Interpreter bsh, String className) throws UtilEvalError {
-        // resolve class
-        Class resolvedClass = bsh.getNameSpace().getClass(className);
-
-        return resolvedClass;
-    }
-
-    /**
      * Resolve parameter types
      *
-     * @param bsh
+     * @param eval
      * @param invocations
      * @param args
      * @return
-     * @throws EvalError
+     * @throws EvalException
      */
-    List<Parameter> resolveParameterTypes(Interpreter bsh, Invocations invocations, List<ParsedCell> args) throws EvalError {
+    List<Parameter> resolveParameterTypes(Eval eval, Invocations invocations, List<ParsedCell> args) throws EvalException {
         List<Parameter> parameters = new ArrayList<>(args.size());
 
         for(ParsedCell arg : args) {
-            Parameter parameter = resolveParameterType(bsh, invocations, arg);
+            Parameter parameter = resolveParameterType(eval, invocations, arg);
             parameters.add(parameter);
         }
 
@@ -616,13 +442,13 @@ public class SSNInterpreter {
     /**
      * Resolve a parameter type.
      *
-     * @param bsh
+     * @param eval
      * @param invocations
      * @param arg
      * @return
-     * @throws EvalError
+     * @throws EvalException
      */
-    Parameter resolveParameterType(Interpreter bsh, Invocations invocations, ParsedCell arg) throws EvalError {
+    Parameter resolveParameterType(Eval eval, Invocations invocations, ParsedCell arg) throws EvalException {
         // two cases
         // reference to be resolved
         if(arg.isValueReference()) {
@@ -633,27 +459,13 @@ public class SSNInterpreter {
         }
 
         // value expression to be evaluated
-        String expression = cleanExpression(arg.getNodeValue().asText());
+        String expression = CodeExpressionUtils.cleanExpression(arg.getNodeValue().asText());
 
         LOG.debug("expression = {}", expression);
 
-        Object output = bsh.eval(expression);
+        Object output = eval.eval(expression);
         Class targetClass = output == null ? null : output.getClass();
 
         return new Parameter(targetClass, arg.getNodeValue().textValue(), output);
-    }
-
-    /**
-     * Produce clean Java code from expressions in JSON notation.
-     *
-     * @param expression
-     * @return
-     */
-    String cleanExpression(String expression) {
-        if(StringUtils.startsWith(expression, "'") && StringUtils.endsWith(expression, "'")) {
-            expression = StringUtils.wrap(StringUtils.substringBetween(expression, "'"), "\"");
-        }
-
-        return expression;
     }
 }

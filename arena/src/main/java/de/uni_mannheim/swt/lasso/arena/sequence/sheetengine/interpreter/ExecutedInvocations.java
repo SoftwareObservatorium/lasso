@@ -47,6 +47,10 @@ public class ExecutedInvocations {
         return "TODO";
     }
 
+    public Invocations getInvocations() {
+        return invocations;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

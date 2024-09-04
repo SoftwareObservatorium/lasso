@@ -1,0 +1,98 @@
+package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocation;
+
+import de.uni_mannheim.swt.lasso.arena.MethodSignature;
+import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
+import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedInitializer;
+import de.uni_mannheim.swt.lasso.arena.adaptation.permutator.PermutatorAdaptedImplementation;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Member;
+import java.util.List;
+
+/**
+ * An instance invocation (e.g., new etc.)
+ *
+ * @author Marcus Kessel
+ */
+public class InstanceInvocation extends MemberInvocation {
+
+    private static final Logger LOG = LoggerFactory
+            .getLogger(InstanceInvocation.class);
+
+    public InstanceInvocation(int index) {
+        super(index);
+    }
+
+    public Constructor getAsConstructor() {
+        return (Constructor) getMember();
+    }
+
+    public void execute(ExecutedInvocations executedInvocations, ExecutedInvocation executedInvocation, AdaptedImplementation adaptedImplementation) {
+        Invocations invocations = executedInvocations.getInvocations();
+        // is CUT?
+        Member member = getMember();
+        Class targetClass = member.getDeclaringClass();
+        boolean cut = false;
+        if(invocations.getInterfaceSpecifications().containsKey(targetClass.getCanonicalName())) {
+            cut = true;
+
+            LOG.debug("Found cut '{}'", targetClass);
+        }
+
+        // either value (object) or reference
+        List<Object> inputs = resolveInputs(invocations, executedInvocations);
+
+        Constructor constructor = getAsConstructor();
+
+        // CUT: adapted constructor call
+        if(cut) {
+            // FIXME adapt delegate
+            MethodSignature constructorSig = invocations.resolve(constructor);
+            // FIXME dangerous cast
+            PermutatorAdaptedImplementation pImpl = (PermutatorAdaptedImplementation) adaptedImplementation;
+            AdaptedInitializer adaptedInitializer = pImpl.resolveAdaptedInitializer(
+                    invocations.getInterfaceSpecifications().get(targetClass.getCanonicalName()),
+                    constructorSig);
+
+            try {
+                //
+                Constructor adaptedConstructor = adaptedInitializer.getAsConstructor();
+                if(!adaptedConstructor.isAccessible()) {
+                    adaptedConstructor.setAccessible(true);
+                }
+
+                Object instance = adaptedConstructor.newInstance(inputs.toArray());
+                executedInvocation.setOutput(Output.fromValue(instance));
+
+                LOG.debug("cut constructor '{}'", executedInvocation.getOutput().getValue());
+            } catch (InstantiationException e) {
+                throw new RuntimeException(e);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            } catch (InvocationTargetException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            try {
+                if(!constructor.isAccessible()) {
+                    constructor.setAccessible(true);
+                }
+
+                Object instance = constructor.newInstance(inputs.toArray());
+                executedInvocation.setOutput(Output.fromValue(instance));
+
+                LOG.debug("non-cut constructor '{}'", executedInvocation.getOutput().getValue());
+            } catch (InstantiationException e) {
+                throw new RuntimeException(e);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            } catch (InvocationTargetException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+}

@@ -9,12 +9,9 @@ import de.uni_mannheim.swt.lasso.arena.repository.DependencyResolver;
 import de.uni_mannheim.swt.lasso.arena.repository.MavenRepository;
 import de.uni_mannheim.swt.lasso.arena.repository.NexusInstance;
 import de.uni_mannheim.swt.lasso.arena.search.InterfaceSpecification;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.Engine;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.ParsedSheet;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.SSNParser;
-import de.uni_mannheim.swt.lasso.core.model.CodeUnit;
-import org.eclipse.aether.resolution.DependencyRequest;
-import org.eclipse.aether.resolution.DependencyResult;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +20,7 @@ import java.io.IOException;
 import java.util.*;
 
 /**
- *
+ * SSN test driver.
  *
  * @author Marcus Kessel
  */
@@ -37,16 +34,15 @@ public class SSNTestDriver {
     DependencyResolver resolver = new DependencyResolver(mavenRepoUrl, localRepo.getAbsolutePath());
     MavenRepository mavenRepository = new MavenRepository(resolver);
 
-    public ExecutedInvocations runSheet(String ssnJsonlStr, String lql, Class cutClass, int limitAdapters) throws IOException {
+    public ExecutedInvocations runSheet(String ssnJsonlStr, String lql, Class cutClass, int limitAdapters, ExecutionListener executionListener) throws IOException {
         SSNParser ssnParser = new SSNParser();
         ParsedSheet parsedSheet = ssnParser.parseJsonl(ssnJsonlStr);
 
-        Engine engine = new Engine();
-        Map<String, InterfaceSpecification> interfaceSpecificationMap = engine.lqlToMap(lql);
+        Map<String, InterfaceSpecification> interfaceSpecificationMap = LQLUtils.lqlToMap(lql);
 
         SSNInterpreter interpreter = new SSNInterpreter();
 
-        ClassUnderTest classUnderTest = createExample(Stack.class);
+        ClassUnderTest classUnderTest = CutUtils.createExample(Stack.class);
         CandidatePool pool = new CandidatePool(mavenRepository, Collections.singletonList(classUnderTest));
         // automatically resolves project-related artifacts
         pool.initProjects();
@@ -62,25 +58,8 @@ public class SSNTestDriver {
         List<AdaptedImplementation> adaptedImplementations = adaptationStrategy.adapt(interfaceSpecificationMap.get(faName), classUnderTest, limitAdapters);
 
         // run
-        ExecutedInvocations executedInvocations = interpreter.run(invocations, adaptedImplementations.get(0));
+        ExecutedInvocations executedInvocations = interpreter.run(invocations, adaptedImplementations.get(0), executionListener);
 
         return executedInvocations;
-    }
-
-    public static ClassUnderTest createExample(Class<?> exampleClass) {
-        CodeUnit implementation = new CodeUnit();
-        implementation.setId(UUID.randomUUID().toString());
-        implementation.setName(exampleClass.getSimpleName());
-        implementation.setPackagename(exampleClass.getPackage().getName());
-        implementation.setGroupId("examples.lasso");
-        implementation.setArtifactId("examples");
-        implementation.setVersion("1.0.0-SNAPSHOT");
-        ClassUnderTest classUnderTest = new ClassUnderTest(new de.uni_mannheim.swt.lasso.core.model.System(implementation));
-        //classUnderTest.setPseudo(true);
-
-        // one workaround to avoid resolution of artifacts
-        classUnderTest.getProject().setDependencyResult(new DependencyResult(new DependencyRequest()));
-
-        return classUnderTest;
     }
 }
