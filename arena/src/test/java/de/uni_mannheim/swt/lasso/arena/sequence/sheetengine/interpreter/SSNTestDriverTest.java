@@ -241,13 +241,13 @@ public class SSNTestDriverTest {
     }
 
     @Test
-    public void test_node() throws IOException, ClassNotFoundException {
+    public void test_composite_node() throws IOException, ClassNotFoundException {
         @Language("jsonl")
         String ssnJsonlStr = """
                 {"sheet": "Sheet 1", "header": "Row 1", "cells": {"A1": {}, "B1": "create", "C1": "Node", "D1": "'node1'"}}
                 {"sheet": "Sheet 1", "header": "Row 2", "cells": {"A2": {}, "B2": "create", "C2": "Node", "D2": "'node2'"}}
                 {"sheet": "Sheet 1", "header": "Row 3", "cells": {"A3": {}, "B3": "setParent", "C3": "A1", "D3": "A2"}}
-                {"sheet": "Sheet 1", "header": "Row 4", "cells": {"A4": "A2", ",B4": "getParent", "C4": "A1"}}
+                {"sheet": "Sheet 1", "header": "Row 4", "cells": {"A4": "A2", "B4": "getParent", "C4": "A1"}}
                 """;
 
         String lql = """
@@ -266,23 +266,63 @@ public class SSNTestDriverTest {
         LOG.debug("executed invocations\n{}", executedInvocations);
         Invocations invocations = executedInvocations.getInvocations();
 
-//        assertEquals(4, invocations.getSequence().size());
-//        assertEquals(invocations.getEval().resolveClass("Stack"), invocations.getInvocation(0).getTargetClass());
-//        assertEquals(0, invocations.getInvocation(0).getParameters().size());
-//        assertEquals(invocations.getEval().resolveClass("java.lang.String"), invocations.getInvocation(1).getTargetClass());
-//        assertEquals(1, invocations.getInvocation(1).getParameters().size());
-//        assertEquals(invocations.getEval().resolveClass("Stack"), invocations.getInvocation(2).getTargetClass());
-//        assertEquals(1, invocations.getInvocation(2).getParameters().size());
-//        assertEquals(invocations.getEval().resolveClass("Stack"), invocations.getInvocation(3).getTargetClass());
-//        assertEquals(0, invocations.getInvocation(3).getParameters().size());
-//        // test oracle values (first column)
-//        assertTrue(invocations.getInvocation(0).getExpectedOutput().isUndefined());
-//        assertTrue(invocations.getInvocation(1).getExpectedOutput().isUndefined());
-//        assertTrue(invocations.getInvocation(2).getExpectedOutput().isUndefined());
-//        assertFalse(invocations.getInvocation(3).getExpectedOutput().isUndefined());
-//        assertEquals("1", invocations.getInvocation(3).getExpectedOutput().getExpression());
-//
-//        assertEquals(4, executedInvocations.getSequence().size());
+        assertEquals(4, invocations.getSequence().size());
+        assertEquals(invocations.getEval().resolveClass("Node"), invocations.getInvocation(0).getTargetClass());
+        assertEquals(1, invocations.getInvocation(0).getParameters().size());
+        assertEquals(invocations.getEval().resolveClass("Node"), invocations.getInvocation(1).getTargetClass());
+        assertEquals(1, invocations.getInvocation(1).getParameters().size());
+        assertEquals(invocations.getEval().resolveClass("Node"), invocations.getInvocation(2).getTargetClass());
+        assertEquals(1, invocations.getInvocation(2).getParameters().size());
+        assertEquals(invocations.getEval().resolveClass("Node"), invocations.getInvocation(3).getTargetClass());
+        assertEquals(0, invocations.getInvocation(3).getParameters().size());
+        // test oracle values (first column)
+        assertTrue(invocations.getInvocation(0).getExpectedOutput().isUndefined());
+        assertTrue(invocations.getInvocation(1).getExpectedOutput().isUndefined());
+        assertTrue(invocations.getInvocation(2).getExpectedOutput().isUndefined());
+        assertFalse(invocations.getInvocation(3).getExpectedOutput().isUndefined());
+        assertEquals("A2", invocations.getInvocation(3).getExpectedOutput().getExpression());
 
+        assertEquals(4, executedInvocations.getSequence().size());
+    }
+
+    @Test
+    public void test_composite_node_self() throws IOException, ClassNotFoundException {
+        @Language("jsonl")
+        String ssnJsonlStr = """
+                {"sheet": "Sheet 1", "header": "Row 1", "cells": {"A1": {}, "B1": "create", "C1": "Node", "D1": "'node1'"}}
+                {"sheet": "Sheet 1", "header": "Row 2", "cells": {"A2": {}, "B2": "setParent", "C2": "A1", "D2": "A1"}}
+                {"sheet": "Sheet 1", "header": "Row 3", "cells": {"A3": "A1", "B3": "getParent", "C3": "A1"}}
+                """;
+
+        String lql = """
+                Node {
+                    Node(java.lang.String)
+                    setParent(Node)->void
+                    getParent()->Node
+                }
+                """;
+        ExecutionListener executionListener = new ExecutionListener();
+
+        Class cutClass = CompositeNodeExample.class;
+
+        SSNTestDriver testDriver = new SSNTestDriver();
+        ExecutedInvocations executedInvocations = testDriver.runSheet(ssnJsonlStr, lql, cutClass, 1, executionListener);
+        LOG.debug("executed invocations\n{}", executedInvocations);
+        Invocations invocations = executedInvocations.getInvocations();
+
+        assertEquals(3, invocations.getSequence().size());
+        assertEquals(invocations.getEval().resolveClass("Node"), invocations.getInvocation(0).getTargetClass());
+        assertEquals(1, invocations.getInvocation(0).getParameters().size());
+        assertEquals(invocations.getEval().resolveClass("Node"), invocations.getInvocation(1).getTargetClass());
+        assertEquals(1, invocations.getInvocation(1).getParameters().size());
+        assertEquals(invocations.getEval().resolveClass("Node"), invocations.getInvocation(2).getTargetClass());
+        assertEquals(0, invocations.getInvocation(2).getParameters().size());
+        // test oracle values (first column)
+        assertTrue(invocations.getInvocation(0).getExpectedOutput().isUndefined());
+        assertTrue(invocations.getInvocation(1).getExpectedOutput().isUndefined());
+        assertFalse(invocations.getInvocation(2).getExpectedOutput().isUndefined());
+        assertEquals("A1", invocations.getInvocation(2).getExpectedOutput().getExpression());
+
+        assertEquals(3, executedInvocations.getSequence().size());
     }
 }

@@ -1,6 +1,7 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util;
 
 import de.uni_mannheim.swt.lasso.arena.ClassUnderTest;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Invocations;
 import de.uni_mannheim.swt.lasso.core.model.CodeUnit;
 import org.eclipse.aether.resolution.DependencyRequest;
 import org.eclipse.aether.resolution.DependencyResult;
@@ -29,5 +30,13 @@ public class CutUtils {
         classUnderTest.getProject().setDependencyResult(new DependencyResult(new DependencyRequest()));
 
         return classUnderTest;
+    }
+
+    public static boolean isCut(Invocations invocations, Class targetClass) {
+        return invocations.getInterfaceSpecifications().containsKey(targetClass.getCanonicalName());
+    }
+
+    public static boolean isCut(ClassUnderTest classUnderTest, Class targetClass) throws ClassNotFoundException {
+        return classUnderTest.loadClass().equals(targetClass);
     }
 }

@@ -9,19 +9,24 @@ import de.uni_mannheim.swt.lasso.arena.search.InterfaceSpecification;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.ExecutedInvocation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.ExecutedInvocations;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Output;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Parameter;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.run.ExecutionResult;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.run.Invoke;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.run.Runner;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.CutUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
+import org.springframework.util.ClassUtils;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *  Create proxies based on CGLIB (supports proxying classes!).
@@ -89,13 +94,32 @@ public class InvocationInterceptor implements MethodInterceptor {
                 executedInvocations.getInvocations().getInterfaceSpecifications().get(method.getDeclaringClass().getCanonicalName()),
                 methodSig);
 
-        // FIXME inputs change proxy to real object
+        // FIXME inputs change proxy to adaptee object
+        Object[] cleanInputs;
         if(ArrayUtils.isNotEmpty(inputs)) {
+            List<Object> mInputs = new ArrayList<>(inputs.length);
+            int p = 0;
             for(Object obj : inputs) {
-                if(obj == proxyInstance) {
-                    // modify
+                LOG.debug("arg {}", obj);
+                if(isProxy(obj)) {
+                    // modify -- we have to get the correct adaptee instance!!
+                    Parameter parameter = executedInvocation.getInvocation().getParameters().get(p);
+                    ExecutedInvocation ref = executedInvocations.getExecutedSequence().get(parameter.getReference()[0]);
+                    Object resolvedAdapteeInstance = ref.getInterceptor().getAdapteeInstance();
+
+                    LOG.debug("changing input arg from '{}' to '{}'", obj, resolvedAdapteeInstance);
+
+                    mInputs.add(resolvedAdapteeInstance);
+                } else {
+                    mInputs.add(obj);
                 }
+
+                p++;
             }
+
+            cleanInputs = mInputs.toArray();
+        } else {
+            cleanInputs = inputs;
         }
 
         // FIXME adaptation logic
@@ -110,18 +134,28 @@ public class InvocationInterceptor implements MethodInterceptor {
             Runner runner = new Runner();
             Invoke invoke;
             if(adaptedMethod.isStatic()) {
-                invoke = () -> adMethod.invoke(null, inputs);
+                invoke = () -> adMethod.invoke(null, cleanInputs);
             } else {
-                invoke = () -> adMethod.invoke(adapteeInstance, inputs);
+                invoke = () -> adMethod.invoke(adapteeInstance, cleanInputs);
             }
 
             ExecutionResult result = runner.run(invoke);
-            executedInvocation.setOutput(Output.fromValue(result.getValue()));
-            executedInvocation.setExecutionTime(result.getDurationNanos());
 
-            LOG.debug("cut method call '{}'", executedInvocation.getOutput().getValue());
+            // FIXME include or exclude adaptation logic in duration?
+            //executedInvocation.setExecutionTime(result.getDurationNanos());
 
-            return executedInvocation.getOutput().getValue();
+            LOG.debug("cut method call '{}', '{}'", result.getValue(), result.getValue().getClass());
+
+            Object value = result.getValue();
+
+            // FIXME inputs change adaptee instance back to proxy object
+            if(value != null && CutUtils.isCut(adaptedMethod.getAdaptee(), value.getClass())) {
+                LOG.debug("changing return arg from '{}' to '{}'", value, adapteeInstance);
+                // modify
+                value = proxyInstance;
+            }
+
+            return value;
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         } catch (InvocationTargetException e) {
@@ -129,6 +163,14 @@ public class InvocationInterceptor implements MethodInterceptor {
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static boolean isProxy(Object obj) {
+        return ClassUtils.isCglibProxy(obj);
+    }
+
+    public static boolean isProxyClass(Class clazz) {
+        return ClassUtils.isCglibProxyClass(clazz);
     }
 
     private Object createProxy(Class clazz, Class[] argumentTypes, Object[] arguments) {
@@ -176,5 +218,9 @@ public class InvocationInterceptor implements MethodInterceptor {
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public Object getAdapteeInstance() {
+        return adapteeInstance;
     }
 }

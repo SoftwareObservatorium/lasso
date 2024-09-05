@@ -5,6 +5,7 @@ import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.*;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.adapter.InvocationInterceptor;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.run.ExecutionResult;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.run.Runner;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.CutUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +37,7 @@ public class InstanceInvocation extends MemberInvocation {
         Member member = getMember();
         Class targetClass = member.getDeclaringClass();
         boolean cut = false;
-        if(invocations.getInterfaceSpecifications().containsKey(targetClass.getCanonicalName())) {
+        if(CutUtils.isCut(invocations, targetClass)) {
             cut = true;
 
             LOG.debug("Found cut '{}'", targetClass);
