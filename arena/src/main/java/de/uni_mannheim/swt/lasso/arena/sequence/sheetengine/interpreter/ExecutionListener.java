@@ -28,6 +28,7 @@ public class ExecutionListener {
     }
 
     void visitBeforeSequence(ExecutedInvocations executedInvocations, AdaptedImplementation adaptedImplementation) {
+        LOG.debug("Sequence '{}'", executedInvocations.getInvocations());
     }
 
     void visitAfterSequence(ExecutedInvocations executedInvocations, AdaptedImplementation adaptedImplementation) {

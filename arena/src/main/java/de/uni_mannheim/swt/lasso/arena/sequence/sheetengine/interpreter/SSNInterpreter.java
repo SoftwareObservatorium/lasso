@@ -17,6 +17,7 @@ import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.ParsedSheet;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.SheetResolver;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
@@ -245,6 +246,7 @@ public class SSNInterpreter {
 
         // evaluate
         String inter = "/* LQL */\n" + sb;
+
         try {
             eval.eval(inter);
         } catch (EvalException e) {
@@ -329,11 +331,18 @@ public class SSNInterpreter {
             List<Parameter> parameters = resolveParameterTypes(eval, invocations, inputs);
             invocation.setParameters(parameters);
 
-            // FIXME can happen that we don't know all types (e.g., null)
-            Class[] types = parameters.stream().map(Parameter::getTargetClass).collect(Collectors.toList()).toArray(new Class[0]);
+            Class[] types = resolveTypes(parameters);
 
             // resolve "constructor" (here just a declared placeholder)
-            Constructor constructor = resolvedClass.getDeclaredConstructor(types);
+            // FIXME what to do if static methods only and no instance necessary?
+            Constructor constructor = null;
+            try {
+                constructor = resolvedClass.getDeclaredConstructor(types);
+            } catch (NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            } catch (SecurityException e) {
+                throw new RuntimeException(e);
+            }
 
             invocation.setMember(constructor);
 
@@ -342,9 +351,14 @@ public class SSNInterpreter {
             // FIXME resolve constructor?
         } catch (ClassNotFoundException | EvalException e) {
             throw new RuntimeException(e);
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
         }
+    }
+
+    private Class[] resolveTypes(List<Parameter> parameters) {
+        // FIXME can happen that we don't know all types (e.g., null)
+        Class[] types = parameters.stream().map(Parameter::getTargetClass).collect(Collectors.toList()).toArray(new Class[0]);
+
+        return types;
     }
 
     /**
@@ -430,6 +444,8 @@ public class SSNInterpreter {
             throw new RuntimeException(e);
         }
 
+        invocation.setParameters(new LinkedList<>());
+
         return invocation;
     }
 
@@ -477,9 +493,16 @@ public class SSNInterpreter {
 
         LOG.debug("expression = {}", expression);
 
-        Object output = eval.eval(expression);
+        // can be any code expression
+        Object output = CodeInvocation.evalCode(eval, expression);
         Class targetClass = output == null ? null : output.getClass();
+        if(targetClass != null) {
+            // FIXME convert primitive wrappers to primitives - is this reliable?
+            if(ClassUtils.isPrimitiveWrapper(targetClass)) {
+                targetClass = ClassUtils.wrapperToPrimitive(targetClass);
+            }
+        }
 
-        return new Parameter(targetClass, arg.getNodeValue().textValue(), output);
+        return new Parameter(targetClass, expression, output);
     }
 }

@@ -48,7 +48,7 @@ public abstract class MemberInvocation extends Invocation {
             } else {
                 // just interpret expression
                 try {
-                    Object value = invocations.getEval().eval(CodeExpressionUtils.cleanExpression(parameter.getExpression()));
+                    Object value = CodeInvocation.evalCode(invocations.getEval(), CodeExpressionUtils.cleanExpression(parameter.getExpression()));
                     inputs.add(value);
                 } catch (EvalException e) {
                     throw new RuntimeException(e);

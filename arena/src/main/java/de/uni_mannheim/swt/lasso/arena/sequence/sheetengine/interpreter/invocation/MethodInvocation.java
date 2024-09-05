@@ -5,13 +5,16 @@ import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedMethod;
 import de.uni_mannheim.swt.lasso.arena.adaptation.permutator.PermutatorAdaptedImplementation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.*;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.perf.Invoke;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.perf.Runner;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.List;
 
 /**
@@ -30,6 +33,10 @@ public class MethodInvocation extends MemberInvocation {
 
     public Method getMethod() {
         return (Method) getMember();
+    }
+
+    public boolean isStatic() {
+        return Modifier.isStatic(getMethod().getModifiers());
     }
 
     @Override
@@ -75,7 +82,14 @@ public class MethodInvocation extends MemberInvocation {
                     adMethod.setAccessible(true);
                 }
                 Runner runner = new Runner();
-                Object out = runner.run(() -> adMethod.invoke(instance, inputs.toArray()));
+                Invoke invoke;
+                if(isStatic()) {
+                    invoke = () -> adMethod.invoke(null, inputs.toArray());
+                } else {
+                    invoke = () -> adMethod.invoke(instance, inputs.toArray());
+                }
+
+                Object out = runner.run(invoke);
                 executedInvocation.setOutput(Output.fromValue(out));
                 executedInvocation.setExecutionTime(runner.getStopWatch().getExecutionNanoTime());
 

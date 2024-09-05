@@ -2,6 +2,8 @@ package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter;
 
 import org.apache.commons.lang3.ArrayUtils;
 
+import java.util.Arrays;
+
 /**
  * Represents an (input) parameter by its type and value.
  *
@@ -47,5 +49,15 @@ public class Parameter {
 
     public int[] getReference() {
         return reference;
+    }
+
+    @Override
+    public String toString() {
+        return "Parameter{" +
+                "targetClass=" + targetClass +
+                ", expression='" + expression + '\'' +
+                ", value=" + value +
+                ", reference=" + Arrays.toString(reference) +
+                '}';
     }
 }

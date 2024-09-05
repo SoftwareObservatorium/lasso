@@ -44,7 +44,7 @@ public class SSNTestDriver {
 
         SSNInterpreter interpreter = new SSNInterpreter();
 
-        ClassUnderTest classUnderTest = CutUtils.createExample(Stack.class);
+        ClassUnderTest classUnderTest = CutUtils.createExample(cutClass);
         CandidatePool pool = new CandidatePool(mavenRepository, Collections.singletonList(classUnderTest));
         // automatically resolves project-related artifacts
         pool.initProjects();
