@@ -5,7 +5,8 @@ import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedInitializer;
 import de.uni_mannheim.swt.lasso.arena.adaptation.permutator.PermutatorAdaptedImplementation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.*;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.perf.Runner;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.run.ExecutionResult;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.run.Runner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,9 +70,9 @@ public class InstanceInvocation extends MemberInvocation {
                 }
 
                 Runner runner = new Runner();
-                Object instance = runner.run(() -> adaptedConstructor.newInstance(inputs.toArray()));
-                executedInvocation.setOutput(Output.fromValue(instance));
-                executedInvocation.setExecutionTime(runner.getStopWatch().getExecutionNanoTime());
+                ExecutionResult result = runner.run(() -> adaptedConstructor.newInstance(inputs.toArray()));
+                executedInvocation.setOutput(Output.fromValue(result.getValue()));
+                executedInvocation.setExecutionTime(result.getDurationNanos());
 
                 LOG.debug("cut constructor '{}'", executedInvocation.getOutput().getValue());
             } catch (InstantiationException e) {
@@ -91,9 +92,9 @@ public class InstanceInvocation extends MemberInvocation {
                 }
 
                 Runner runner = new Runner();
-                Object instance = runner.run(() -> constructor.newInstance(inputs.toArray()));
-                executedInvocation.setOutput(Output.fromValue(instance));
-                executedInvocation.setExecutionTime(runner.getStopWatch().getExecutionNanoTime());
+                ExecutionResult result = runner.run(() -> constructor.newInstance(inputs.toArray()));
+                executedInvocation.setOutput(Output.fromValue(result.getValue()));
+                executedInvocation.setExecutionTime(result.getDurationNanos());
 
                 LOG.debug("non-cut constructor '{}'", executedInvocation.getOutput().getValue());
             } catch (InstantiationException e) {

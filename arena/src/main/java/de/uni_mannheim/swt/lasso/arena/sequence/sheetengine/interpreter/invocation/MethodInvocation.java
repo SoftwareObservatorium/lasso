@@ -5,8 +5,9 @@ import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedMethod;
 import de.uni_mannheim.swt.lasso.arena.adaptation.permutator.PermutatorAdaptedImplementation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.*;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.perf.Invoke;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.perf.Runner;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.run.ExecutionResult;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.run.Invoke;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.run.Runner;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,9 +90,9 @@ public class MethodInvocation extends MemberInvocation {
                     invoke = () -> adMethod.invoke(instance, inputs.toArray());
                 }
 
-                Object out = runner.run(invoke);
-                executedInvocation.setOutput(Output.fromValue(out));
-                executedInvocation.setExecutionTime(runner.getStopWatch().getExecutionNanoTime());
+                ExecutionResult result = runner.run(invoke);
+                executedInvocation.setOutput(Output.fromValue(result.getValue()));
+                executedInvocation.setExecutionTime(result.getDurationNanos());
 
                 LOG.debug("cut method call '{}'", executedInvocation.getOutput().getValue());
             } catch (IllegalAccessException e) {
@@ -112,9 +113,16 @@ public class MethodInvocation extends MemberInvocation {
                 }
 
                 Runner runner = new Runner();
-                Object out = runner.run(() -> method.invoke(instance, inputs.toArray()));
-                executedInvocation.setOutput(Output.fromValue(out));
-                executedInvocation.setExecutionTime(runner.getStopWatch().getExecutionNanoTime());
+                Invoke invoke;
+                if(isStatic()) {
+                    invoke = () -> method.invoke(null, inputs.toArray());
+                } else {
+                    invoke = () -> method.invoke(instance, inputs.toArray());
+                }
+
+                ExecutionResult result = runner.run(invoke);
+                executedInvocation.setOutput(Output.fromValue(result.getValue()));
+                executedInvocation.setExecutionTime(result.getDurationNanos());
 
                 LOG.debug("non-cut method call '{}'", executedInvocation.getOutput().getValue());
             } catch (IllegalAccessException e) {

@@ -7,7 +7,8 @@ import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Invocati
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Output;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.eval.Eval;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.eval.EvalException;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.perf.Runner;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.run.ExecutionResult;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.run.Runner;
 
 /**
  * A code expression that is "invoked" (i.e., evaluated).
@@ -32,9 +33,9 @@ public class CodeInvocation extends Invocation {
         String codeExpression = ((CodeInvocation) invocation).getCodeExpression();
         try {
             Runner runner = new Runner();
-            Object outVal = runner.run(() -> evalCode(executedInvocations.getInvocations().getEval(), codeExpression));
-            executedInvocation.setOutput(Output.fromValue(outVal));
-            executedInvocation.setExecutionTime(runner.getStopWatch().getExecutionNanoTime());
+            ExecutionResult result = runner.run(() -> evalCode(executedInvocations.getInvocations().getEval(), codeExpression));
+            executedInvocation.setOutput(Output.fromValue(result.getValue()));
+            executedInvocation.setExecutionTime(result.getDurationNanos());
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
@@ -54,10 +55,16 @@ public class CodeInvocation extends Invocation {
      * @throws EvalException
      */
     public static Object evalCode(Eval eval, String codeExpression) throws EvalException {
-        Object outVal = eval.eval(codeExpression);
+        Runner runner = new Runner();
+        ExecutionResult result = null;
+        try {
+            result = runner.run(() -> eval.eval(codeExpression));
+        } catch (Throwable e) {
+            throw new EvalException("Evaluation run failed", e);
+        }
 
         //LOG.debug("exp out '{}'", outVal);
-        return outVal;
+        return result.getValue();
     }
 
     public String getCodeExpression() {

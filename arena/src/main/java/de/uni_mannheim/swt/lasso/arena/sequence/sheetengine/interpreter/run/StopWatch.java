@@ -1,4 +1,4 @@
-package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.perf;
+package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.run;
 
 /**
  * A simple stop watch.
