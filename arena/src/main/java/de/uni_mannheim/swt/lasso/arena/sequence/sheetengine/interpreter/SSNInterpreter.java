@@ -11,6 +11,7 @@ import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocati
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocation.InstanceInvocation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocation.MethodInvocation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.CodeExpressionUtils;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.FAMarker;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.ParsedCell;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.ParsedRow;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.ParsedSheet;
@@ -297,9 +298,16 @@ public class SSNInterpreter {
         }
 
         sb.append("(");
+        // FIXME hen/egg problem here .. just use name
         if(!ArrayUtils.isEmpty(methodSignature.getParameterTypes())) {
             String[] inputs = Arrays.stream(methodSignature.getParameterTypes())
-                    .map(Class::getCanonicalName)
+                    .map(c -> {
+                        if(c.equals(FAMarker.class)) {
+                            return methodSignature.getParent().getClassName();
+                        } else {
+                            return c.getCanonicalName();
+                        }
+                    })
                     .toArray(String[]::new);
             List<String> in = new LinkedList<>();
             for(int i = 0; i < inputs.length; i++) {

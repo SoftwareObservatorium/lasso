@@ -37,6 +37,10 @@ public class ExecutedInvocations {
         return executedSequence.get(index);
     }
 
+    public ExecutedInvocation getLastExecutedInvocation() {
+        return executedSequence.get(executedSequence.size() - 1);
+    }
+
     /**
      * Return code statement for this executed sequence of invocations
      *

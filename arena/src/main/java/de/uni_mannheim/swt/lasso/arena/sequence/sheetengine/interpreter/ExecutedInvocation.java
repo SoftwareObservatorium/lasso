@@ -1,5 +1,7 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter;
 
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.adapter.InvocationInterceptor;
+
 /**
  * An executed {@link Invocation} that records the output.
  *
@@ -9,6 +11,8 @@ public class ExecutedInvocation {
 
     private final Invocation invocation;
     private Output output = null;
+
+    private InvocationInterceptor interceptor;
 
     private long executionTime;
 
@@ -53,5 +57,13 @@ public class ExecutedInvocation {
 
     public void setExecutionTime(long executionTime) {
         this.executionTime = executionTime;
+    }
+
+    public InvocationInterceptor getInterceptor() {
+        return interceptor;
+    }
+
+    public void setInterceptor(InvocationInterceptor interceptor) {
+        this.interceptor = interceptor;
     }
 }

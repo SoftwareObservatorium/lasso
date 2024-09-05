@@ -1,9 +1,6 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocation;
 
-import de.uni_mannheim.swt.lasso.arena.MethodSignature;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
-import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedMethod;
-import de.uni_mannheim.swt.lasso.arena.adaptation.permutator.PermutatorAdaptedImplementation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.*;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.run.ExecutionResult;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.run.Invoke;
@@ -46,92 +43,46 @@ public class MethodInvocation extends MemberInvocation {
         // is CUT?
         Member member = getMember();
         Class targetClass = member.getDeclaringClass();
-        boolean cut = false;
-        if(invocations.getInterfaceSpecifications().containsKey(targetClass.getCanonicalName())) {
-            cut = true;
 
-            LOG.debug("Found cut '{}'", targetClass);
-        }
+        LOG.debug("Found class {}", targetClass.getCanonicalName());
 
         Method method = getMethod();
 
         // invoke method
         Parameter target = getTarget();
 
+        LOG.debug("Found target {}", target);
+
         // either value (object) or reference
         List<Object> inputs = resolveInputs(invocations, executedInvocations);
 
-        // --- START ADAPTER LOGIC
-        // FIXME pre-produce code a) (GoF adapter) or b) adapt dynamically
-        // CUT: adapted method invocation
-        if(cut) {
-            ExecutedInvocation ref = executedInvocations.getExecutedInvocation(target.getReference()[0]);
-            Object instance = ref.getOutput().getValue();
+        ExecutedInvocation ref = executedInvocations.getExecutedInvocation(target.getReference()[0]);
+        Object instance = ref.getOutput().getValue();
 
-            MethodSignature methodSig = invocations.resolve(method);
-            // FIXME dangerous cast
-            PermutatorAdaptedImplementation pImpl = (PermutatorAdaptedImplementation) adaptedImplementation;
-            AdaptedMethod adaptedMethod = pImpl.resolveAdaptedMethod(
-                    invocations.getInterfaceSpecifications().get(targetClass.getCanonicalName()),
-                    methodSig);
-
-            // FIXME adaptation logic
-            try {
-                Method adMethod = adaptedMethod.getMethod();
-
-                if(!adMethod.isAccessible()) {
-                    adMethod.setAccessible(true);
-                }
-                Runner runner = new Runner();
-                Invoke invoke;
-                if(isStatic()) {
-                    invoke = () -> adMethod.invoke(null, inputs.toArray());
-                } else {
-                    invoke = () -> adMethod.invoke(instance, inputs.toArray());
-                }
-
-                ExecutionResult result = runner.run(invoke);
-                executedInvocation.setOutput(Output.fromValue(result.getValue()));
-                executedInvocation.setExecutionTime(result.getDurationNanos());
-
-                LOG.debug("cut method call '{}'", executedInvocation.getOutput().getValue());
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            } catch (InvocationTargetException e) {
-                throw new RuntimeException(e);
-            } catch (Throwable e) {
-                throw new RuntimeException(e);
+        try {
+            if(!method.isAccessible()) {
+                method.setAccessible(true);
             }
-            // --- END ADAPTER LOGIC
-        } else {
-            // method invocation
-            ExecutedInvocation ref = executedInvocations.getExecutedInvocation(target.getReference()[0]);
-            Object instance = ref.getOutput().getValue();
-            try {
-                if(!method.isAccessible()) {
-                    method.setAccessible(true);
-                }
 
-                Runner runner = new Runner();
-                Invoke invoke;
-                if(isStatic()) {
-                    invoke = () -> method.invoke(null, inputs.toArray());
-                } else {
-                    invoke = () -> method.invoke(instance, inputs.toArray());
-                }
-
-                ExecutionResult result = runner.run(invoke);
-                executedInvocation.setOutput(Output.fromValue(result.getValue()));
-                executedInvocation.setExecutionTime(result.getDurationNanos());
-
-                LOG.debug("non-cut method call '{}'", executedInvocation.getOutput().getValue());
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            } catch (InvocationTargetException e) {
-                throw new RuntimeException(e);
-            } catch (Throwable e) {
-                throw new RuntimeException(e);
+            Runner runner = new Runner();
+            Invoke invoke;
+            if(isStatic()) {
+                invoke = () -> method.invoke(null, inputs.toArray());
+            } else {
+                invoke = () -> method.invoke(instance, inputs.toArray());
             }
+
+            ExecutionResult result = runner.run(invoke);
+            executedInvocation.setOutput(Output.fromValue(result.getValue()));
+            executedInvocation.setExecutionTime(result.getDurationNanos());
+
+            LOG.debug("method call '{}'", executedInvocation.getOutput().getValue());
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        } catch (InvocationTargetException e) {
+            throw new RuntimeException(e);
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
         }
     }
 

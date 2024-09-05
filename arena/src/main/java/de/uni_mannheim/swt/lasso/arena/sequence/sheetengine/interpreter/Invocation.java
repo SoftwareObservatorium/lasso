@@ -45,6 +45,7 @@ public abstract class Invocation {
         return "Invocation{" +
                 "index=" + index +
                 ", targetClass=" + targetClass +
+                ", target=" + target +
                 ", parameters=" + parameters +
                 ", expectedOutput=" + expectedOutput +
                 '}';

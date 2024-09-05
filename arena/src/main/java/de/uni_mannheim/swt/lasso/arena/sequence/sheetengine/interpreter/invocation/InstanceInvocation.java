@@ -1,17 +1,14 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocation;
 
-import de.uni_mannheim.swt.lasso.arena.MethodSignature;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
-import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedInitializer;
-import de.uni_mannheim.swt.lasso.arena.adaptation.permutator.PermutatorAdaptedImplementation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.*;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.adapter.InvocationInterceptor;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.run.ExecutionResult;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.run.Runner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.util.List;
 
@@ -50,41 +47,14 @@ public class InstanceInvocation extends MemberInvocation {
 
         Constructor constructor = getAsConstructor();
 
-        // --- START ADAPTER LOGIC
         // FIXME pre-produce code a) (GoF adapter) or b) adapt dynamically
         // CUT: adapted constructor call
         if(cut) {
-            // FIXME adapt delegate
-            MethodSignature constructorSig = invocations.resolve(constructor);
-            // FIXME dangerous cast
-            PermutatorAdaptedImplementation pImpl = (PermutatorAdaptedImplementation) adaptedImplementation;
-            AdaptedInitializer adaptedInitializer = pImpl.resolveAdaptedInitializer(
-                    invocations.getInterfaceSpecifications().get(targetClass.getCanonicalName()),
-                    constructorSig);
-
-            try {
-                //
-                Constructor adaptedConstructor = adaptedInitializer.getAsConstructor();
-                if(!adaptedConstructor.isAccessible()) {
-                    adaptedConstructor.setAccessible(true);
-                }
-
-                Runner runner = new Runner();
-                ExecutionResult result = runner.run(() -> adaptedConstructor.newInstance(inputs.toArray()));
-                executedInvocation.setOutput(Output.fromValue(result.getValue()));
-                executedInvocation.setExecutionTime(result.getDurationNanos());
-
-                LOG.debug("cut constructor '{}'", executedInvocation.getOutput().getValue());
-            } catch (InstantiationException e) {
-                throw new RuntimeException(e);
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            } catch (InvocationTargetException e) {
-                throw new RuntimeException(e);
-            } catch (Throwable e) {
-                throw new RuntimeException(e);
-            }
-            // --- END ADAPTER LOGIC
+            // we need one interceptor for EACH instance
+            InvocationInterceptor invocationInterceptor = new InvocationInterceptor(executedInvocations, adaptedImplementation, invocations.getInterfaceSpecifications().get(targetClass.getCanonicalName()));
+            Object proxyInstance = invocationInterceptor.create(executedInvocation, constructor, inputs.toArray());
+            executedInvocation.setInterceptor(invocationInterceptor);
+            LOG.debug("created proxy {}", proxyInstance.getClass().getCanonicalName());
         } else {
             try {
                 if(!constructor.isAccessible()) {

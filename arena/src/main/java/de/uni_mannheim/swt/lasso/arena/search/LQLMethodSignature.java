@@ -20,6 +20,7 @@
 package de.uni_mannheim.swt.lasso.arena.search;
 
 import de.uni_mannheim.swt.lasso.arena.MethodSignature;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.FAMarker;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -65,7 +66,12 @@ public class LQLMethodSignature extends MethodSignature {
             try {
                 return ClassUtils.getClass(stripGenerics(p));
             } catch (ClassNotFoundException e) {
-                throw new IllegalArgumentException(e);
+                if(isFA(p)) {
+                    // return a marker class
+                    return FAMarker.class;
+                } else {
+                    throw new IllegalArgumentException(e);
+                }
             }
         }).toArray(Class[]::new);
     }
