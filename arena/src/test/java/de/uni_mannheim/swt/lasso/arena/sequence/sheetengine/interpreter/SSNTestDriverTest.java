@@ -4,6 +4,7 @@ import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.examples
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.examples.StackEmptyConstructorExample;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.examples.StackNonEmptyConstructorExample;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.examples.StaticMethodExample;
+import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,15 +32,20 @@ public class SSNTestDriverTest {
      */
     @Test
     public void test_Stack_empty_constructor() throws IOException, ClassNotFoundException {
-        String ssnJsonlStr = "{\"sheet\": \"Sheet 1\", \"header\": \"Row 1\", \"cells\": {\"A1\": {}, \"B1\": \"create\", \"C1\": \"Stack\"}}\n" +
-                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 2\", \"cells\": {\"A2\": {}, \"B2\": \"create\", \"C2\": \"java.lang.String\", \"D2\": \"'Hello World!'\"}}\n" +
-                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 3\", \"cells\": {\"A3\": {}, \"B3\": \"push\", \"C3\": \"A1\", \"D3\": \"A2\"}}\n" +
-                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 3\", \"cells\": {\"A4\": 1, \"B4\": \"size\", \"C4\": \"A1\"}}\n";
+        @Language("jsonl")
+        String ssnJsonlStr = """
+                {"sheet": "Sheet 1", "header": "Row 1", "cells": {"A1": {}, "B1": "create", "C1": "Stack"}}
+                {"sheet": "Sheet 1", "header": "Row 2", "cells": {"A2": {}, "B2": "create", "C2": "java.lang.String", "D2": "'Hello World!'"}}
+                {"sheet": "Sheet 1", "header": "Row 3", "cells": {"A3": {}, "B3": "push", "C3": "A1", "D3": "A2"}}
+                {"sheet": "Sheet 1", "header": "Row 4", "cells": {"A4": 1, "B4": "size", "C4": "A1"}}
+                """;
 
-        String lql = "Stack {\n" +
-                "push(java.lang.String)->java.lang.String\n" +
-                "size()->int\n" +
-                "}";
+        String lql = """
+                Stack {
+                    push(java.lang.String)->java.lang.String
+                    size()->int
+                }
+                """;
         ExecutionListener executionListener = new ExecutionListener();
 
         Class cutClass = StackEmptyConstructorExample.class;
@@ -80,16 +86,21 @@ public class SSNTestDriverTest {
      */
     @Test
     public void test_Stack_nonempty_constructor() throws IOException, ClassNotFoundException {
-        String ssnJsonlStr = "{\"sheet\": \"Sheet 1\", \"header\": \"Row 1\", \"cells\": {\"A1\": {}, \"B1\": \"create\", \"C1\": \"Stack\", \"D1\": 10}}\n" +
-                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 2\", \"cells\": {\"A2\": {}, \"B2\": \"create\", \"C2\": \"java.lang.String\", \"D2\": \"'Hello World!'\"}}\n" +
-                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 3\", \"cells\": {\"A3\": {}, \"B3\": \"push\", \"C3\": \"A1\", \"D3\": \"A2\"}}\n" +
-                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 3\", \"cells\": {\"A4\": {}, \"B4\": \"size\", \"C4\": \"A1\"}}\n";
+        @Language("jsonl")
+        String ssnJsonlStr = """
+                {"sheet": "Sheet 1", "header": "Row 1", "cells": {"A1": {}, "B1": "create", "C1": "Stack", "D1": 10}}
+                {"sheet": "Sheet 1", "header": "Row 2", "cells": {"A2": {}, "B2": "create", "C2": "java.lang.String", "D2": "'Hello World!'"}}
+                {"sheet": "Sheet 1", "header": "Row 3", "cells": {"A3": {}, "B3": "push", "C3": "A1", "D3": "A2"}}
+                {"sheet": "Sheet 1", "header": "Row 4", "cells": {"A4": 1, "B4": "size", "C4": "A1"}}
+                """;
 
-        String lql = "Stack {\n" +
-                "Stack(int)\n" +
-                "push(java.lang.String)->java.lang.String\n" +
-                "size()->int\n" +
-                "}";
+        String lql = """
+                Stack {
+                    Stack(int)
+                    push(java.lang.String)->java.lang.String
+                    size()->int
+                }
+                """;
         ExecutionListener executionListener = new ExecutionListener();
 
         Class cutClass = StackNonEmptyConstructorExample.class;
@@ -124,15 +135,20 @@ public class SSNTestDriverTest {
      */
     @Test
     public void test_Stack_code() throws IOException, ClassNotFoundException {
-        String ssnJsonlStr = "{\"sheet\": \"Sheet 1\", \"header\": \"Row 1\", \"cells\": {\"A1\": {}, \"B1\": \"create\", \"C1\": \"Stack\"}}\n" +
-                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 2\", \"cells\": {\"A2\": {}, \"B2\": \"$eval\", \"C2\": \"Arrays.toString(new char[]{'a', 'b'})\"}}\n" +
-                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 3\", \"cells\": {\"A3\": {}, \"B3\": \"push\", \"C3\": \"A1\", \"D3\": \"A2\"}}\n" +
-                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 3\", \"cells\": {\"A3\": {}, \"B3\": \"size\", \"C3\": \"A1\"}}\n";
+        @Language("jsonl")
+        String ssnJsonlStr = """
+                {"sheet": "Sheet 1", "header": "Row 1", "cells": {"A1": {}, "B1": "create", "C1": "Stack"}}
+                {"sheet": "Sheet 1", "header": "Row 2", "cells": {"A2": {}, "B2": "$eval", "C2": "Arrays.toString(new char[]{'a', 'b'})"}}
+                {"sheet": "Sheet 1", "header": "Row 3", "cells": {"A3": {}, "B3": "push", "C3": "A1", "D3": "A2"}}
+                {"sheet": "Sheet 1", "header": "Row 4", "cells": {"A4": 1, "B4": "size", "C4": "A1"}}
+                """;
 
-        String lql = "Stack {\n" +
-                "push(java.lang.String)->java.lang.String\n" +
-                "size()->int\n" +
-                "}";
+        String lql = """
+                Stack {
+                    push(java.lang.String)->java.lang.String
+                    size()->int
+                }
+                """;
         ExecutionListener executionListener = new ExecutionListener();
 
         Class cutClass = StackEmptyConstructorExample.class;
@@ -163,12 +179,17 @@ public class SSNTestDriverTest {
      */
     @Test
     public void test_static() throws IOException, ClassNotFoundException {
-        String ssnJsonlStr = "{\"sheet\": \"Sheet 1\", \"header\": \"Row 1\", \"cells\": {\"A1\": {}, \"B1\": \"create\", \"C1\": \"SingletonExample\"}}\n" +
-                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 2\", \"cells\": {\"A2\": {}, \"B2\": \"sum\", \"C2\": \"A1\", \"D2\": 2, \"E2\": 3}}\n";
+        @Language("jsonl")
+        String ssnJsonlStr = """
+                {"sheet": "Sheet 1", "header": "Row 1", "cells": {"A1": {}, "B1": "create", "C1": "SingletonExample"}}
+                {"sheet": "Sheet 1", "header": "Row 2", "cells": {"A2": {}, "B2": "sum", "C2": "A1", "D2": 2, "E2": 3}}
+                """;
 
-        String lql = "SingletonExample {\n" +
-                "sum(int,int)->int\n" +
-                "}";
+        String lql = """
+                SingletonExample {
+                    sum(int,int)->int
+                }
+                """;
         ExecutionListener executionListener = new ExecutionListener();
 
         Class cutClass = StaticMethodExample.class;
@@ -194,12 +215,17 @@ public class SSNTestDriverTest {
      */
     @Test
     public void test_static_invisible() throws IOException, ClassNotFoundException {
-        String ssnJsonlStr = "{\"sheet\": \"Sheet 1\", \"header\": \"Row 1\", \"cells\": {\"A1\": {}, \"B1\": \"create\", \"C1\": \"SingletonExample\"}}\n" +
-                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 2\", \"cells\": {\"A2\": {}, \"B2\": \"sum\", \"C2\": \"A1\", \"D2\": 2, \"E2\": 3}}\n";
+        @Language("jsonl")
+        String ssnJsonlStr = """
+                {"sheet": "Sheet 1", "header": "Row 1", "cells": {"A1": {}, "B1": "create", "C1": "SingletonExample"}}
+                {"sheet": "Sheet 1", "header": "Row 2", "cells": {"A2": {}, "B2": "sum", "C2": "A1", "D2": 2, "E2": 3}}
+                """;
 
-        String lql = "SingletonExample {\n" +
-                "sum(int,int)->int\n" +
-                "}";
+        String lql = """
+                SingletonExample {
+                    sum(int,int)->int
+                }
+                """;
         ExecutionListener executionListener = new ExecutionListener();
 
         Class cutClass = InvisibleStaticMethodExample.class;
