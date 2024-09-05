@@ -1,6 +1,7 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
 
@@ -49,6 +50,15 @@ public class Parameter {
 
     public int[] getReference() {
         return reference;
+    }
+
+    /**
+     * No value defined?
+     *
+     * @return
+     */
+    public boolean isUndefined() {
+        return StringUtils.isEmpty(expression);
     }
 
     @Override

@@ -117,14 +117,14 @@ public class SSNInterpreter {
                 inputArgs = inputs.subList(1, inputs.size()); // remaining input parameters
             }
 
+            Invocation invocation;
             if(StringUtils.equalsAnyIgnoreCase(operationName, CREATE, $_CREATE)) {
                 // create invocation
                 LOG.debug("create invocation = {}", operationName);
 
                 String className = clazz;
                 // create instance
-                Invocation createInstance = instanceInvocation(eval, invocations, className, inputArgs);
-
+                invocation = instanceInvocation(eval, invocations, className, inputArgs);
             } else if(StringUtils.equalsAnyIgnoreCase(operationName, $_EVAL)) {
                 // code to evaluate
 
@@ -132,12 +132,19 @@ public class SSNInterpreter {
                 // -- use "eval" command? or some simple syntax like in SpEL #{ <expression string> }
 
                 LOG.debug("code invocation = {}", operationName);
-                Invocation codeInvocation = codeInvocation(invocations, clazzCell);
-
+                invocation = codeInvocation(invocations, clazzCell);
             } else {
                 // method invocation
                 LOG.debug("method invocation = {}", operationName);
-                Invocation methodInvocation = methodInvocation(eval, invocations, clazzCell, operationName, inputArgs);
+                invocation = methodInvocation(eval, invocations, clazzCell, operationName, inputArgs);
+            }
+
+            // resolve expected output (i.e., oracle value)
+            try {
+                Parameter expectedOutput = resolveParameterType(eval, invocations, output);
+                invocation.setExpectedOutput(expectedOutput);
+            } catch (EvalException e) {
+                throw new RuntimeException(e);
             }
         }
 

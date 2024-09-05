@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  *
@@ -31,10 +31,10 @@ public class SSNTestDriverTest {
      */
     @Test
     public void test_Stack_empty_constructor() throws IOException, ClassNotFoundException {
-        String ssnJsonlStr = "{\"sheet\": \"Sheet 1\", \"header\": \"Row 1\", \"cells\": {\"A1\": null, \"B1\": \"create\", \"C1\": \"Stack\"}}\n" +
-                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 2\", \"cells\": {\"A2\": null, \"B2\": \"create\", \"C2\": \"java.lang.String\", \"D2\": \"'Hello World!'\"}}\n" +
-                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 3\", \"cells\": {\"A3\": null, \"B3\": \"push\", \"C3\": \"A1\", \"D3\": \"A2\"}}\n" +
-                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 3\", \"cells\": {\"A4\": null, \"B4\": \"size\", \"C4\": \"A1\"}}\n";
+        String ssnJsonlStr = "{\"sheet\": \"Sheet 1\", \"header\": \"Row 1\", \"cells\": {\"A1\": {}, \"B1\": \"create\", \"C1\": \"Stack\"}}\n" +
+                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 2\", \"cells\": {\"A2\": {}, \"B2\": \"create\", \"C2\": \"java.lang.String\", \"D2\": \"'Hello World!'\"}}\n" +
+                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 3\", \"cells\": {\"A3\": {}, \"B3\": \"push\", \"C3\": \"A1\", \"D3\": \"A2\"}}\n" +
+                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 3\", \"cells\": {\"A4\": 1, \"B4\": \"size\", \"C4\": \"A1\"}}\n";
 
         String lql = "Stack {\n" +
                 "push(java.lang.String)->java.lang.String\n" +
@@ -58,8 +58,15 @@ public class SSNTestDriverTest {
         assertEquals(1, invocations.getInvocation(2).getParameters().size());
         assertEquals(invocations.getEval().resolveClass("Stack"), invocations.getInvocation(3).getTargetClass());
         assertEquals(0, invocations.getInvocation(3).getParameters().size());
+        // test oracle values (first column)
+        assertTrue(invocations.getInvocation(0).getExpectedOutput().isUndefined());
+        assertTrue(invocations.getInvocation(1).getExpectedOutput().isUndefined());
+        assertTrue(invocations.getInvocation(2).getExpectedOutput().isUndefined());
+        assertFalse(invocations.getInvocation(3).getExpectedOutput().isUndefined());
+        assertEquals("1", invocations.getInvocation(3).getExpectedOutput().getExpression());
 
         assertEquals(4, executedInvocations.getSequence().size());
+
     }
 
     /**
@@ -73,10 +80,10 @@ public class SSNTestDriverTest {
      */
     @Test
     public void test_Stack_nonempty_constructor() throws IOException, ClassNotFoundException {
-        String ssnJsonlStr = "{\"sheet\": \"Sheet 1\", \"header\": \"Row 1\", \"cells\": {\"A1\": null, \"B1\": \"create\", \"C1\": \"Stack\", \"D1\": 10}}\n" +
-                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 2\", \"cells\": {\"A2\": null, \"B2\": \"create\", \"C2\": \"java.lang.String\", \"D2\": \"'Hello World!'\"}}\n" +
-                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 3\", \"cells\": {\"A3\": null, \"B3\": \"push\", \"C3\": \"A1\", \"D3\": \"A2\"}}\n" +
-                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 3\", \"cells\": {\"A4\": null, \"B4\": \"size\", \"C4\": \"A1\"}}\n";
+        String ssnJsonlStr = "{\"sheet\": \"Sheet 1\", \"header\": \"Row 1\", \"cells\": {\"A1\": {}, \"B1\": \"create\", \"C1\": \"Stack\", \"D1\": 10}}\n" +
+                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 2\", \"cells\": {\"A2\": {}, \"B2\": \"create\", \"C2\": \"java.lang.String\", \"D2\": \"'Hello World!'\"}}\n" +
+                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 3\", \"cells\": {\"A3\": {}, \"B3\": \"push\", \"C3\": \"A1\", \"D3\": \"A2\"}}\n" +
+                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 3\", \"cells\": {\"A4\": {}, \"B4\": \"size\", \"C4\": \"A1\"}}\n";
 
         String lql = "Stack {\n" +
                 "Stack(int)\n" +
@@ -117,10 +124,10 @@ public class SSNTestDriverTest {
      */
     @Test
     public void test_Stack_code() throws IOException, ClassNotFoundException {
-        String ssnJsonlStr = "{\"sheet\": \"Sheet 1\", \"header\": \"Row 1\", \"cells\": {\"A1\": null, \"B1\": \"create\", \"C1\": \"Stack\"}}\n" +
-                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 2\", \"cells\": {\"A2\": null, \"B2\": \"$eval\", \"C2\": \"Arrays.toString(new char[]{'a', 'b'})\"}}\n" +
-                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 3\", \"cells\": {\"A3\": null, \"B3\": \"push\", \"C3\": \"A1\", \"D3\": \"A2\"}}\n" +
-                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 3\", \"cells\": {\"A3\": null, \"B3\": \"size\", \"C3\": \"A1\"}}\n";
+        String ssnJsonlStr = "{\"sheet\": \"Sheet 1\", \"header\": \"Row 1\", \"cells\": {\"A1\": {}, \"B1\": \"create\", \"C1\": \"Stack\"}}\n" +
+                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 2\", \"cells\": {\"A2\": {}, \"B2\": \"$eval\", \"C2\": \"Arrays.toString(new char[]{'a', 'b'})\"}}\n" +
+                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 3\", \"cells\": {\"A3\": {}, \"B3\": \"push\", \"C3\": \"A1\", \"D3\": \"A2\"}}\n" +
+                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 3\", \"cells\": {\"A3\": {}, \"B3\": \"size\", \"C3\": \"A1\"}}\n";
 
         String lql = "Stack {\n" +
                 "push(java.lang.String)->java.lang.String\n" +
@@ -156,8 +163,8 @@ public class SSNTestDriverTest {
      */
     @Test
     public void test_static() throws IOException, ClassNotFoundException {
-        String ssnJsonlStr = "{\"sheet\": \"Sheet 1\", \"header\": \"Row 1\", \"cells\": {\"A1\": null, \"B1\": \"create\", \"C1\": \"SingletonExample\"}}\n" +
-                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 2\", \"cells\": {\"A2\": null, \"B2\": \"sum\", \"C2\": \"A1\", \"D2\": 2, \"E2\": 3}}\n";
+        String ssnJsonlStr = "{\"sheet\": \"Sheet 1\", \"header\": \"Row 1\", \"cells\": {\"A1\": {}, \"B1\": \"create\", \"C1\": \"SingletonExample\"}}\n" +
+                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 2\", \"cells\": {\"A2\": {}, \"B2\": \"sum\", \"C2\": \"A1\", \"D2\": 2, \"E2\": 3}}\n";
 
         String lql = "SingletonExample {\n" +
                 "sum(int,int)->int\n" +
@@ -187,8 +194,8 @@ public class SSNTestDriverTest {
      */
     @Test
     public void test_static_invisible() throws IOException, ClassNotFoundException {
-        String ssnJsonlStr = "{\"sheet\": \"Sheet 1\", \"header\": \"Row 1\", \"cells\": {\"A1\": null, \"B1\": \"create\", \"C1\": \"SingletonExample\"}}\n" +
-                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 2\", \"cells\": {\"A2\": null, \"B2\": \"sum\", \"C2\": \"A1\", \"D2\": 2, \"E2\": 3}}\n";
+        String ssnJsonlStr = "{\"sheet\": \"Sheet 1\", \"header\": \"Row 1\", \"cells\": {\"A1\": {}, \"B1\": \"create\", \"C1\": \"SingletonExample\"}}\n" +
+                "{\"sheet\": \"Sheet 1\", \"header\": \"Row 2\", \"cells\": {\"A2\": {}, \"B2\": \"sum\", \"C2\": \"A1\", \"D2\": 2, \"E2\": 3}}\n";
 
         String lql = "SingletonExample {\n" +
                 "sum(int,int)->int\n" +

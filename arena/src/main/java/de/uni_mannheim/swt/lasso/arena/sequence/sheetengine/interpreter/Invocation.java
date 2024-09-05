@@ -18,6 +18,8 @@ public abstract class Invocation {
 
     private List<Parameter> parameters;
 
+    private Parameter expectedOutput;
+
     public Invocation(int index) {
         this.index = index;
     }
@@ -44,6 +46,7 @@ public abstract class Invocation {
                 "index=" + index +
                 ", targetClass=" + targetClass +
                 ", parameters=" + parameters +
+                ", expectedOutput=" + expectedOutput +
                 '}';
     }
 
@@ -62,4 +65,12 @@ public abstract class Invocation {
     public abstract void execute(ExecutedInvocations executedInvocations, ExecutedInvocation executedInvocation, AdaptedImplementation adaptedImplementation);
 
     public abstract String toCode();
+
+    public Parameter getExpectedOutput() {
+        return expectedOutput;
+    }
+
+    public void setExpectedOutput(Parameter expectedOutput) {
+        this.expectedOutput = expectedOutput;
+    }
 }
