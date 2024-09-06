@@ -101,23 +101,31 @@ public class GsonMapper implements ObjectMapper {
     @Override
     public String writeAdaptedOp(ExecutedInvocation executedInvocation, AdaptedImplementation adaptedImplementation) throws IOException {
         Invocation invocation = executedInvocation.getInvocation();
-        // FIXME write CUT operation (i.e. LQL signature)
+        // FIXME write adaptee's operation (i.e. adaptee signature)
         if(invocation.isCodeInvocation()) {
             CodeInvocation codeInvocation = (CodeInvocation) invocation;
 
             return gson.toJson(codeInvocation.getCodeExpression());
         } else if(invocation.isInstanceInvocation()) {
-            InstanceInvocation instanceInvocation = (InstanceInvocation) invocation;
+            if(executedInvocation.isAdapted()) {
+                AdaptedInitializer adaptedInitializer = (AdaptedInitializer) executedInvocation.getAdaptedMember();
 
-            AdaptedInitializer adaptedInitializer = (AdaptedInitializer) executedInvocation.getAdaptedMember();
+                return gson.toJson(adaptedInitializer.getInitializer().toString());
+            } else {
+                InstanceInvocation instanceInvocation = (InstanceInvocation) invocation;
 
-            return gson.toJson(adaptedInitializer.getInitializer().toString());
+                return gson.toJson(instanceInvocation.getAsConstructor().toString());
+            }
         } else if(invocation.isMethodInvocation()) {
-            MethodInvocation methodInvocation = (MethodInvocation) invocation;
+            if(executedInvocation.isAdapted()) {
+                AdaptedMethod adaptedMethod = (AdaptedMethod) executedInvocation.getAdaptedMember();
 
-            AdaptedMethod adaptedMethod = (AdaptedMethod) executedInvocation.getAdaptedMember();
+                return gson.toJson(adaptedMethod.getMethod().toString());
+            } else {
+                MethodInvocation methodInvocation = (MethodInvocation) invocation;
 
-            return gson.toJson(adaptedMethod.getMethod().toString());
+                return gson.toJson(methodInvocation.getMethod().toString());
+            }
         }
 
         throw new IllegalArgumentException("unknown invocation type");

@@ -22,6 +22,7 @@ public class SSNParser {
      * @return
      * @throws IOException
      */
+    // FIXME parse to de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet
     public ParsedSheet parseJsonl(String jsonlStr) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
 

@@ -42,6 +42,15 @@ public class ExecutedInvocations {
     }
 
     /**
+     * Total execution time in nanos.
+     *
+     * @return
+     */
+    public long getExecutionTime() {
+        return executedSequence.stream().mapToLong(ExecutedInvocation::getExecutionTime).sum();
+    }
+
+    /**
      * Return code statement for this executed sequence of invocations
      *
      * @return

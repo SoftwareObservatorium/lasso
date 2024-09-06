@@ -118,50 +118,43 @@ public class InvocationInterceptor implements MethodInterceptor {
         }
 
         // FIXME adaptation logic
-        try {
-            Method adMethod = adaptedMethod.getMethod();
+        Method adMethod = adaptedMethod.getMethod();
 
-            LOG.debug("Calling '{}'", adMethod);
 
-            if(!adMethod.isAccessible()) {
-                adMethod.setAccessible(true);
-            }
+        LOG.debug("Calling '{}'", adMethod);
 
-            // set
-            executedInvocation.setAdaptedMember(adaptedMethod);
-
-            Runner runner = new Runner();
-            Invoke invoke;
-            if(adaptedMethod.isStatic()) {
-                invoke = () -> adMethod.invoke(null, cleanInputs);
-            } else {
-                invoke = () -> adMethod.invoke(adapteeInstance, cleanInputs);
-            }
-
-            ExecutionResult result = runner.run(invoke);
-
-            // FIXME include or exclude adaptation logic in duration?
-            //executedInvocation.setExecutionTime(result.getDurationNanos());
-
-            LOG.debug("cut method call '{}', '{}'", result.getValue(), result.getValue().getClass());
-
-            Object value = result.getValue();
-
-            // FIXME inputs change adaptee instance back to proxy object
-            if(value != null && CutUtils.isCut(adaptedMethod.getAdaptee(), value.getClass())) {
-                LOG.debug("changing return arg from '{}' to '{}'", value, adapteeInstance);
-                // modify
-                value = proxyInstance;
-            }
-
-            return value;
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (InvocationTargetException e) {
-            throw new RuntimeException(e);
-        } catch (Throwable e) {
-            throw new RuntimeException(e);
+        if(!adMethod.isAccessible()) {
+            adMethod.setAccessible(true);
         }
+
+        // set
+        executedInvocation.setAdaptedMember(adaptedMethod);
+
+        Runner runner = new Runner();
+        Invoke invoke;
+        if(adaptedMethod.isStatic()) {
+            invoke = () -> adMethod.invoke(null, cleanInputs);
+        } else {
+            invoke = () -> adMethod.invoke(adapteeInstance, cleanInputs);
+        }
+
+        ExecutionResult result = runner.run(invoke);
+
+        // FIXME include or exclude adaptation logic in duration?
+        //executedInvocation.setExecutionTime(result.getDurationNanos());
+
+        LOG.debug("cut method call '{}', '{}'", result.getValue(), result.getValue().getClass());
+
+        Object value = result.getValue();
+
+        // FIXME inputs change adaptee instance back to proxy object
+        if(value != null && CutUtils.isCut(adaptedMethod.getAdaptee(), value.getClass())) {
+            LOG.debug("changing return arg from '{}' to '{}'", value, adapteeInstance);
+            // modify
+            value = proxyInstance;
+        }
+
+        return value;
     }
 
     public static boolean isProxy(Object obj) {

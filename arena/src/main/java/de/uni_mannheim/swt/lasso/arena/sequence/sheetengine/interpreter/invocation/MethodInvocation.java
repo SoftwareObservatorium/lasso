@@ -64,11 +64,17 @@ public class MethodInvocation extends MemberInvocation {
 
             LOG.debug("method call '{}'", executedInvocation.getOutput().getValue());
         } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
+            // FIXME accessbility issues
+            Throwable throwable = e.getCause();
+            executedInvocation.setOutput(Obj.fromException(throwable, executedInvocation.getInvocation().getIndex()));
         } catch (InvocationTargetException e) {
-            throw new RuntimeException(e);
+            // FIXME this one is of interest (underlying exception from adaptee)
+            Throwable throwable = e.getCause();
+            executedInvocation.setOutput(Obj.fromException(throwable, executedInvocation.getInvocation().getIndex()));
         } catch (Throwable e) {
-            throw new RuntimeException(e);
+            // FIXME any other ..
+            Throwable throwable = e.getCause();
+            executedInvocation.setOutput(Obj.fromException(throwable, executedInvocation.getInvocation().getIndex()));
         }
     }
 

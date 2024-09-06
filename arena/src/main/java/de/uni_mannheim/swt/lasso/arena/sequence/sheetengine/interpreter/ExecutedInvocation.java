@@ -135,4 +135,8 @@ public class ExecutedInvocation {
     public void setAdaptedMember(AdaptedMember adaptedMember) {
         this.adaptedMember = adaptedMember;
     }
+
+    public boolean isAdapted() {
+        return adaptedMember != null;
+    }
 }
