@@ -160,7 +160,7 @@ public class SSNInterpreter {
      * @param executionListener
      * @return
      */
-    public ExecutedInvocations run(Invocations invocations, AdaptedImplementation adaptedImplementation, InvocationListener executionListener) {
+    public ExecutedInvocations run(Invocations invocations, AdaptedImplementation adaptedImplementation, InvocationVisitor executionListener) {
         //
         ExecutedInvocations executedInvocations = new ExecutedInvocations(invocations);
 
@@ -173,6 +173,10 @@ public class SSNInterpreter {
 
         for(Invocation invocation : invocations.getSequence()) {
             ExecutedInvocation executedInvocation = executedInvocations.create(invocation);
+
+            // either value (object) or reference
+            List<Obj> inputs = resolveInputs(executedInvocations, executedInvocation);
+            executedInvocation.setInputs(inputs);
 
             try {
                 LOG.debug("Execution listener 'visitBeforeStatement'");
@@ -519,5 +523,37 @@ public class SSNInterpreter {
         }
 
         return new Parameter(targetClass, expression, output);
+    }
+
+    /**
+     * Resolve input values.
+     *
+     * @param executedInvocations
+     * @param executedInvocation
+     * @return
+     */
+    List<Obj> resolveInputs(ExecutedInvocations executedInvocations, ExecutedInvocation executedInvocation) {
+        Invocation invocation = executedInvocation.getInvocation();
+        // either value (object) or reference
+        List<Obj> inputs = new ArrayList<>(invocation.getParameters().size());
+        for(Parameter parameter : invocation.getParameters()) {
+
+            if(parameter.isReference()) {
+                // by row
+                // get value from ExecutedInvocation
+                ExecutedInvocation ref = executedInvocations.getExecutedInvocation(parameter.getReference()[0]);
+                inputs.add(ref.getOutput());
+            } else {
+                // just interpret expression
+                try {
+                    Object value = CodeInvocation.evalCode(executedInvocations.getInvocations().getEval(), CodeExpressionUtils.cleanExpression(parameter.getExpression()));
+                    inputs.add(Obj.fromValue(value, Obj.PRODUCER_INDEX_NONE));
+                } catch (EvalException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+
+        return inputs;
     }
 }

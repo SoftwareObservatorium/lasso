@@ -71,7 +71,7 @@ public class TestSSNInterpreter {
 
         List<AdaptedImplementation> adaptedImplementations = adaptationStrategy.adapt(interfaceSpecificationMap.get("Stack"), classUnderTest, limitAdapters);
 
-        InvocationListener executionListener = new InvocationListener();
+        InvocationVisitor executionListener = new InvocationVisitor();
         // run
         ExecutedInvocations executedInvocations = interpreter.run(invocations, adaptedImplementations.get(0), executionListener);
         LOG.debug("Executed Invocations\n{}", executedInvocations);

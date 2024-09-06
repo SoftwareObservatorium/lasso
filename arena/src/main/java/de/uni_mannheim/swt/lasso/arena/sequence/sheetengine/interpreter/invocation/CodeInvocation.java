@@ -4,7 +4,7 @@ import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.ExecutedInvocation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.ExecutedInvocations;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Invocation;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Output;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Obj;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.eval.Eval;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.eval.EvalException;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.run.ExecutionResult;
@@ -34,7 +34,7 @@ public class CodeInvocation extends Invocation {
         try {
             Runner runner = new Runner();
             ExecutionResult result = runner.run(() -> evalCode(executedInvocations.getInvocations().getEval(), codeExpression));
-            executedInvocation.setOutput(Output.fromValue(result.getValue()));
+            executedInvocation.setOutput(Obj.fromValue(result.getValue(), Obj.PRODUCER_INDEX_NONE));
             executedInvocation.setExecutionTime(result.getDurationNanos());
         } catch (Throwable e) {
             throw new RuntimeException(e);

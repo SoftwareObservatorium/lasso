@@ -8,7 +8,7 @@ import de.uni_mannheim.swt.lasso.arena.adaptation.permutator.PermutatorAdaptedIm
 import de.uni_mannheim.swt.lasso.arena.search.InterfaceSpecification;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.ExecutedInvocation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.ExecutedInvocations;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Output;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Obj;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Parameter;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.run.ExecutionResult;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.run.Invoke;
@@ -70,7 +70,7 @@ public class InvocationInterceptor implements MethodInterceptor {
         adapteeInstance = result.getValue();
 
         // set proxy instance as output
-        executedInvocation.setOutput(Output.fromValue(proxyInstance));
+        executedInvocation.setOutput(Obj.fromValue(proxyInstance, executedInvocation.getInvocation().getIndex()));
 
         return proxyInstance;
     }
@@ -207,7 +207,7 @@ public class InvocationInterceptor implements MethodInterceptor {
 
             Runner runner = new Runner();
             ExecutionResult result = runner.run(() -> adaptedConstructor.newInstance(inputs));
-            executedInvocation.setOutput(Output.fromValue(result.getValue()));
+            executedInvocation.setOutput(Obj.fromValue(result.getValue(), executedInvocation.getInvocation().getIndex()));
             executedInvocation.setExecutionTime(result.getDurationNanos());
 
             LOG.debug("cut constructor '{}'", executedInvocation.getOutput().getValue());

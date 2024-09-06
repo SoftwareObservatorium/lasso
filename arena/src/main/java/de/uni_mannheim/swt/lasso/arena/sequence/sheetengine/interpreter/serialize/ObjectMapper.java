@@ -1,8 +1,8 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize;
 
+import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.ExecutedInvocation;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.ExecutedInvocations;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Output;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Obj;
 
 import java.io.IOException;
 
@@ -13,7 +13,13 @@ import java.io.IOException;
  */
 public interface ObjectMapper {
 
-    String writeValue(ExecutedInvocation executedInvocation) throws IOException;
+    String writeOutput(ExecutedInvocation executedInvocation) throws IOException;
+    String writeInput(ExecutedInvocation executedInvocation, int p) throws IOException;
+    String writeTarget(ExecutedInvocation executedInvocation) throws IOException;
+    String writeOp(ExecutedInvocation executedInvocation) throws IOException;
+    String writeAdaptedOp(ExecutedInvocation executedInvocation, AdaptedImplementation adaptedImplementation) throws IOException;
 
-    Output readValue(String value) throws IOException;
+    Obj readOutput(String value) throws IOException;
+    Obj readInput(String value) throws IOException;
+    Obj readOp(String value) throws IOException;
 }

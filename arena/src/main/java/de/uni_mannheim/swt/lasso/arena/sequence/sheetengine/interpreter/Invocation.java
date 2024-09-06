@@ -1,6 +1,9 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter;
 
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocation.CodeInvocation;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocation.InstanceInvocation;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocation.MethodInvocation;
 
 import java.util.List;
 
@@ -73,5 +76,17 @@ public abstract class Invocation {
 
     public void setExpectedOutput(Parameter expectedOutput) {
         this.expectedOutput = expectedOutput;
+    }
+
+    public boolean isCodeInvocation() {
+        return getClass() == CodeInvocation.class;
+    }
+
+    public boolean isInstanceInvocation() {
+        return getClass() == InstanceInvocation.class;
+    }
+
+    public boolean isMethodInvocation() {
+        return getClass() == MethodInvocation.class;
     }
 }

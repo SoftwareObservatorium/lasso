@@ -8,10 +8,10 @@ import org.slf4j.LoggerFactory;
  *
  * @author Marcus Kessel
  */
-public class InvocationListener {
+public class InvocationVisitor {
 
     private static final Logger LOG = LoggerFactory
-            .getLogger(InvocationListener.class);
+            .getLogger(InvocationVisitor.class);
 
     public void visitBeforeStatement(ExecutedInvocations executedInvocations, int index, AdaptedImplementation adaptedImplementation) {
         Invocation invocation = executedInvocations.getSequence().get(index);

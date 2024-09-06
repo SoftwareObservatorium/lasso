@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.List;
@@ -39,25 +38,12 @@ public class MethodInvocation extends MemberInvocation {
 
     @Override
     public void execute(ExecutedInvocations executedInvocations, ExecutedInvocation executedInvocation, AdaptedImplementation adaptedImplementation) {
-        Invocations invocations = executedInvocations.getInvocations();
-        // is CUT?
-        Member member = getMember();
-        Class targetClass = member.getDeclaringClass();
-
-        LOG.debug("Found class {}", targetClass.getCanonicalName());
-
         Method method = getMethod();
 
-        // invoke method
-        Parameter target = getTarget();
-
-        LOG.debug("Found target {}", target);
-
         // either value (object) or reference
-        List<Object> inputs = resolveInputs(invocations, executedInvocations);
+        List<Object> inputValues = executedInvocation.getInputs().stream().map(i -> i.getValue()).toList();
 
-        ExecutedInvocation ref = executedInvocations.getExecutedInvocation(target.getReference()[0]);
-        Object instance = ref.getOutput().getValue();
+        Obj targetInstance = executedInvocation.resolveTargetInstance();
 
         try {
             if(!method.isAccessible()) {
@@ -67,13 +53,13 @@ public class MethodInvocation extends MemberInvocation {
             Runner runner = new Runner();
             Invoke invoke;
             if(isStatic()) {
-                invoke = () -> method.invoke(null, inputs.toArray());
+                invoke = () -> method.invoke(null, inputValues.toArray());
             } else {
-                invoke = () -> method.invoke(instance, inputs.toArray());
+                invoke = () -> method.invoke(targetInstance.getValue(), inputValues.toArray());
             }
 
             ExecutionResult result = runner.run(invoke);
-            executedInvocation.setOutput(Output.fromValue(result.getValue()));
+            executedInvocation.setOutput(Obj.fromValue(result.getValue(), executedInvocation.getInvocation().getIndex()));
             executedInvocation.setExecutionTime(result.getDurationNanos());
 
             LOG.debug("method call '{}'", executedInvocation.getOutput().getValue());

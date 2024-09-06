@@ -5,12 +5,10 @@ import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.*;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.adapter.InvocationInterceptor;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.run.ExecutionResult;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.run.Runner;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.CutUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Member;
 import java.util.List;
 
 /**
@@ -34,17 +32,11 @@ public class InstanceInvocation extends MemberInvocation {
     public void execute(ExecutedInvocations executedInvocations, ExecutedInvocation executedInvocation, AdaptedImplementation adaptedImplementation) {
         Invocations invocations = executedInvocations.getInvocations();
         // is CUT?
-        Member member = getMember();
-        Class targetClass = member.getDeclaringClass();
-        boolean cut = false;
-        if(CutUtils.isFaCut(invocations, targetClass)) {
-            cut = true;
-
-            LOG.debug("Found cut '{}'", targetClass);
-        }
+        Class targetClass = getMember().getDeclaringClass();
+        boolean cut = isCut(invocations);
 
         // either value (object) or reference
-        List<Object> inputs = resolveInputs(invocations, executedInvocations);
+        List<Object> inputValues = executedInvocation.getInputs().stream().map(i -> i.getValue()).toList();
 
         Constructor constructor = getAsConstructor();
 
@@ -53,7 +45,7 @@ public class InstanceInvocation extends MemberInvocation {
         if(cut) {
             // we need one interceptor for EACH instance
             InvocationInterceptor invocationInterceptor = new InvocationInterceptor(executedInvocations, adaptedImplementation, invocations.getInterfaceSpecifications().get(targetClass.getCanonicalName()));
-            Object proxyInstance = invocationInterceptor.create(executedInvocation, constructor, inputs.toArray());
+            Object proxyInstance = invocationInterceptor.create(executedInvocation, constructor, inputValues.toArray());
             executedInvocation.setInterceptor(invocationInterceptor);
             LOG.debug("created proxy {}", proxyInstance.getClass().getCanonicalName());
         } else {
@@ -63,8 +55,8 @@ public class InstanceInvocation extends MemberInvocation {
                 }
 
                 Runner runner = new Runner();
-                ExecutionResult result = runner.run(() -> constructor.newInstance(inputs.toArray()));
-                executedInvocation.setOutput(Output.fromValue(result.getValue()));
+                ExecutionResult result = runner.run(() -> constructor.newInstance(inputValues.toArray()));
+                executedInvocation.setOutput(Obj.fromValue(result.getValue(), executedInvocation.getInvocation().getIndex()));
                 executedInvocation.setExecutionTime(result.getDurationNanos());
 
                 LOG.debug("non-cut constructor '{}'", executedInvocation.getOutput().getValue());

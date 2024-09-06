@@ -1,29 +1,34 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter;
 
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.adapter.InvocationInterceptor;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.CutUtils;
 
 /**
- * Represents the outcome (i.e., result) of an execution of an {@link Invocation}.
+ * Represents an object (i.e., result) of an execution of an {@link Invocation} (e.g., output, inputs).
  *
  * @author Marcus Kessel
  */
-public class Output {
+public class Obj {
+
+    public static int PRODUCER_INDEX_NONE = -1;
 
     private Object value;
-
     private Throwable exception;
 
-    public static Output fromValue(Object value) {
-        Output out = new Output();
+    // row index of producer
+    private int producerIndex = PRODUCER_INDEX_NONE;
+
+    public static Obj fromValue(Object value, int producerIndex) {
+        Obj out = new Obj();
         out.setValue(value);
+        out.setProducerIndex(producerIndex);
 
         return out;
     }
 
-    public static Output fromException(Throwable t) {
-        Output out = new Output();
+    public static Obj fromException(Throwable t, int producerIndex) {
+        Obj out = new Obj();
         out.setException(t);
+        out.setProducerIndex(producerIndex);
 
         return out;
     }
@@ -86,5 +91,13 @@ public class Output {
                 "value=" + value +
                 ", exception=" + exception +
                 '}';
+    }
+
+    public int getProducerIndex() {
+        return producerIndex;
+    }
+
+    public void setProducerIndex(int producerIndex) {
+        this.producerIndex = producerIndex;
     }
 }

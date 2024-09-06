@@ -36,7 +36,7 @@ public class SSNTestDriver {
     DependencyResolver resolver = new DependencyResolver(mavenRepoUrl, localRepo.getAbsolutePath());
     MavenRepository mavenRepository = new MavenRepository(resolver);
 
-    public ExecutedInvocations runSheet(String ssnJsonlStr, String lql, Class cutClass, int limitAdapters, InvocationListener executionListener) throws IOException {
+    public ExecutedInvocations runSheet(String ssnJsonlStr, String lql, Class cutClass, int limitAdapters, InvocationVisitor executionListener) throws IOException {
         SSNParser ssnParser = new SSNParser();
         ParsedSheet parsedSheet = ssnParser.parseJsonl(ssnJsonlStr);
 

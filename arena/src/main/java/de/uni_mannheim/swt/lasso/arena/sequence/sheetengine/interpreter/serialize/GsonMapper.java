@@ -1,8 +1,13 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize;
 
 import com.google.gson.Gson;
+import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.ExecutedInvocation;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Output;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Invocation;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Obj;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocation.CodeInvocation;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocation.InstanceInvocation;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocation.MethodInvocation;
 import de.uni_mannheim.swt.lasso.runner.permutator.TypeUtils;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -34,47 +39,129 @@ public class GsonMapper implements ObjectMapper {
      * @throws IOException
      */
     @Override
-    public String writeValue(ExecutedInvocation executedInvocation) throws IOException {
-        Output output = executedInvocation.getOutput();
+    public String writeOutput(ExecutedInvocation executedInvocation) throws IOException {
+        Obj output = executedInvocation.getOutput();
 
-        String serializedStr;
-        if(output.hasException()) {
-            Throwable throwable = output.getException();
-            serializedStr = gson.toJson("$EXCEPTION@" + throwable.getClass().getCanonicalName() + "@" + throwable.getMessage());
-        } else if(output.isNull()) {
-            serializedStr = gson.toJson(null); // FIXME allowed?
-        } else if(output.isCutProxyReference()) {
-            // CUT (i.e., proxy instance of cut)
-
-            // serialize identifier of reference
-            // format: ClassName@ROW
-            serializedStr = gson.toJson("$CUT@" + output.getTypeAsName() + "@" + executedInvocation.getInvocation().getIndex());
-        } else {
-            // an object needs to be serialized
-            // TODO primitive vs complex objects
-            if(ClassUtils.isPrimitiveOrWrapper(output.getType())) {
-                // FIXME special handling of primitive types?
-                serializedStr = gson.toJson(output.getValue());
-            } else if(TypeUtils.isAssignable(output.getType(), String.class)) {
-                // FIXME use Charsequence instead?
-                // TODO if string, use additional double-quotes as in Sequence sheets in JSONL notation
-                // e.g. "'Hello World!'"
-                serializedStr = gson.toJson(StringUtils.wrap((String) output.getValue(), "'"));
-            } else if(TypeUtils.isAssignable(output.getType(), Void.class, true)) {
-                // FIXME notation: use "{}" (empty object)?
-                serializedStr = gson.toJson(new Object());
-            } else {
-                // FIXME
-                serializedStr = gson.toJson(output.getValue());
-            }
-        }
+        String serializedStr = toString(output);
 
         return serializedStr;
     }
 
     @Override
-    public Output readValue(String value) throws IOException {
+    public String writeInput(ExecutedInvocation executedInvocation, int p) throws IOException {
+        Obj input = executedInvocation.getInputs().get(p);
+        String serializedStr = toString(input);
+
+        return serializedStr;
+    }
+
+    @Override
+    public String writeTarget(ExecutedInvocation executedInvocation) throws IOException {
+        if(executedInvocation.getInvocation().isMethodInvocation()) {
+            Obj targetInstance = executedInvocation.resolveTargetInstance();
+            String serializedStr = toString(targetInstance);
+
+            return serializedStr;
+        } else if(executedInvocation.getInvocation().isInstanceInvocation()) {
+            Class targetClass = executedInvocation.getInvocation().getTargetClass();
+
+            return gson.toJson(targetClass.getCanonicalName());
+        }
+
+        throw new IllegalArgumentException("unknown invocation type");
+    }
+
+    @Override
+    public String writeOp(ExecutedInvocation executedInvocation) throws IOException {
+        Invocation invocation = executedInvocation.getInvocation();
+        // FIXME write CUT operation (i.e. LQL signature)
+        if(invocation.isCodeInvocation()) {
+            CodeInvocation codeInvocation = (CodeInvocation) invocation;
+
+            return gson.toJson(codeInvocation.getCodeExpression());
+        } else if(invocation.isInstanceInvocation()) {
+            InstanceInvocation instanceInvocation = (InstanceInvocation) invocation;
+
+            return gson.toJson(instanceInvocation.getAsConstructor().toString());
+        } else if(invocation.isMethodInvocation()) {
+            MethodInvocation methodInvocation = (MethodInvocation) invocation;
+
+            return gson.toJson(methodInvocation.getMethod().toString());
+        }
+
+        throw new IllegalArgumentException("unknown invocation type");
+    }
+
+    @Override
+    public String writeAdaptedOp(ExecutedInvocation executedInvocation, AdaptedImplementation adaptedImplementation) throws IOException {
+        Invocation invocation = executedInvocation.getInvocation();
+        // FIXME write CUT operation (i.e. LQL signature)
+        if(invocation.isCodeInvocation()) {
+            CodeInvocation codeInvocation = (CodeInvocation) invocation;
+
+            return gson.toJson(codeInvocation.getCodeExpression());
+        } else if(invocation.isInstanceInvocation()) {
+            InstanceInvocation instanceInvocation = (InstanceInvocation) invocation;
+
+            return gson.toJson(instanceInvocation.getAsConstructor().toString());
+        } else if(invocation.isMethodInvocation()) {
+            MethodInvocation methodInvocation = (MethodInvocation) invocation;
+
+            return gson.toJson(methodInvocation.getMethod().toString());
+        }
+
+        throw new IllegalArgumentException("unknown invocation type");
+    }
+
+    @Override
+    public Obj readOutput(String value) throws IOException {
         // FIXME implement
         throw new UnsupportedOperationException("not implemented");
+    }
+
+    @Override
+    public Obj readInput(String value) throws IOException {
+        return null;
+    }
+
+    @Override
+    public Obj readOp(String value) throws IOException {
+        return null;
+    }
+
+    String toString(Obj obj) {
+        String serializedStr;
+        if(obj.hasException()) {
+            Throwable throwable = obj.getException();
+            serializedStr = gson.toJson("$EXCEPTION@" + throwable.getClass().getCanonicalName() + "@" + throwable.getMessage());
+        } else if(obj.isNull()) {
+            serializedStr = gson.toJson(null); // FIXME allowed?
+        } else if(obj.isCutProxyReference()) {
+            // CUT (i.e., proxy instance of cut)
+
+            // serialize identifier of reference
+            // format: ClassName@ROW
+            serializedStr = gson.toJson("$CUT@" + obj.getTypeAsName() + "@" + obj.getProducerIndex());
+        } else {
+            // an object needs to be serialized
+            // TODO primitive vs complex objects
+            if(ClassUtils.isPrimitiveOrWrapper(obj.getType())) {
+                // FIXME special handling of primitive types?
+                serializedStr = gson.toJson(obj.getValue());
+            } else if(TypeUtils.isAssignable(obj.getType(), String.class)) {
+                // FIXME use Charsequence instead?
+                // TODO if string, use additional double-quotes as in Sequence sheets in JSONL notation
+                // e.g. "'Hello World!'"
+                serializedStr = gson.toJson(StringUtils.wrap((String) obj.getValue(), "'"));
+            } else if(TypeUtils.isAssignable(obj.getType(), Void.class, true)) {
+                // FIXME notation: use "{}" (empty object)?
+                serializedStr = gson.toJson(new Object());
+            } else {
+                // FIXME any value
+                serializedStr = gson.toJson(obj.getValue());
+            }
+        }
+
+        return serializedStr;
     }
 }

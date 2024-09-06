@@ -2,6 +2,8 @@ package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter;
 
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.adapter.InvocationInterceptor;
 
+import java.util.List;
+
 /**
  * An executed {@link Invocation} that records the output.
  *
@@ -11,7 +13,9 @@ public class ExecutedInvocation {
 
     private final Invocation invocation;
     private final ExecutedInvocations executedInvocations;
-    private Output output = null;
+    private Obj output = null;
+
+    private List<Obj> inputs;
 
     private InvocationInterceptor interceptor;
 
@@ -26,11 +30,11 @@ public class ExecutedInvocation {
         return invocation;
     }
 
-    public Output getOutput() {
+    public Obj getOutput() {
         return output;
     }
 
-    public void setOutput(Output output) {
+    public void setOutput(Obj output) {
         this.output = output;
     }
 
@@ -71,5 +75,21 @@ public class ExecutedInvocation {
 
     public ExecutedInvocations getExecutedInvocations() {
         return executedInvocations;
+    }
+
+    public List<Obj> getInputs() {
+        return inputs;
+    }
+
+    public void setInputs(List<Obj> inputs) {
+        this.inputs = inputs;
+    }
+
+    public Obj resolveTargetInstance() {
+        // invoke method
+        Parameter target = invocation.getTarget();
+
+        ExecutedInvocation ref = executedInvocations.getExecutedInvocation(target.getReference()[0]);
+        return ref.getOutput();
     }
 }

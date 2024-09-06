@@ -1,7 +1,8 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize;
 
-import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
+import com.google.common.collect.Table;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.*;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.event.CompositeInvocationVisitor;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.examples.StackEmptyConstructorExample;
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
@@ -9,8 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Arrays;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
@@ -39,25 +40,26 @@ public class GsonMapperTest {
                 """;
 
         final GsonMapper gsonMapper = new GsonMapper();
-        InvocationListener executionListener = new InvocationListener() {
-
-            @Override
-            public void visitAfterStatement(ExecutedInvocations executedInvocations, int index, AdaptedImplementation adaptedImplementation) {
-                // FIXME collect in existing objects or directly stream out?
-                try {
-                    String serializedValue = gsonMapper.writeValue(executedInvocations.getExecutedInvocation(index));
-
-                    LOG.debug("serialized = '{}'", serializedValue);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        };
-
+        ObjectMapperVisitor visitor = new ObjectMapperVisitor(gsonMapper);
+        InvocationVisitor executionListener = new CompositeInvocationVisitor(
+                Arrays.asList(visitor));
 
         Class cutClass = StackEmptyConstructorExample.class;
 
         SSNTestDriver testDriver = new SSNTestDriver();
         ExecutedInvocations executedInvocations = testDriver.runSheet(ssnJsonlStr, lql, cutClass, 1, executionListener);
+
+        Table<Integer, Integer, String> actuationSheet = visitor.getActuationSheet();
+        Table<Integer, Integer, String> adaptedActuationSheet = visitor.getAdaptedActuationSheet();
+
+        debug(actuationSheet);
+        System.out.println("-----");
+        debug(adaptedActuationSheet);
+    }
+
+    void debug(Table<Integer, Integer, String> sheet) {
+        for (Table.Cell<Integer, Integer, String> cell: sheet.cellSet()){
+            System.out.println(cell.getRowKey()+" "+cell.getColumnKey()+" "+cell.getValue());
+        }
     }
 }
