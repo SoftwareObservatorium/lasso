@@ -37,7 +37,7 @@ public class InstanceInvocation extends MemberInvocation {
         Member member = getMember();
         Class targetClass = member.getDeclaringClass();
         boolean cut = false;
-        if(CutUtils.isCut(invocations, targetClass)) {
+        if(CutUtils.isFaCut(invocations, targetClass)) {
             cut = true;
 
             LOG.debug("Found cut '{}'", targetClass);

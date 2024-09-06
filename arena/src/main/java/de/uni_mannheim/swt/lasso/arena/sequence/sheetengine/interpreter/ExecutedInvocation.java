@@ -10,14 +10,16 @@ import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.adapter.
 public class ExecutedInvocation {
 
     private final Invocation invocation;
+    private final ExecutedInvocations executedInvocations;
     private Output output = null;
 
     private InvocationInterceptor interceptor;
 
     private long executionTime;
 
-    public ExecutedInvocation(Invocation invocation) {
+    public ExecutedInvocation(Invocation invocation, ExecutedInvocations executedInvocations) {
         this.invocation = invocation;
+        this.executedInvocations = executedInvocations;
     }
 
     public Invocation getInvocation() {
@@ -65,5 +67,9 @@ public class ExecutedInvocation {
 
     public void setInterceptor(InvocationInterceptor interceptor) {
         this.interceptor = interceptor;
+    }
+
+    public ExecutedInvocations getExecutedInvocations() {
+        return executedInvocations;
     }
 }

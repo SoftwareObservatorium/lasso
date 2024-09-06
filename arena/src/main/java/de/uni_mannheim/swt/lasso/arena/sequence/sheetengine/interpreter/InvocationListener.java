@@ -8,29 +8,29 @@ import org.slf4j.LoggerFactory;
  *
  * @author Marcus Kessel
  */
-public class ExecutionListener {
+public class InvocationListener {
 
     private static final Logger LOG = LoggerFactory
-            .getLogger(ExecutionListener.class);
+            .getLogger(InvocationListener.class);
 
-    void visitBeforeStatement(ExecutedInvocations executedInvocations, int index, AdaptedImplementation adaptedImplementation) {
+    public void visitBeforeStatement(ExecutedInvocations executedInvocations, int index, AdaptedImplementation adaptedImplementation) {
         Invocation invocation = executedInvocations.getSequence().get(index);
         ExecutedInvocation executedInvocation = executedInvocations.getExecutedInvocation(index);
 
         LOG.debug("Statement '{}' -> {}", index, invocation.toCode());
     }
 
-    void visitAfterStatement(ExecutedInvocations executedInvocations, int index, AdaptedImplementation adaptedImplementation) {
+    public void visitAfterStatement(ExecutedInvocations executedInvocations, int index, AdaptedImplementation adaptedImplementation) {
         Invocation invocation = executedInvocations.getSequence().get(index);
         ExecutedInvocation executedInvocation = executedInvocations.getExecutedInvocation(index);
 
         LOG.debug("Statement '{}' -> {}", index, executedInvocation.toCode());
     }
 
-    void visitBeforeSequence(ExecutedInvocations executedInvocations, AdaptedImplementation adaptedImplementation) {
+    public void visitBeforeSequence(ExecutedInvocations executedInvocations, AdaptedImplementation adaptedImplementation) {
         LOG.debug("Sequence '{}'", executedInvocations.getInvocations());
     }
 
-    void visitAfterSequence(ExecutedInvocations executedInvocations, AdaptedImplementation adaptedImplementation) {
+    public void visitAfterSequence(ExecutedInvocations executedInvocations, AdaptedImplementation adaptedImplementation) {
     }
 }

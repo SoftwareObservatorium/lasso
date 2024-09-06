@@ -32,7 +32,7 @@ public class CutUtils {
         return classUnderTest;
     }
 
-    public static boolean isCut(Invocations invocations, Class targetClass) {
+    public static boolean isFaCut(Invocations invocations, Class targetClass) {
         return invocations.getInterfaceSpecifications().containsKey(targetClass.getCanonicalName());
     }
 

@@ -160,7 +160,7 @@ public class SSNInterpreter {
      * @param executionListener
      * @return
      */
-    public ExecutedInvocations run(Invocations invocations, AdaptedImplementation adaptedImplementation, ExecutionListener executionListener) {
+    public ExecutedInvocations run(Invocations invocations, AdaptedImplementation adaptedImplementation, InvocationListener executionListener) {
         //
         ExecutedInvocations executedInvocations = new ExecutedInvocations(invocations);
 

@@ -43,7 +43,7 @@ public class SSNTestDriverTest {
                     size()->int
                 }
                 """;
-        ExecutionListener executionListener = new ExecutionListener();
+        InvocationListener executionListener = new InvocationListener();
 
         Class cutClass = StackEmptyConstructorExample.class;
 
@@ -98,7 +98,7 @@ public class SSNTestDriverTest {
                     size()->int
                 }
                 """;
-        ExecutionListener executionListener = new ExecutionListener();
+        InvocationListener executionListener = new InvocationListener();
 
         Class cutClass = StackNonEmptyConstructorExample.class;
 
@@ -146,7 +146,7 @@ public class SSNTestDriverTest {
                     size()->int
                 }
                 """;
-        ExecutionListener executionListener = new ExecutionListener();
+        InvocationListener executionListener = new InvocationListener();
 
         Class cutClass = StackEmptyConstructorExample.class;
 
@@ -187,7 +187,7 @@ public class SSNTestDriverTest {
                     sum(int,int)->int
                 }
                 """;
-        ExecutionListener executionListener = new ExecutionListener();
+        InvocationListener executionListener = new InvocationListener();
 
         Class cutClass = StaticMethodExample.class;
 
@@ -223,7 +223,7 @@ public class SSNTestDriverTest {
                     sum(int,int)->int
                 }
                 """;
-        ExecutionListener executionListener = new ExecutionListener();
+        InvocationListener executionListener = new InvocationListener();
 
         Class cutClass = InvisibleStaticMethodExample.class;
 
@@ -257,7 +257,7 @@ public class SSNTestDriverTest {
                     getParent()->Node
                 }
                 """;
-        ExecutionListener executionListener = new ExecutionListener();
+        InvocationListener executionListener = new InvocationListener();
 
         Class cutClass = CompositeNodeExample.class;
 
@@ -301,7 +301,7 @@ public class SSNTestDriverTest {
                     getParent()->Node
                 }
                 """;
-        ExecutionListener executionListener = new ExecutionListener();
+        InvocationListener executionListener = new InvocationListener();
 
         Class cutClass = CompositeNodeExample.class;
 

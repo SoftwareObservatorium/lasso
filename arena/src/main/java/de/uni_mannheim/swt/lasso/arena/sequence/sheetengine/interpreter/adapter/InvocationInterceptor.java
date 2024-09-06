@@ -173,6 +173,10 @@ public class InvocationInterceptor implements MethodInterceptor {
         return ClassUtils.isCglibProxyClass(clazz);
     }
 
+    public static String getCutClassNameFromProxy(Object obj) {
+        return ClassUtils.getUserClass(obj).getCanonicalName();
+    }
+
     private Object createProxy(Class clazz, Class[] argumentTypes, Object[] arguments) {
         Enhancer enhancer = new Enhancer();
         enhancer.setSuperclass(clazz);

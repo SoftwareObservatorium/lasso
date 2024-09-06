@@ -27,7 +27,7 @@ public class ExecutedInvocations {
     }
 
     public ExecutedInvocation create(Invocation invocation) {
-        ExecutedInvocation executedInvocation = new ExecutedInvocation(invocation);
+        ExecutedInvocation executedInvocation = new ExecutedInvocation(invocation, this);
         executedSequence.add(executedInvocation);
 
         return executedInvocation;
