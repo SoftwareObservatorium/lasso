@@ -3,6 +3,7 @@ package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter;
 import de.uni_mannheim.swt.lasso.arena.MethodSignature;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedInitializer;
+import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedMember;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedMethod;
 import de.uni_mannheim.swt.lasso.arena.adaptation.permutator.PermutatorAdaptedImplementation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.adapter.InvocationInterceptor;
@@ -25,6 +26,8 @@ public class ExecutedInvocation {
     private List<Obj> inputs;
 
     private InvocationInterceptor interceptor;
+
+    private AdaptedMember adaptedMember;
 
     private long executionTime;
 
@@ -123,5 +126,13 @@ public class ExecutedInvocation {
                 methodSig);
 
         return adaptedMethod;
+    }
+
+    public AdaptedMember getAdaptedMember() {
+        return adaptedMember;
+    }
+
+    public void setAdaptedMember(AdaptedMember adaptedMember) {
+        this.adaptedMember = adaptedMember;
     }
 }

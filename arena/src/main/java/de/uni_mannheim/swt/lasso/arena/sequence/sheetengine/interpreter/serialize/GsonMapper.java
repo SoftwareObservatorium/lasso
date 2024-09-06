@@ -3,6 +3,7 @@ package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.seriali
 import com.google.gson.Gson;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedInitializer;
+import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedMethod;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.ExecutedInvocation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Invocation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Obj;
@@ -29,7 +30,7 @@ public class GsonMapper implements ObjectMapper {
     }
 
     public GsonMapper(Gson gson) {
-        this.gson = new Gson();
+        this.gson = gson;
     }
 
     /**
@@ -67,6 +68,10 @@ public class GsonMapper implements ObjectMapper {
             Class targetClass = executedInvocation.getInvocation().getTargetClass();
 
             return gson.toJson(targetClass.getCanonicalName());
+        } else if(executedInvocation.getInvocation().isCodeInvocation()) {
+            CodeInvocation codeInvocation = (CodeInvocation) executedInvocation.getInvocation();
+            // nothing to do here, since this can only be an $eval
+            return gson.toJson("$COMMAND@" + codeInvocation.getCommand());
         }
 
         throw new IllegalArgumentException("unknown invocation type");
@@ -104,13 +109,15 @@ public class GsonMapper implements ObjectMapper {
         } else if(invocation.isInstanceInvocation()) {
             InstanceInvocation instanceInvocation = (InstanceInvocation) invocation;
 
-            //AdaptedInitializer adaptedInitializer = executedInvocation.resolveAdaptedInitializer(adaptedImplementation);
+            AdaptedInitializer adaptedInitializer = (AdaptedInitializer) executedInvocation.getAdaptedMember();
 
-            return gson.toJson(instanceInvocation.getAsConstructor().toString());
+            return gson.toJson(adaptedInitializer.getInitializer().toString());
         } else if(invocation.isMethodInvocation()) {
             MethodInvocation methodInvocation = (MethodInvocation) invocation;
 
-            return gson.toJson(methodInvocation.getMethod().toString());
+            AdaptedMethod adaptedMethod = (AdaptedMethod) executedInvocation.getAdaptedMember();
+
+            return gson.toJson(adaptedMethod.getMethod().toString());
         }
 
         throw new IllegalArgumentException("unknown invocation type");

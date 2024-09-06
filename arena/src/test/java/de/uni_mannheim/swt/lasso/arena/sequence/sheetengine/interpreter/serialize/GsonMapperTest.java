@@ -1,6 +1,5 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize;
 
-import com.google.common.collect.Table;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.*;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.event.CompositeInvocationVisitor;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.examples.StackEmptyConstructorExample;
@@ -48,11 +47,41 @@ public class GsonMapperTest {
         SSNTestDriver testDriver = new SSNTestDriver();
         ExecutedInvocations executedInvocations = testDriver.runSheet(ssnJsonlStr, lql, cutClass, 1, invocationVisitor);
 
-        Table<Integer, Integer, String> actuationSheet = visitor.getActuationSheet();
-        Table<Integer, Integer, String> adaptedActuationSheet = visitor.getAdaptedActuationSheet();
+        Sheet<Integer, Integer, String> actuationSheet = visitor.getActuationSheet();
+        Sheet<Integer, Integer, String> adaptedActuationSheet = visitor.getAdaptedActuationSheet();
 
-        visitor.debug(actuationSheet);
-        System.out.println("-----");
-        visitor.debug(adaptedActuationSheet);
+        actuationSheet.debug();
+        adaptedActuationSheet.debug();
+
+        assertEquals("""
+                0 0 "$CUT@Stack@0"
+                0 1 "public Stack()"
+                0 2 "Stack"
+                1 0 "\\u0027[a, b]\\u0027"
+                1 1 "Arrays.toString(new char[]{\\u0027a\\u0027, \\u0027b\\u0027})"
+                1 2 "$COMMAND@$eval"
+                2 0 "\\u0027[a, b]\\u0027"
+                2 1 "java.lang.String Stack.push(java.lang.String)"
+                2 2 "$CUT@Stack@0"
+                2 3 "\\u0027[a, b]\\u0027"
+                3 0 1
+                3 1 "int Stack.size()"
+                3 2 "$CUT@Stack@0"
+                """, actuationSheet.toString());
+        assertEquals("""
+                0 0 "$CUT@Stack@0"
+                0 1 "public de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.examples.StackEmptyConstructorExample()"
+                0 2 "Stack"
+                1 0 "\\u0027[a, b]\\u0027"
+                1 1 "Arrays.toString(new char[]{\\u0027a\\u0027, \\u0027b\\u0027})"
+                1 2 "$COMMAND@$eval"
+                2 0 "\\u0027[a, b]\\u0027"
+                2 1 "public java.lang.Object java.util.Stack.push(java.lang.Object)"
+                2 2 "$CUT@Stack@0"
+                2 3 "\\u0027[a, b]\\u0027"
+                3 0 1
+                3 1 "public synchronized int java.util.Vector.size()"
+                3 2 "$CUT@Stack@0"
+                """, adaptedActuationSheet.toString());
     }
 }

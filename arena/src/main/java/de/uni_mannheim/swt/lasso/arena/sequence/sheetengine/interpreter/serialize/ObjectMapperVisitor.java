@@ -1,7 +1,5 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize;
 
-import com.google.common.collect.Table;
-import com.google.common.collect.TreeBasedTable;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.*;
 import org.slf4j.Logger;
@@ -15,15 +13,16 @@ import java.util.List;
  *
  * @author Marcus Kessel
  */
+// FIXME instead of keeping two sheets, just keep one and additional diffs (adapter) - and merge
 public class ObjectMapperVisitor extends InvocationVisitor {
 
     private static final Logger LOG = LoggerFactory.getLogger(ObjectMapperVisitor.class);
 
     private final ObjectMapper objectMapper;
 
-    private Table<Integer, Integer, String> actuationSheet = TreeBasedTable.create();
+    private final Sheet<Integer, Integer, String> actuationSheet = new Sheet<>();
 
-    private Table<Integer, Integer, String> adaptedActuationSheet = TreeBasedTable.create();
+    private final Sheet<Integer, Integer, String> adaptedActuationSheet = new Sheet<>();
 
     public ObjectMapperVisitor(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
@@ -105,17 +104,11 @@ public class ObjectMapperVisitor extends InvocationVisitor {
         }
     }
 
-    public Table<Integer, Integer, String> getActuationSheet() {
+    public Sheet<Integer, Integer, String> getActuationSheet() {
         return actuationSheet;
     }
 
-    public Table<Integer, Integer, String> getAdaptedActuationSheet() {
+    public Sheet<Integer, Integer, String> getAdaptedActuationSheet() {
         return adaptedActuationSheet;
-    }
-
-    public void debug(Table<Integer, Integer, String> sheet) {
-        for (Table.Cell<Integer, Integer, String> cell: sheet.cellSet()){
-            System.out.println(cell.getRowKey()+" "+cell.getColumnKey()+" "+cell.getValue());
-        }
     }
 }

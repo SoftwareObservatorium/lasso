@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- *  Create proxies based on CGLIB (supports proxying classes!).
+ * Dynamic runtime adapter based on CGLIB-based proxy classes and delegation.
  *
  * @author Marcus Kessel
  */
@@ -126,6 +126,10 @@ public class InvocationInterceptor implements MethodInterceptor {
             if(!adMethod.isAccessible()) {
                 adMethod.setAccessible(true);
             }
+
+            // set
+            executedInvocation.setAdaptedMember(adaptedMethod);
+
             Runner runner = new Runner();
             Invoke invoke;
             if(adaptedMethod.isStatic()) {
@@ -193,6 +197,9 @@ public class InvocationInterceptor implements MethodInterceptor {
             if(!adaptedConstructor.isAccessible()) {
                 adaptedConstructor.setAccessible(true);
             }
+
+            // set
+            executedInvocation.setAdaptedMember(adaptedInitializer);
 
             Runner runner = new Runner();
             ExecutionResult result = runner.run(() -> adaptedConstructor.newInstance(inputs));

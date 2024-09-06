@@ -133,7 +133,9 @@ public class SSNInterpreter {
                 // -- use "eval" command? or some simple syntax like in SpEL #{ <expression string> }
 
                 LOG.debug("code invocation = {}", operationName);
-                invocation = codeInvocation(invocations, clazzCell);
+                CodeInvocation codeInvocation = codeInvocation(invocations, clazzCell);
+                codeInvocation.setCommand(operationName);
+                invocation = codeInvocation;
             } else {
                 // method invocation
                 LOG.debug("method invocation = {}", operationName);
@@ -335,7 +337,7 @@ public class SSNInterpreter {
      * @param inputs
      * @return
      */
-    Invocation instanceInvocation(Eval eval, Invocations invocations, String className, List<ParsedCell> inputs) {
+    InstanceInvocation instanceInvocation(Eval eval, Invocations invocations, String className, List<ParsedCell> inputs) {
         LOG.debug("classname = {}, inputs = {}", className, inputs);
 
         try {
@@ -390,7 +392,7 @@ public class SSNInterpreter {
      * @param inputs
      * @return
      */
-    Invocation methodInvocation(Eval eval, Invocations invocations, ParsedCell clazzCell, String methodName, List<ParsedCell> inputs) {
+    MethodInvocation methodInvocation(Eval eval, Invocations invocations, ParsedCell clazzCell, String methodName, List<ParsedCell> inputs) {
         String clazz = clazzCell.getNodeValue().textValue();
         LOG.debug("this {}", clazz);
 
@@ -447,7 +449,7 @@ public class SSNInterpreter {
      * @param codeCell
      * @return
      */
-    Invocation codeInvocation(Invocations invocations, ParsedCell codeCell) {
+    CodeInvocation codeInvocation(Invocations invocations, ParsedCell codeCell) {
         String codeExpression = codeCell.getNodeValue().textValue();
 
         CodeInvocation invocation = invocations.createCodeInvocation();

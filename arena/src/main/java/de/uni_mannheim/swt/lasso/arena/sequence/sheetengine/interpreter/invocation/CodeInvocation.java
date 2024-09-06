@@ -18,6 +18,7 @@ import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.run.Runn
 public class CodeInvocation extends Invocation {
 
     private String codeExpression;
+    private String command;
 
     public CodeInvocation(int index) {
         super(index);
@@ -73,5 +74,13 @@ public class CodeInvocation extends Invocation {
 
     public void setCodeExpression(String codeExpression) {
         this.codeExpression = codeExpression;
+    }
+
+    public String getCommand() {
+        return command;
+    }
+
+    public void setCommand(String command) {
+        this.command = command;
     }
 }

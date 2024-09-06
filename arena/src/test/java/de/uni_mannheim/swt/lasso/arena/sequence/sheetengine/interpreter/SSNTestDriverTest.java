@@ -52,8 +52,8 @@ public class SSNTestDriverTest {
         SSNTestDriver testDriver = new SSNTestDriver();
         ExecutedInvocations executedInvocations = testDriver.runSheet(ssnJsonlStr, lql, cutClass, 1, visitor);
         LOG.debug("executed invocations\n{}", executedInvocations);
-        visitor.debug(visitor.getActuationSheet());
-        visitor.debug(visitor.getAdaptedActuationSheet());
+        visitor.getActuationSheet().debug();
+        visitor.getAdaptedActuationSheet().debug();
         Invocations invocations = executedInvocations.getInvocations();
 
         assertEquals(4, invocations.getSequence().size());
@@ -109,8 +109,8 @@ public class SSNTestDriverTest {
         SSNTestDriver testDriver = new SSNTestDriver();
         ExecutedInvocations executedInvocations = testDriver.runSheet(ssnJsonlStr, lql, cutClass, 1, visitor);
         LOG.debug("executed invocations\n{}", executedInvocations);
-        visitor.debug(visitor.getActuationSheet());
-        visitor.debug(visitor.getAdaptedActuationSheet());
+        visitor.getActuationSheet().debug();
+        visitor.getAdaptedActuationSheet().debug();
         Invocations invocations = executedInvocations.getInvocations();
 
         assertEquals(4, invocations.getSequence().size());
@@ -159,8 +159,8 @@ public class SSNTestDriverTest {
         SSNTestDriver testDriver = new SSNTestDriver();
         ExecutedInvocations executedInvocations = testDriver.runSheet(ssnJsonlStr, lql, cutClass, 1, visitor);
         LOG.debug("executed invocations\n{}", executedInvocations);
-        visitor.debug(visitor.getActuationSheet());
-        visitor.debug(visitor.getAdaptedActuationSheet());
+        visitor.getActuationSheet().debug();
+        visitor.getAdaptedActuationSheet().debug();
         Invocations invocations = executedInvocations.getInvocations();
 
         assertEquals(4, invocations.getSequence().size());
@@ -202,8 +202,8 @@ public class SSNTestDriverTest {
         SSNTestDriver testDriver = new SSNTestDriver();
         ExecutedInvocations executedInvocations = testDriver.runSheet(ssnJsonlStr, lql, cutClass, 1, visitor);
         LOG.debug("executed invocations\n{}", executedInvocations);
-        visitor.debug(visitor.getActuationSheet());
-        visitor.debug(visitor.getAdaptedActuationSheet());
+        visitor.getActuationSheet().debug();
+        visitor.getAdaptedActuationSheet().debug();
         Invocations invocations = executedInvocations.getInvocations();
 
         assertEquals(2, invocations.getSequence().size());
@@ -240,8 +240,8 @@ public class SSNTestDriverTest {
         SSNTestDriver testDriver = new SSNTestDriver();
         ExecutedInvocations executedInvocations = testDriver.runSheet(ssnJsonlStr, lql, cutClass, 1, visitor);
         LOG.debug("executed invocations\n{}", executedInvocations);
-        visitor.debug(visitor.getActuationSheet());
-        visitor.debug(visitor.getAdaptedActuationSheet());
+        visitor.getActuationSheet().debug();
+        visitor.getAdaptedActuationSheet().debug();
         Invocations invocations = executedInvocations.getInvocations();
 
         assertEquals(2, invocations.getSequence().size());
@@ -276,8 +276,8 @@ public class SSNTestDriverTest {
         SSNTestDriver testDriver = new SSNTestDriver();
         ExecutedInvocations executedInvocations = testDriver.runSheet(ssnJsonlStr, lql, cutClass, 1, visitor);
         LOG.debug("executed invocations\n{}", executedInvocations);
-        visitor.debug(visitor.getActuationSheet());
-        visitor.debug(visitor.getAdaptedActuationSheet());
+        visitor.getActuationSheet().debug();
+        visitor.getAdaptedActuationSheet().debug();
         Invocations invocations = executedInvocations.getInvocations();
 
         assertEquals(4, invocations.getSequence().size());
@@ -322,8 +322,8 @@ public class SSNTestDriverTest {
         SSNTestDriver testDriver = new SSNTestDriver();
         ExecutedInvocations executedInvocations = testDriver.runSheet(ssnJsonlStr, lql, cutClass, 1, visitor);
         LOG.debug("executed invocations\n{}", executedInvocations);
-        visitor.debug(visitor.getActuationSheet());
-        visitor.debug(visitor.getAdaptedActuationSheet());
+        visitor.getActuationSheet().debug();
+        visitor.getAdaptedActuationSheet().debug();
         Invocations invocations = executedInvocations.getInvocations();
 
         assertEquals(3, invocations.getSequence().size());
