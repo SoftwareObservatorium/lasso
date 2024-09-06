@@ -71,6 +71,9 @@ public class ExecutedInvocations {
             sb.append(executedInvocation.toString());
             sb.append("\n");
         }
+        sb.append("Total execution time (nanos): ");
+        sb.append(getExecutionTime());
+        sb.append("\n");
 
         return sb.toString();
     }
