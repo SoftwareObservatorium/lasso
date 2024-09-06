@@ -2,6 +2,7 @@ package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.seriali
 
 import com.google.gson.Gson;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
+import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedInitializer;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.ExecutedInvocation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Invocation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Obj;
@@ -103,6 +104,8 @@ public class GsonMapper implements ObjectMapper {
         } else if(invocation.isInstanceInvocation()) {
             InstanceInvocation instanceInvocation = (InstanceInvocation) invocation;
 
+            //AdaptedInitializer adaptedInitializer = executedInvocation.resolveAdaptedInitializer(adaptedImplementation);
+
             return gson.toJson(instanceInvocation.getAsConstructor().toString());
         } else if(invocation.isMethodInvocation()) {
             MethodInvocation methodInvocation = (MethodInvocation) invocation;
@@ -121,12 +124,14 @@ public class GsonMapper implements ObjectMapper {
 
     @Override
     public Obj readInput(String value) throws IOException {
-        return null;
+        // FIXME implement
+        throw new UnsupportedOperationException("not implemented");
     }
 
     @Override
     public Obj readOp(String value) throws IOException {
-        return null;
+        // FIXME implement
+        throw new UnsupportedOperationException("not implemented");
     }
 
     String toString(Obj obj) {
@@ -141,6 +146,8 @@ public class GsonMapper implements ObjectMapper {
 
             // serialize identifier of reference
             // format: ClassName@ROW
+
+            // FIXME we need to keep track of unique objects!!!
             serializedStr = gson.toJson("$CUT@" + obj.getTypeAsName() + "@" + obj.getProducerIndex());
         } else {
             // an object needs to be serialized

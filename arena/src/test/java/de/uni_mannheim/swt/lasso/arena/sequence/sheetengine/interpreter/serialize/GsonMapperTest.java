@@ -39,27 +39,20 @@ public class GsonMapperTest {
                 }
                 """;
 
-        final GsonMapper gsonMapper = new GsonMapper();
-        ObjectMapperVisitor visitor = new ObjectMapperVisitor(gsonMapper);
-        InvocationVisitor executionListener = new CompositeInvocationVisitor(
+        ObjectMapperVisitor visitor = new ObjectMapperVisitor(new GsonMapper());
+        InvocationVisitor invocationVisitor = new CompositeInvocationVisitor(
                 Arrays.asList(visitor));
 
         Class cutClass = StackEmptyConstructorExample.class;
 
         SSNTestDriver testDriver = new SSNTestDriver();
-        ExecutedInvocations executedInvocations = testDriver.runSheet(ssnJsonlStr, lql, cutClass, 1, executionListener);
+        ExecutedInvocations executedInvocations = testDriver.runSheet(ssnJsonlStr, lql, cutClass, 1, invocationVisitor);
 
         Table<Integer, Integer, String> actuationSheet = visitor.getActuationSheet();
         Table<Integer, Integer, String> adaptedActuationSheet = visitor.getAdaptedActuationSheet();
 
-        debug(actuationSheet);
+        visitor.debug(actuationSheet);
         System.out.println("-----");
-        debug(adaptedActuationSheet);
-    }
-
-    void debug(Table<Integer, Integer, String> sheet) {
-        for (Table.Cell<Integer, Integer, String> cell: sheet.cellSet()){
-            System.out.println(cell.getRowKey()+" "+cell.getColumnKey()+" "+cell.getValue());
-        }
+        visitor.debug(adaptedActuationSheet);
     }
 }

@@ -1,6 +1,13 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter;
 
+import de.uni_mannheim.swt.lasso.arena.MethodSignature;
+import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
+import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedInitializer;
+import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedMethod;
+import de.uni_mannheim.swt.lasso.arena.adaptation.permutator.PermutatorAdaptedImplementation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.adapter.InvocationInterceptor;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocation.InstanceInvocation;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocation.MethodInvocation;
 
 import java.util.List;
 
@@ -91,5 +98,30 @@ public class ExecutedInvocation {
 
         ExecutedInvocation ref = executedInvocations.getExecutedInvocation(target.getReference()[0]);
         return ref.getOutput();
+    }
+
+    public AdaptedInitializer resolveAdaptedInitializer(AdaptedImplementation adaptedImplementation) {
+        InstanceInvocation instanceInvocation = (InstanceInvocation) invocation;
+        // FIXME adapt delegate
+        MethodSignature constructorSig = executedInvocations.getInvocations().resolve(instanceInvocation.getAsConstructor());
+        // FIXME dangerous cast
+        PermutatorAdaptedImplementation pImpl = (PermutatorAdaptedImplementation) adaptedImplementation;
+        AdaptedInitializer adaptedInitializer = pImpl.resolveAdaptedInitializer(
+                executedInvocations.getInvocations().getInterfaceSpecifications().get(instanceInvocation.getAsConstructor().getDeclaringClass().getCanonicalName()),
+                constructorSig);
+
+        return adaptedInitializer;
+    }
+
+    public AdaptedMethod resolveAdaptedMethod(AdaptedImplementation adaptedImplementation) {
+        MethodInvocation methodInvocation = (MethodInvocation) invocation;
+        MethodSignature methodSig = executedInvocations.getInvocations().resolve(methodInvocation.getMethod());
+        // FIXME dangerous cast
+        PermutatorAdaptedImplementation pImpl = (PermutatorAdaptedImplementation) adaptedImplementation;
+        AdaptedMethod adaptedMethod = pImpl.resolveAdaptedMethod(
+                executedInvocations.getInvocations().getInterfaceSpecifications().get(methodInvocation.getMethod().getDeclaringClass().getCanonicalName()),
+                methodSig);
+
+        return adaptedMethod;
     }
 }

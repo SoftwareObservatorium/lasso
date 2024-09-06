@@ -1,6 +1,8 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter;
 
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.examples.*;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize.GsonMapper;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize.ObjectMapperVisitor;
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -43,13 +45,15 @@ public class SSNTestDriverTest {
                     size()->int
                 }
                 """;
-        InvocationVisitor executionListener = new InvocationVisitor();
+        ObjectMapperVisitor visitor = createVisitor();
 
         Class cutClass = StackEmptyConstructorExample.class;
 
         SSNTestDriver testDriver = new SSNTestDriver();
-        ExecutedInvocations executedInvocations = testDriver.runSheet(ssnJsonlStr, lql, cutClass, 1, executionListener);
+        ExecutedInvocations executedInvocations = testDriver.runSheet(ssnJsonlStr, lql, cutClass, 1, visitor);
         LOG.debug("executed invocations\n{}", executedInvocations);
+        visitor.debug(visitor.getActuationSheet());
+        visitor.debug(visitor.getAdaptedActuationSheet());
         Invocations invocations = executedInvocations.getInvocations();
 
         assertEquals(4, invocations.getSequence().size());
@@ -98,13 +102,15 @@ public class SSNTestDriverTest {
                     size()->int
                 }
                 """;
-        InvocationVisitor executionListener = new InvocationVisitor();
+        ObjectMapperVisitor visitor = createVisitor();
 
         Class cutClass = StackNonEmptyConstructorExample.class;
 
         SSNTestDriver testDriver = new SSNTestDriver();
-        ExecutedInvocations executedInvocations = testDriver.runSheet(ssnJsonlStr, lql, cutClass, 1, executionListener);
+        ExecutedInvocations executedInvocations = testDriver.runSheet(ssnJsonlStr, lql, cutClass, 1, visitor);
         LOG.debug("executed invocations\n{}", executedInvocations);
+        visitor.debug(visitor.getActuationSheet());
+        visitor.debug(visitor.getAdaptedActuationSheet());
         Invocations invocations = executedInvocations.getInvocations();
 
         assertEquals(4, invocations.getSequence().size());
@@ -146,13 +152,15 @@ public class SSNTestDriverTest {
                     size()->int
                 }
                 """;
-        InvocationVisitor executionListener = new InvocationVisitor();
+        ObjectMapperVisitor visitor = createVisitor();
 
         Class cutClass = StackEmptyConstructorExample.class;
 
         SSNTestDriver testDriver = new SSNTestDriver();
-        ExecutedInvocations executedInvocations = testDriver.runSheet(ssnJsonlStr, lql, cutClass, 1, executionListener);
+        ExecutedInvocations executedInvocations = testDriver.runSheet(ssnJsonlStr, lql, cutClass, 1, visitor);
         LOG.debug("executed invocations\n{}", executedInvocations);
+        visitor.debug(visitor.getActuationSheet());
+        visitor.debug(visitor.getAdaptedActuationSheet());
         Invocations invocations = executedInvocations.getInvocations();
 
         assertEquals(4, invocations.getSequence().size());
@@ -187,13 +195,15 @@ public class SSNTestDriverTest {
                     sum(int,int)->int
                 }
                 """;
-        InvocationVisitor executionListener = new InvocationVisitor();
+        ObjectMapperVisitor visitor = createVisitor();
 
         Class cutClass = StaticMethodExample.class;
 
         SSNTestDriver testDriver = new SSNTestDriver();
-        ExecutedInvocations executedInvocations = testDriver.runSheet(ssnJsonlStr, lql, cutClass, 1, executionListener);
+        ExecutedInvocations executedInvocations = testDriver.runSheet(ssnJsonlStr, lql, cutClass, 1, visitor);
         LOG.debug("executed invocations\n{}", executedInvocations);
+        visitor.debug(visitor.getActuationSheet());
+        visitor.debug(visitor.getAdaptedActuationSheet());
         Invocations invocations = executedInvocations.getInvocations();
 
         assertEquals(2, invocations.getSequence().size());
@@ -223,13 +233,15 @@ public class SSNTestDriverTest {
                     sum(int,int)->int
                 }
                 """;
-        InvocationVisitor executionListener = new InvocationVisitor();
+        ObjectMapperVisitor visitor = createVisitor();
 
         Class cutClass = InvisibleStaticMethodExample.class;
 
         SSNTestDriver testDriver = new SSNTestDriver();
-        ExecutedInvocations executedInvocations = testDriver.runSheet(ssnJsonlStr, lql, cutClass, 1, executionListener);
+        ExecutedInvocations executedInvocations = testDriver.runSheet(ssnJsonlStr, lql, cutClass, 1, visitor);
         LOG.debug("executed invocations\n{}", executedInvocations);
+        visitor.debug(visitor.getActuationSheet());
+        visitor.debug(visitor.getAdaptedActuationSheet());
         Invocations invocations = executedInvocations.getInvocations();
 
         assertEquals(2, invocations.getSequence().size());
@@ -257,13 +269,15 @@ public class SSNTestDriverTest {
                     getParent()->Node
                 }
                 """;
-        InvocationVisitor executionListener = new InvocationVisitor();
+        ObjectMapperVisitor visitor = createVisitor();
 
         Class cutClass = CompositeNodeExample.class;
 
         SSNTestDriver testDriver = new SSNTestDriver();
-        ExecutedInvocations executedInvocations = testDriver.runSheet(ssnJsonlStr, lql, cutClass, 1, executionListener);
+        ExecutedInvocations executedInvocations = testDriver.runSheet(ssnJsonlStr, lql, cutClass, 1, visitor);
         LOG.debug("executed invocations\n{}", executedInvocations);
+        visitor.debug(visitor.getActuationSheet());
+        visitor.debug(visitor.getAdaptedActuationSheet());
         Invocations invocations = executedInvocations.getInvocations();
 
         assertEquals(4, invocations.getSequence().size());
@@ -301,13 +315,15 @@ public class SSNTestDriverTest {
                     getParent()->Node
                 }
                 """;
-        InvocationVisitor executionListener = new InvocationVisitor();
+        ObjectMapperVisitor visitor = createVisitor();
 
         Class cutClass = CompositeNodeExample.class;
 
         SSNTestDriver testDriver = new SSNTestDriver();
-        ExecutedInvocations executedInvocations = testDriver.runSheet(ssnJsonlStr, lql, cutClass, 1, executionListener);
+        ExecutedInvocations executedInvocations = testDriver.runSheet(ssnJsonlStr, lql, cutClass, 1, visitor);
         LOG.debug("executed invocations\n{}", executedInvocations);
+        visitor.debug(visitor.getActuationSheet());
+        visitor.debug(visitor.getAdaptedActuationSheet());
         Invocations invocations = executedInvocations.getInvocations();
 
         assertEquals(3, invocations.getSequence().size());
@@ -324,5 +340,13 @@ public class SSNTestDriverTest {
         assertEquals("A1", invocations.getInvocation(2).getExpectedOutput().getExpression());
 
         assertEquals(3, executedInvocations.getSequence().size());
+    }
+
+    private ObjectMapperVisitor createVisitor() {
+        ObjectMapperVisitor visitor = new ObjectMapperVisitor(new GsonMapper());
+//        InvocationVisitor invocationVisitor = new CompositeInvocationVisitor(
+//                Arrays.asList(visitor));
+
+        return visitor;
     }
 }

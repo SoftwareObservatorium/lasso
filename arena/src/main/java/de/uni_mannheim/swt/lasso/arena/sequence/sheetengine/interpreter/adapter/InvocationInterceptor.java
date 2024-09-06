@@ -4,7 +4,6 @@ import de.uni_mannheim.swt.lasso.arena.MethodSignature;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedInitializer;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedMethod;
-import de.uni_mannheim.swt.lasso.arena.adaptation.permutator.PermutatorAdaptedImplementation;
 import de.uni_mannheim.swt.lasso.arena.search.InterfaceSpecification;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.ExecutedInvocation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.ExecutedInvocations;
@@ -64,7 +63,7 @@ public class InvocationInterceptor implements MethodInterceptor {
         Object proxyInstance = createProxy(constructor.getDeclaringClass(), constructor.getParameterTypes(), inputs);
 
         // create adaptee instance
-        ExecutionResult result = createAdapteeInstance(executedInvocations, executedInvocation, constructor, inputs);
+        ExecutionResult result = createAdapteeInstance(executedInvocation, inputs);
 
         // set adapter instance
         adapteeInstance = result.getValue();
@@ -88,13 +87,9 @@ public class InvocationInterceptor implements MethodInterceptor {
 
         ExecutedInvocation executedInvocation = executedInvocations.getLastExecutedInvocation();
 
-        // FIXME dangerous cast
-        PermutatorAdaptedImplementation pImpl = (PermutatorAdaptedImplementation) adaptedImplementation;
-        AdaptedMethod adaptedMethod = pImpl.resolveAdaptedMethod(
-                executedInvocations.getInvocations().getInterfaceSpecifications().get(method.getDeclaringClass().getCanonicalName()),
-                methodSig);
+        AdaptedMethod adaptedMethod = executedInvocation.resolveAdaptedMethod(adaptedImplementation);
 
-        // FIXME inputs change proxy to adaptee object
+        // inputs change proxy to adaptee object
         Object[] cleanInputs;
         if(ArrayUtils.isNotEmpty(inputs)) {
             List<Object> mInputs = new ArrayList<>(inputs.length);
@@ -189,14 +184,8 @@ public class InvocationInterceptor implements MethodInterceptor {
         }
     }
 
-    private ExecutionResult createAdapteeInstance(ExecutedInvocations executedInvocations, ExecutedInvocation executedInvocation, Constructor constructor, Object[] inputs) {
-        // FIXME adapt delegate
-        MethodSignature constructorSig = executedInvocations.getInvocations().resolve(constructor);
-        // FIXME dangerous cast
-        PermutatorAdaptedImplementation pImpl = (PermutatorAdaptedImplementation) adaptedImplementation;
-        AdaptedInitializer adaptedInitializer = pImpl.resolveAdaptedInitializer(
-                executedInvocations.getInvocations().getInterfaceSpecifications().get(constructor.getDeclaringClass().getCanonicalName()),
-                constructorSig);
+    private ExecutionResult createAdapteeInstance(ExecutedInvocation executedInvocation, Object[] inputs) {
+        AdaptedInitializer adaptedInitializer = executedInvocation.resolveAdaptedInitializer(adaptedImplementation);
 
         try {
             //

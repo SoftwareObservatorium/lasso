@@ -112,4 +112,10 @@ public class ObjectMapperVisitor extends InvocationVisitor {
     public Table<Integer, Integer, String> getAdaptedActuationSheet() {
         return adaptedActuationSheet;
     }
+
+    public void debug(Table<Integer, Integer, String> sheet) {
+        for (Table.Cell<Integer, Integer, String> cell: sheet.cellSet()){
+            System.out.println(cell.getRowKey()+" "+cell.getColumnKey()+" "+cell.getValue());
+        }
+    }
 }
