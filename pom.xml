@@ -109,6 +109,7 @@
         <module>engine</module>
         <module>arena-support</module>
         <module>arena</module>
+        <module>sheets-service</module>
 	<module>worker</module>
 	<module>intelligence</module>
         <module>webui</module>

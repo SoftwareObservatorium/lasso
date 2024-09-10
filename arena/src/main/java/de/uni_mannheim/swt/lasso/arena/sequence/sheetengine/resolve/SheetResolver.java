@@ -47,4 +47,19 @@ public class SheetResolver {
         }
         return (int) result;
     }
+
+    public static String toColumnLabel(int column) {
+        String label = "";
+        int index = column;
+        while (index >= 0) {
+            char c = (char) (65 + (index % 26));
+            label = c + label;
+            index = (int) (Math.floor(index / 26) - 1);
+        }
+        return label;
+    }
+
+    public static String toRowLabel(int row) {
+        return String.valueOf(row + 1);
+    }
 }

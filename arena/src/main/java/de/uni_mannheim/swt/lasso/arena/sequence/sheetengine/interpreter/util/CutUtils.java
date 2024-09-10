@@ -3,6 +3,7 @@ package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util;
 import de.uni_mannheim.swt.lasso.arena.ClassUnderTest;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Invocations;
 import de.uni_mannheim.swt.lasso.core.model.CodeUnit;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.aether.resolution.DependencyRequest;
 import org.eclipse.aether.resolution.DependencyResult;
 
@@ -20,6 +21,26 @@ public class CutUtils {
         implementation.setId(UUID.randomUUID().toString());
         implementation.setName(exampleClass.getSimpleName());
         implementation.setPackagename(exampleClass.getPackage().getName());
+        implementation.setGroupId("examples.lasso");
+        implementation.setArtifactId("examples");
+        implementation.setVersion("1.0.0-SNAPSHOT");
+        ClassUnderTest classUnderTest = new ClassUnderTest(new de.uni_mannheim.swt.lasso.core.model.System(implementation));
+        //classUnderTest.setPseudo(true);
+
+        // one workaround to avoid resolution of artifacts
+        classUnderTest.getProject().setDependencyResult(new DependencyResult(new DependencyRequest()));
+
+        return classUnderTest;
+    }
+
+    public static ClassUnderTest createExample(String exampleClass) {
+        String name = StringUtils.substringAfterLast(exampleClass, ".");
+        String pkg = StringUtils.substringBeforeLast(exampleClass, ".");
+
+        CodeUnit implementation = new CodeUnit();
+        implementation.setId(UUID.randomUUID().toString());
+        implementation.setName(name);
+        implementation.setPackagename(pkg);
         implementation.setGroupId("examples.lasso");
         implementation.setArtifactId("examples");
         implementation.setVersion("1.0.0-SNAPSHOT");

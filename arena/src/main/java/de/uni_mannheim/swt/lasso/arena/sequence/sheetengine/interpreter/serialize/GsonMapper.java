@@ -67,11 +67,11 @@ public class GsonMapper implements ObjectMapper {
         } else if(executedInvocation.getInvocation().isInstanceInvocation()) {
             Class targetClass = executedInvocation.getInvocation().getTargetClass();
 
-            return gson.toJson(targetClass.getCanonicalName());
+            return targetClass.getCanonicalName();
         } else if(executedInvocation.getInvocation().isCodeInvocation()) {
             CodeInvocation codeInvocation = (CodeInvocation) executedInvocation.getInvocation();
             // nothing to do here, since this can only be an $eval
-            return gson.toJson("$COMMAND@" + codeInvocation.getCommand());
+            return "$COMMAND@" + codeInvocation.getCommand();
         }
 
         throw new IllegalArgumentException("unknown invocation type");
@@ -84,15 +84,15 @@ public class GsonMapper implements ObjectMapper {
         if(invocation.isCodeInvocation()) {
             CodeInvocation codeInvocation = (CodeInvocation) invocation;
 
-            return gson.toJson(codeInvocation.getCodeExpression());
+            return codeInvocation.getCodeExpression();
         } else if(invocation.isInstanceInvocation()) {
             InstanceInvocation instanceInvocation = (InstanceInvocation) invocation;
 
-            return gson.toJson(instanceInvocation.getAsConstructor().toString());
+            return instanceInvocation.getAsConstructor().toString();
         } else if(invocation.isMethodInvocation()) {
             MethodInvocation methodInvocation = (MethodInvocation) invocation;
 
-            return gson.toJson(methodInvocation.getMethod().toString());
+            return methodInvocation.getMethod().toString();
         }
 
         throw new IllegalArgumentException("unknown invocation type");
@@ -105,26 +105,26 @@ public class GsonMapper implements ObjectMapper {
         if(invocation.isCodeInvocation()) {
             CodeInvocation codeInvocation = (CodeInvocation) invocation;
 
-            return gson.toJson(codeInvocation.getCodeExpression());
+            return codeInvocation.getCodeExpression();
         } else if(invocation.isInstanceInvocation()) {
             if(executedInvocation.isAdapted()) {
                 AdaptedInitializer adaptedInitializer = (AdaptedInitializer) executedInvocation.getAdaptedMember();
 
-                return gson.toJson(adaptedInitializer.getInitializer().toString());
+                return adaptedInitializer.getInitializer().toString();
             } else {
                 InstanceInvocation instanceInvocation = (InstanceInvocation) invocation;
 
-                return gson.toJson(instanceInvocation.getAsConstructor().toString());
+                return instanceInvocation.getAsConstructor().toString();
             }
         } else if(invocation.isMethodInvocation()) {
             if(executedInvocation.isAdapted()) {
                 AdaptedMethod adaptedMethod = (AdaptedMethod) executedInvocation.getAdaptedMember();
 
-                return gson.toJson(adaptedMethod.getMethod().toString());
+                return adaptedMethod.getMethod().toString();
             } else {
                 MethodInvocation methodInvocation = (MethodInvocation) invocation;
 
-                return gson.toJson(methodInvocation.getMethod().toString());
+                return methodInvocation.getMethod().toString();
             }
         }
 
@@ -153,7 +153,7 @@ public class GsonMapper implements ObjectMapper {
         String serializedStr;
         if(obj.hasException()) {
             Throwable throwable = obj.getException();
-            serializedStr = gson.toJson("$EXCEPTION@" + throwable.getClass().getCanonicalName() + "@" + throwable.getMessage());
+            serializedStr = "$EXCEPTION@" + throwable.getClass().getCanonicalName() + "@" + throwable.getMessage();
         } else if(obj.isNull()) {
             serializedStr = gson.toJson(null); // FIXME allowed?
         } else if(obj.isCutProxyReference()) {
@@ -163,7 +163,7 @@ public class GsonMapper implements ObjectMapper {
             // format: ClassName@ROW
 
             // FIXME we need to keep track of unique objects!!!
-            serializedStr = gson.toJson("$CUT@" + obj.getTypeAsName() + "@" + obj.getProducerIndex());
+            serializedStr = "$CUT@" + obj.getTypeAsName() + "@" + obj.getProducerIndex();
         } else {
             // an object needs to be serialized
             // TODO primitive vs complex objects
@@ -174,7 +174,7 @@ public class GsonMapper implements ObjectMapper {
                 // FIXME use Charsequence instead?
                 // TODO if string, use additional double-quotes as in Sequence sheets in JSONL notation
                 // e.g. "'Hello World!'"
-                serializedStr = gson.toJson(StringUtils.wrap((String) obj.getValue(), "'"));
+                serializedStr = gson.toJson(obj.getValue());
             } else if(TypeUtils.isAssignable(obj.getType(), Void.class, true)) {
                 // FIXME notation: use "{}" (empty object)?
                 serializedStr = gson.toJson(new Object());

@@ -37,6 +37,14 @@ public class SSNTestDriver {
     MavenRepository mavenRepository = new MavenRepository(resolver);
 
     public ExecutedInvocations runSheet(String ssnJsonlStr, String lql, Class cutClass, int limitAdapters, InvocationVisitor executionListener) throws IOException {
+        return runSheet(ssnJsonlStr, lql, CutUtils.createExample(cutClass), limitAdapters, executionListener);
+    }
+
+    public ExecutedInvocations runSheet(String ssnJsonlStr, String lql, String cutClass, int limitAdapters, InvocationVisitor executionListener) throws IOException {
+        return runSheet(ssnJsonlStr, lql, CutUtils.createExample(cutClass), limitAdapters, executionListener);
+    }
+
+    public ExecutedInvocations runSheet(String ssnJsonlStr, String lql, ClassUnderTest classUnderTest, int limitAdapters, InvocationVisitor executionListener) throws IOException {
         SSNParser ssnParser = new SSNParser();
         ParsedSheet parsedSheet = ssnParser.parseJsonl(ssnJsonlStr);
 
@@ -44,7 +52,6 @@ public class SSNTestDriver {
 
         SSNInterpreter interpreter = new SSNInterpreter();
 
-        ClassUnderTest classUnderTest = CutUtils.createExample(cutClass);
         CandidatePool pool = new CandidatePool(mavenRepository, Collections.singletonList(classUnderTest));
         // automatically resolves project-related artifacts
         pool.initProjects();
