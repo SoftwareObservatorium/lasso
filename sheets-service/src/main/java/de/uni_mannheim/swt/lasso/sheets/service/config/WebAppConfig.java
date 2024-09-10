@@ -14,7 +14,7 @@ public class WebAppConfig implements WebMvcConfigurer {
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
         // redirect to sheets-ui
-        registry.addRedirectViewController("/", "index.html");
+        registry.addRedirectViewController("/sheets-ui/", "index.html");
     }
 
 }
