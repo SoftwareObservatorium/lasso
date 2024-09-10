@@ -11,14 +11,9 @@ const LQLEditor = ({lqlHandler, defaultLqlCode} : any) => {
     lqlHandler(editorRef.current.getValue())
   }
 
-  function showValue() {
-    alert(editorRef.current.getValue())
-  }
-
   return (
     <>
           <h2>LQL editor</h2>
-      <button onClick={showValue}>Show value</button>
       <Editor
         height="200px"
         defaultLanguage="java"

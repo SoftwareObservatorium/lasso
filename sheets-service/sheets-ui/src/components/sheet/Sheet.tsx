@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 import Spreadsheet, { CellBase, Matrix } from "react-spreadsheet";
-//import "bootstrap/dist/css/bootstrap.min.css";
 import "./Sheet.css";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Button from "@mui/material/Button";
@@ -100,17 +99,22 @@ const Sheet = ({ defaultSheetName, sheetData, executeHandler, isResult }: any) =
           </ButtonGroup>
 
           <br></br>
-
-          <ButtonGroup variant="outlined" aria-label="Basic button group">
-            <Button onClick={(event) => executeHandler(sheetName, data)}>Execute Sheet</Button>
-          </ButtonGroup>
-
-          <br></br>
         </>
       )}
 
       <TextField onChange={onChangeSheetName} value={sheetName} id="outlined-basic" label="Sheet Name" variant="outlined" />
+
       <Spreadsheet data={data} onChange={setData} />
+
+      {!isResult && (
+        <>
+          <br></br>
+          <ButtonGroup variant="outlined" aria-label="Basic button group">
+            <Button onClick={(event) => executeHandler(sheetName, data)}>Execute Sheet</Button>
+          </ButtonGroup>
+        </>
+      )}
+
     </div>
   );
 
