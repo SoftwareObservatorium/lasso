@@ -261,6 +261,8 @@ public class SSNInterpreter {
         // evaluate
         String inter = "/* LQL */\n" + sb;
 
+        LOG.info("Eval\n{}", inter);
+
         try {
             eval.eval(inter);
         } catch (EvalException e) {
@@ -287,7 +289,7 @@ public class SSNInterpreter {
         StringBuilder sb = new StringBuilder();
 
         if(StringUtils.equalsIgnoreCase(methodSignature.getName(), "<init>")) {
-            sb.append(methodSignature.getParent().getClassName());
+            sb.append(methodSignature.getParent().getSimpleClassName());
         } else {
             try {
                 sb.append(methodSignature.toReturnString());

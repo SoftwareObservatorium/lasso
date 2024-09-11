@@ -8,7 +8,7 @@ parse
 
 /** System has zero or more method signatures */
 interfaceSpec
- : NAME '{' methodSig* '}'
+ : (simpletype | qualifiedtype) '{' methodSig* '}'
  ;
 
 /** Method signature */

@@ -1,7 +1,7 @@
 package de.uni_mannheim.swt.lasso.sheets.service;
 
+import de.uni_mannheim.swt.lasso.arena.search.InterfaceSpecification;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.ExecutedInvocations;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Invocations;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.SSNTestDriver;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize.GsonMapper;
@@ -10,7 +10,6 @@ import de.uni_mannheim.swt.lasso.sheets.service.dto.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -35,7 +34,7 @@ public class SheetsManager {
         SSNTestDriver testDriver = new SSNTestDriver();
 
         try {
-            ExecutedInvocations executedInvocations = testDriver.runSheet(sheetSpec.getBody(), sheetSpec.getInterfaceSpecification(), classUnderTestSpec.getClassName(), 1, visitor);
+            ExecutedInvocations executedInvocations = testDriver.runSheet(sheetSpec.getBody(), sheetSpec.getInterfaceSpecification(), classUnderTestSpec.getClassName(), classUnderTestSpec.getArtifacts(), 1, visitor);
 
             LOG.debug("executed invocations\n{}", executedInvocations);
 
@@ -68,6 +67,21 @@ public class SheetsManager {
         } catch (Throwable e) {
             LOG.warn("execution failed", e);
 
+            throw new RuntimeException(e);
+        }
+    }
+
+    public InterfaceSpecificationResponse toLql(ClassUnderTestSpec classUnderTestSpec, UserInfo userInfo) {
+        SSNTestDriver testDriver = new SSNTestDriver();
+
+        try {
+            InterfaceSpecification interfaceSpecification = testDriver.toLQL(classUnderTestSpec.getClassName(), classUnderTestSpec.getArtifacts());
+
+            InterfaceSpecificationResponse response = new InterfaceSpecificationResponse();
+            response.setInterfaceSpecification(interfaceSpecification.toLQL());
+
+            return response;
+        } catch (Throwable e) {
             throw new RuntimeException(e);
         }
     }

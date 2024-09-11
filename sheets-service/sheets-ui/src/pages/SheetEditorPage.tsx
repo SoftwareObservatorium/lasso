@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Sheet from '../components/sheet/Sheet';
 import LQLEditor from '../components/editor/LQLEditor';
-import { Alert, Backdrop, Box, CircularProgress, Divider, TextField, ToggleButton, ToggleButtonGroup } from '@mui/material';
+import { Alert, Backdrop, Box, CircularProgress, Container, Divider, TextField, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { CellBase, Matrix } from 'react-spreadsheet';
 import ClassUnderTest from '../components/cut/ClassUnderTest';
 import { ClassUnderTestSpec, SheetRequest, SheetResponse, SheetSpec } from '../model/models';
@@ -126,6 +126,8 @@ function SheetEditorPage() {
 
   const [codeAnalyzers, setCodeAnalyzers] = React.useState<string[]>([]);
 
+  const lqlEditorRef = useRef<any>(null)
+
   const handleCodeAnalyzer = (
     event: React.MouseEvent<HTMLElement>,
     analyzers: string[],
@@ -191,6 +193,44 @@ function SheetEditorPage() {
     }
   }
 
+  // toLQL handler
+  const detectInterfaceHandler = (className: string, artifacts: string[]) => {
+    console.log("detectInterfaceHandler " + JSON.stringify(classUnderTestSpec))
+
+    const request = classUnderTestSpec
+
+    console.log(JSON.stringify(request))
+
+    setMessage("");
+    setLoading(true);
+
+    const valid: boolean = true
+
+    if (valid) {
+      SheetService.toLQL(request).then(
+        (response) => {
+          // update monaco LQL editor
+          lqlEditorRef.current.getModel().setValue(response.data.interfaceSpecification);
+
+          setLoading(false);
+        },
+        (error) => {
+          const resMessage =
+            (error.response &&
+              error.response.data &&
+              error.response.data.message) ||
+            error.message ||
+            error.toString();
+
+          setLoading(false);
+          setMessage(resMessage);
+        }
+      );
+    } else {
+      setLoading(false);
+    }
+  }
+
   // get LQL
   const lqlHandler = (lql: string) => {
     console.log("lql handler " + lql)
@@ -198,9 +238,16 @@ function SheetEditorPage() {
     setInterfaceSpecification(lql)
   }
 
+  // get LQL editor (monaco)
+  const lqlEditorHandler = (editor: any) => {
+    //console.log("lql editor handler " + editor)
+
+    lqlEditorRef.current = editor
+  }
+
   // get CUT
   const cutHandler = (className: string, artifacts: string[]) => {
-    console.log("cut handler " + className + " " + typeof (artifacts))
+    //console.log("cut handler " + className + " " + typeof (artifacts))
 
     classUnderTestSpec.className = className
     classUnderTestSpec.artifacts = artifacts
@@ -223,14 +270,14 @@ function SheetEditorPage() {
   }, []);
 
   return (
-    <div className="sheet">
+    <Container maxWidth="xl">
 
       <Box component="section" sx={{ p: 2, border: '1px dashed grey' }}>
-        <LQLEditor lqlHandler={lqlHandler} defaultLqlCode={lqlCode} />
+        <LQLEditor editorHandler={lqlEditorHandler} lqlHandler={lqlHandler} defaultLqlCode={lqlCode} />
       </Box>
 
       <Box component="section" sx={{ p: 2, border: '1px dashed grey' }}>
-        <ClassUnderTest cutHandler={cutHandler} />
+        <ClassUnderTest detectInterfaceHandler={detectInterfaceHandler} cutHandler={cutHandler} />
       </Box>
 
       <Box component="section" sx={{ p: 2, border: '1px dashed grey' }}>
@@ -285,7 +332,7 @@ function SheetEditorPage() {
         </>
       )}
 
-    </div>
+    </Container>
   );
 }
 

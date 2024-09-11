@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import './ClassUnderTest.css';
 import { Button, ButtonGroup, Divider, TextField } from '@mui/material';
 
-const ClassUnderTest = ({ cutHandler }: any) => {
+const ClassUnderTest = ({ detectInterfaceHandler, cutHandler }: any) => {
 
   const [className, setClassName] = useState("java.util.Stack");
   const [artifacts, setArtifacts] = useState("");
@@ -33,7 +33,7 @@ const ClassUnderTest = ({ cutHandler }: any) => {
       <TextField onChange={onChangeArtifacts} value={artifacts} id="outlined-basic" label="Artifacts" variant="outlined" />
       <Divider>Interface Specification</Divider>
           <ButtonGroup variant="outlined" aria-label="Basic button group">
-            <Button onClick={(event) => console.log("FIXME")}>(FIXME) Detect Interface</Button>
+            <Button onClick={(event) => detectInterfaceHandler(className, toArtifacts())}>Detect (Declared) Interface</Button>
           </ButtonGroup>
     </>
   )

@@ -60,6 +60,30 @@ public class LQLParserTest {
     }
 
     @Test
+    public void test_stack_fully_qualified() {
+        String lqlQuery = "java.util.Stack {\n" +
+                "    push(java.lang.Object)->java.lang.Object\n" +
+                "    pop()->java.lang.Object\n" +
+                "    peek()->java.lang.Object\n" +
+                "    size()->int}";
+
+        LQLLexer lexer = new LQLLexer(CharStreams.fromString(lqlQuery));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        LQLParser parser = new LQLParser(tokens);
+        LQLParser.ParseContext tree = parser.parse();
+
+        ParseTreeWalker walker = new ParseTreeWalker();
+        InterfaceListener listener = new InterfaceListener();
+
+        walker.walk(listener, tree);
+
+        print(parser, tree);
+        System.out.println(listener.getParseResult());
+
+        assertEquals(1, listener.getParseResult().getInterfaceSpecification().getMethods().get(0).getInputs().size());
+    }
+
+    @Test
     public void test_stack_filter() {
         String lqlQuery = "Stack {\n" +
                 "    push(java.lang.Object)->java.lang.Object\n" +
@@ -381,6 +405,46 @@ public class LQLParserTest {
     @Test
     public void testParse_namedparam() {
         String lqlQuery = "SampleClass{doSomething(myparam=one.sub,second=two)->bla=three.sub}";
+        LQLLexer lexer = new LQLLexer(CharStreams.fromString(lqlQuery));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        LQLParser parser = new LQLParser(tokens);
+        LQLParser.ParseContext tree = parser.parse();
+
+        ParseTreeWalker walker = new ParseTreeWalker();
+        InterfaceListener listener = new InterfaceListener();
+
+        walker.walk(listener, tree);
+
+        print(parser, tree);
+        System.out.println(listener.getParseResult());
+    }
+
+    @Test
+    public void testCompositeNode_fully_qualified() {
+        String lqlQuery = """
+de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.examples.CompositeNodeExample{
+	CompositeNodeExample(java.lang.String)
+	getName()->java.lang.String
+	getParent()->de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.examples.CompositeNodeExample
+	setName(java.lang.String)->void
+	setParent(de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.examples.CompositeNodeExample)->void
+	getName()->java.lang.String
+	getParent()->de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.examples.CompositeNodeExample
+	setName(java.lang.String)->void
+	setParent(de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.examples.CompositeNodeExample)->void
+	finalize()->void
+	wait(long,int)->void
+	wait()->void
+	wait(long)->void
+	equals(java.lang.Object)->boolean
+	toString()->java.lang.String
+	hashCode()->int
+	getClass()->java.lang.Class
+	clone()->java.lang.Object
+	notify()->void
+	notifyAll()->void
+}
+                """;
         LQLLexer lexer = new LQLLexer(CharStreams.fromString(lqlQuery));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         LQLParser parser = new LQLParser(tokens);

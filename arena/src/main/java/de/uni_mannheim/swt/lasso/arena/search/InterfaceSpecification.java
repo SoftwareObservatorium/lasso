@@ -22,6 +22,7 @@ package de.uni_mannheim.swt.lasso.arena.search;
 import de.uni_mannheim.swt.lasso.arena.MethodSignature;
 import de.uni_mannheim.swt.lasso.core.adapter.InterfaceDesc;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -44,6 +45,14 @@ public class InterfaceSpecification {
 
     public String getClassName() {
         return className;
+    }
+
+    public String getSimpleClassName() {
+        if(StringUtils.contains(getClassName(), ".")) {
+            return StringUtils.substringAfterLast(getClassName(), ".");
+        }
+
+        return getClassName();
     }
 
     public void setClassName(String className) {
@@ -86,12 +95,13 @@ public class InterfaceSpecification {
 //                c.setReturnType("void");
 //            });
 
-            sb.append(constructors.stream().map(MethodSignature::toLQL).collect(Collectors.joining("\n")));
+            sb.append(constructors.stream().map(s -> "\t" + s.toLQL()).collect(Collectors.joining("\n")));
 
             sb.append("\n");
         }
         if(CollectionUtils.isNotEmpty(methods)) {
-            sb.append(methods.stream().map(MethodSignature::toLQL).collect(Collectors.joining("\n")));
+
+            sb.append(methods.stream().map(s -> "\t" + s.toLQL()).collect(Collectors.joining("\n")));
 
             sb.append("\n");
         }

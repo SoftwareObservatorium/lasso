@@ -52,7 +52,13 @@ public class InterfaceListener extends LQLBaseListener {
 
         parseResult.setInterfaceSpecification(new Interface());
 
-        parseResult.getInterfaceSpecification().setName(ctx.NAME().getText());
+        if(ctx.simpletype() != null) {
+            parseResult.getInterfaceSpecification().setName(ctx.simpletype().getText());
+        }
+
+        if(ctx.qualifiedtype() != null) {
+            parseResult.getInterfaceSpecification().setName(ctx.qualifiedtype().getText());
+        }
     }
 
     @Override
@@ -65,7 +71,7 @@ public class InterfaceListener extends LQLBaseListener {
 
         MethodSignature method = new MethodSignature();
         method.setName(ctx.NAME().getText());
-        method.setConstructor(parseResult.getInterfaceSpecification().getName().equals(method.getName()));
+        method.setConstructor(parseResult.getInterfaceSpecification().getSimpleName().equals(method.getName()));
 
         if(ctx.inputs() != null) {
             //method.setInputs(Arrays.asList(StringUtils.split(ctx.inputs().getText(), ",")));

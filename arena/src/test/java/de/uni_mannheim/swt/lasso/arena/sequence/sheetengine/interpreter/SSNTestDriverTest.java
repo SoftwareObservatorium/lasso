@@ -1,5 +1,6 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter;
 
+import de.uni_mannheim.swt.lasso.arena.search.InterfaceSpecification;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.examples.*;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize.GsonMapper;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize.ObjectMapperVisitor;
@@ -19,6 +20,17 @@ import static org.junit.jupiter.api.Assertions.*;
 public class SSNTestDriverTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(SSNTestDriverTest.class);
+
+    @Test
+    public void testToLql() {
+        Class cutClass = CompositeNodeExample.class;
+
+        SSNTestDriver testDriver = new SSNTestDriver();
+
+        InterfaceSpecification interfaceSpecification = testDriver.toLQL(cutClass.getCanonicalName(), null);
+
+        LOG.debug("LQL\n{}", interfaceSpecification.toLQL());
+    }
 
     /**
      * Multi-object

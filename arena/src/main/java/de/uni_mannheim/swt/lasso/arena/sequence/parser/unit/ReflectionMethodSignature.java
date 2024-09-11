@@ -100,7 +100,7 @@ public class ReflectionMethodSignature extends MethodSignature {
         sb.append(getName());
         sb.append("(");
         sb.append(String.join(",", toParameterString()));
-        sb.append("):");
+        sb.append(")->");
         sb.append(toReturnString());
 
         return sb.toString();

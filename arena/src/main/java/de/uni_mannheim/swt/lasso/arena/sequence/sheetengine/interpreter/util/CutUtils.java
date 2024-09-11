@@ -16,14 +16,18 @@ import java.util.UUID;
  */
 public class CutUtils {
 
+    public static final String EXAMPLES_LASSO_EXAMPLES_1_0_0_SNAPSHOT = "examples.lasso:examples:1.0.0-SNAPSHOT";
+
     public static ClassUnderTest createExample(Class<?> exampleClass) {
+        String[] uriParts = StringUtils.split(EXAMPLES_LASSO_EXAMPLES_1_0_0_SNAPSHOT, ":");
+
         CodeUnit implementation = new CodeUnit();
         implementation.setId(UUID.randomUUID().toString());
         implementation.setName(exampleClass.getSimpleName());
         implementation.setPackagename(exampleClass.getPackage().getName());
-        implementation.setGroupId("examples.lasso");
-        implementation.setArtifactId("examples");
-        implementation.setVersion("1.0.0-SNAPSHOT");
+        implementation.setGroupId(uriParts[0]);
+        implementation.setArtifactId(uriParts[1]);
+        implementation.setVersion(uriParts[2]);
         ClassUnderTest classUnderTest = new ClassUnderTest(new de.uni_mannheim.swt.lasso.core.model.System(implementation));
         //classUnderTest.setPseudo(true);
 
@@ -34,16 +38,26 @@ public class CutUtils {
     }
 
     public static ClassUnderTest createExample(String exampleClass) {
+        return createExample(exampleClass, null);
+    }
+
+    public static ClassUnderTest createExample(String exampleClass, String artifactUri) {
         String name = StringUtils.substringAfterLast(exampleClass, ".");
         String pkg = StringUtils.substringBeforeLast(exampleClass, ".");
+
+        if(StringUtils.isBlank(artifactUri)) {
+            artifactUri = EXAMPLES_LASSO_EXAMPLES_1_0_0_SNAPSHOT;
+        }
+
+        String[] uriParts = StringUtils.split(artifactUri, ":");
 
         CodeUnit implementation = new CodeUnit();
         implementation.setId(UUID.randomUUID().toString());
         implementation.setName(name);
         implementation.setPackagename(pkg);
-        implementation.setGroupId("examples.lasso");
-        implementation.setArtifactId("examples");
-        implementation.setVersion("1.0.0-SNAPSHOT");
+        implementation.setGroupId(uriParts[0]);
+        implementation.setArtifactId(uriParts[1]);
+        implementation.setVersion(uriParts[2]);
         ClassUnderTest classUnderTest = new ClassUnderTest(new de.uni_mannheim.swt.lasso.core.model.System(implementation));
         //classUnderTest.setPseudo(true);
 

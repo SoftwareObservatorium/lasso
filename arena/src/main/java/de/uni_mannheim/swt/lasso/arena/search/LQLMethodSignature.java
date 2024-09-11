@@ -69,9 +69,17 @@ public class LQLMethodSignature extends MethodSignature {
                 if(isFA(p)) {
                     // return a marker class
                     return FAMarker.class;
-                } else {
-                    throw new IllegalArgumentException(e);
+                } else if(!StringUtils.contains(p, ".")) {
+                    String pFq = "java.lang." + p;
+
+                    try {
+                        return ClassUtils.getClass(stripGenerics(pFq));
+                    } catch (ClassNotFoundException e2) {
+
+                    }
                 }
+
+                throw new IllegalArgumentException(e);
             }
         }).toArray(Class[]::new);
     }
