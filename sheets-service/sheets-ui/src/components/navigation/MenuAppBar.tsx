@@ -13,7 +13,7 @@ import AuthService from '../../services/AuthService';
 import { Button, Container, Tooltip } from '@mui/material';
 import AdbIcon from '@mui/icons-material/Adb';
 
-const pages = ['Editor'];
+const pages = ['Editor', 'Documentation', 'About'];
 const userSettings = ['Profile', 'Logout'];
 const loginSettings = ['Login'];
 
@@ -39,6 +39,16 @@ export default function MenuAppBar() {
 
         if (page === "Editor") {
             navigate("/editor");
+            window.location.reload();
+        }
+
+        if (page === "Documentation") {
+            navigate("/documentation");
+            window.location.reload();
+        }
+
+        if (page === "About") {
+            navigate("/about");
             window.location.reload();
         }
     };
@@ -155,7 +165,7 @@ export default function MenuAppBar() {
                     </Box>
                     <Box sx={{ flexGrow: 0 }}>
                         <Tooltip title="Open settings">
-                            <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+                            <IconButton color="inherit" onClick={handleOpenUserMenu} sx={{ p: 0 }}>
                                 <AccountCircle />
                             </IconButton>
                         </Tooltip>

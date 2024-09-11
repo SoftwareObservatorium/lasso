@@ -12,6 +12,8 @@ import MenuAppBar from './components/navigation/MenuAppBar';
 import { User } from './model/models';
 import AuthService from './services/AuthService';
 import PrivateRoute from './components/navigation/PrivateRoute';
+import DocumentationPage from './pages/DocumentationPage';
+import AboutPage from './pages/AboutPage';
 
 function App() {
   const [currentUser, setCurrentUser] = useState<User>()
@@ -45,6 +47,8 @@ function App() {
         <Routes>
           <Route path="/" element={<HomePage/>} />
           <Route path="/home" element={<HomePage/>} />
+          <Route path="/documentation" element={<DocumentationPage />} />
+          <Route path="/about" element={<AboutPage/>} />
           <Route path="/login" element={<LoginPage/>} />
           <Route path="/register" element={<RegisterPage/>} />
           <Route path="/profile" element={wrapPrivateRoute(<ProfilePage />, currentUser, 'profile')} />

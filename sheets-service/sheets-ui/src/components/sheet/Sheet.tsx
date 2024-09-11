@@ -90,7 +90,7 @@ const Sheet = ({ defaultSheetName, sheetData, executeHandler, isResult }: any) =
 
       {!isResult && (
         <>
-          <h2>Sheet editor</h2>
+          <h2>Stimulus Sheet editor</h2>
           <ButtonGroup variant="outlined" aria-label="Basic button group">
             <Button onClick={(event) => addRow()}>Add Row</Button>
             <Button onClick={(event) => addColumn()}>Add Column</Button>

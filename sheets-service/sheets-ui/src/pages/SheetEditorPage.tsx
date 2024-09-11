@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Sheet from '../components/sheet/Sheet';
 import LQLEditor from '../components/editor/LQLEditor';
-import { Alert, Box, CircularProgress, TextField } from '@mui/material';
+import { Alert, Backdrop, Box, CircularProgress, Divider, TextField, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { CellBase, Matrix } from 'react-spreadsheet';
 import ClassUnderTest from '../components/cut/ClassUnderTest';
 import { ClassUnderTestSpec, SheetRequest, SheetResponse, SheetSpec } from '../model/models';
@@ -124,6 +124,15 @@ function SheetEditorPage() {
   const [sheetResponse, setSheetResponse] = useState<SheetResponse>();
   const [sheetResponseUpdate, setSheetResponseUpdate] = useState(0);
 
+  const [codeAnalyzers, setCodeAnalyzers] = React.useState<string[]>([]);
+
+  const handleCodeAnalyzer = (
+    event: React.MouseEvent<HTMLElement>,
+    analyzers: string[],
+  ) => {
+    setCodeAnalyzers(analyzers);
+  };
+
   // execute sheet
   const executeHandler = (sheetName: string, sheetData: Matrix<CellBase<any>>) => {
     console.log("executed sheet '" + sheetName + "' data: " + sheetData)
@@ -161,7 +170,7 @@ function SheetEditorPage() {
           setSheetResponse(response.data)
 
           // ugly hack to re-render actuation sheets
-          setSheetResponseUpdate(sheetResponseUpdate+1)
+          setSheetResponseUpdate(sheetResponseUpdate + 1)
 
           setLoading(false);
         },
@@ -226,9 +235,28 @@ function SheetEditorPage() {
 
       <Box component="section" sx={{ p: 2, border: '1px dashed grey' }}>
         {loading && (
-          <CircularProgress />
+          <Backdrop
+            sx={(theme) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })}
+            open={loading}
+          >
+            <CircularProgress color="inherit" />
+          </Backdrop>
         )}
         <Sheet defaultSheetName="test1" sheetData={sheetData} executeHandler={executeHandler} />
+        <Divider>Additional Analyzers</Divider>
+        <ToggleButtonGroup
+          color="primary"
+          value={codeAnalyzers}
+          onChange={handleCodeAnalyzer}
+          aria-label="Analyzers"
+        >
+          <ToggleButton value="cc" aria-label="bold">
+            Code Coverage
+          </ToggleButton>
+          <ToggleButton value="mt" aria-label="italic">
+            Mutation Testing
+          </ToggleButton>
+        </ToggleButtonGroup>
       </Box>
 
       {message && (

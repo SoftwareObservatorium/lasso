@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import './ClassUnderTest.css';
-import { TextField } from '@mui/material';
+import { Button, ButtonGroup, Divider, TextField } from '@mui/material';
 
 const ClassUnderTest = ({ cutHandler }: any) => {
 
@@ -31,6 +31,10 @@ const ClassUnderTest = ({ cutHandler }: any) => {
       <h2>Class Under Test</h2>
       <TextField onChange={onChangeClassname} value={className} id="outlined-basic" label="Class Under Test" variant="outlined" />
       <TextField onChange={onChangeArtifacts} value={artifacts} id="outlined-basic" label="Artifacts" variant="outlined" />
+      <Divider>Interface Specification</Divider>
+          <ButtonGroup variant="outlined" aria-label="Basic button group">
+            <Button onClick={(event) => console.log("FIXME")}>(FIXME) Detect Interface</Button>
+          </ButtonGroup>
     </>
   )
 }

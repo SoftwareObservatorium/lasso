@@ -19,9 +19,12 @@
     "axios": "^1.7.7",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-markdown": "^9.0.1",
     "react-router-dom": "^6.26.1",
     "react-scripts": "5.0.1",
     "react-spreadsheet": "^0.9.5",
+    "rehype-highlight": "^7.0.0",
+    "remark-gfm": "^4.0.0",
     "scheduler": "^0.23.2",
     "typescript": "^4.9.5",
     "web-vitals": "^2.1.4"
