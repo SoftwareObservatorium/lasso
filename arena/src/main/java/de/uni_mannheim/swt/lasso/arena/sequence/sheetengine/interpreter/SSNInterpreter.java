@@ -12,6 +12,7 @@ import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocati
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocation.MethodInvocation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.CodeExpressionUtils;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.FAMarker;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.MemberResolutionUtils;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.ParsedCell;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.ParsedRow;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.ParsedSheet;
@@ -358,14 +359,16 @@ public class SSNInterpreter {
 
             // resolve "constructor" (here just a declared placeholder)
             // FIXME what to do if static methods only and no instance necessary?
-            Constructor constructor = null;
-            try {
-                constructor = resolvedClass.getDeclaredConstructor(types);
-            } catch (NoSuchMethodException e) {
-                throw new RuntimeException(e);
-            } catch (SecurityException e) {
-                throw new RuntimeException(e);
-            }
+//            Constructor constructor = null;
+//            try {
+//                constructor = resolvedClass.getDeclaredConstructor(types);
+//            } catch (NoSuchMethodException e) {
+//                throw new RuntimeException(e);
+//            } catch (SecurityException e) {
+//                throw new RuntimeException(e);
+//            }
+
+            Constructor constructor = MemberResolutionUtils.resolveConstructor(resolvedClass, types);
 
             invocation.setMember(constructor);
 
@@ -373,6 +376,8 @@ public class SSNInterpreter {
 
             // FIXME resolve constructor?
         } catch (ClassNotFoundException | EvalException e) {
+            throw new RuntimeException(e);
+        } catch (NoSuchMethodException e) {
             throw new RuntimeException(e);
         }
     }
@@ -430,7 +435,8 @@ public class SSNInterpreter {
             Class[] types = parameters.stream().map(Parameter::getTargetClass).collect(Collectors.toList()).toArray(new Class[0]);
 
             // resolve "constructor" (here just a declared placeholder)
-            Method method = resolvedClass.getDeclaredMethod(methodName, types);
+            // FIXME isAssignable (i.e., String->Object) - use more sophisticated matching here.
+            Method method = MemberResolutionUtils.resolveMethod(resolvedClass, methodName, types);
 
             invocation.setMember(method);
 

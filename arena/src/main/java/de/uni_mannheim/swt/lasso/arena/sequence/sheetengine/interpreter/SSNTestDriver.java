@@ -18,14 +18,12 @@ import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.ParsedSheet;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.SSNParser;
 
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.ClassUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
@@ -104,21 +102,17 @@ public class SSNTestDriver {
             Class<?> clazz = classUnderTest.loadClass();
 
             InterfaceSpecification interfaceSpecification = new InterfaceSpecification();
-            interfaceSpecification.setClassName(clazz.getCanonicalName());
+            interfaceSpecification.setClassName(clazz.getSimpleName()); // use simple name and not fully-qualified one
 
             List<MethodSignature> constructors = new LinkedList<>();
             Arrays.stream(clazz.getDeclaredConstructors()).forEach(c -> {
                 constructors.add(new ReflectionConstructorSignature(c));
             });
             interfaceSpecification.setConstructors(constructors);
-            List<MethodSignature> methods = new LinkedList<>();
-            Arrays.stream(clazz.getDeclaredMethods()).forEach(m -> {
-                methods.add(new ReflectionMethodSignature(m));
-            });
 
+            List<MethodSignature> methods = new LinkedList<>();
             // also detect all inherited, non-overridden super methods
-            List<Method> superMethods = getSuperMethods(clazz);
-            superMethods.forEach(m -> {
+            getAllDeclaredMethods(clazz).forEach(m -> {
                 methods.add(new ReflectionMethodSignature(m));
             });
 
@@ -130,7 +124,9 @@ public class SSNTestDriver {
         }
     }
 
-    private List<Method> getSuperMethods(Class<?> cutClass) {
+    private List<Method> getAllDeclaredMethods(Class<?> cutClass) {
+        List<Method> methods = new ArrayList<>(
+                Arrays.asList(cutClass.getDeclaredMethods()));
         // find all protected/public methods from super hierarchy NOT
         // overridden
         List<Method> superMethods = new LinkedList<>();
@@ -156,6 +152,35 @@ public class SSNTestDriver {
             }
         }
 
-        return superMethods;
+        if (!superMethods.isEmpty()) {
+            // remove all methods overridden in cut class
+            for (Method superMethod : superMethods) {
+                List<Class<?>> superMethodParams = Arrays
+                        .asList(superMethod.getParameterTypes());
+
+                boolean overridden = false;
+                // check if super methods are overridden in cut class
+                for (Method method : methods) {
+                    List<Class<?>> methodParams = Arrays
+                            .asList(method.getParameterTypes());
+
+                    // same signature?
+                    if (method.getName().equals(superMethod.getName())
+                            && CollectionUtils.isEqualCollection(
+                            methodParams, superMethodParams)) {
+                        //
+                        overridden = true;
+
+                        break;
+                    }
+                }
+
+                if (!overridden) {
+                    methods.add(superMethod);
+                }
+            }
+        }
+
+        return methods;
     }
 }
