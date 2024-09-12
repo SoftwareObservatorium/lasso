@@ -1,12 +1,18 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util;
 
+import de.uni_mannheim.swt.lasso.arena.CandidatePool;
 import de.uni_mannheim.swt.lasso.arena.ClassUnderTest;
+import de.uni_mannheim.swt.lasso.arena.repository.DependencyResolver;
+import de.uni_mannheim.swt.lasso.arena.repository.MavenRepository;
+import de.uni_mannheim.swt.lasso.arena.repository.NexusInstance;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Invocations;
 import de.uni_mannheim.swt.lasso.core.model.CodeUnit;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.aether.resolution.DependencyRequest;
 import org.eclipse.aether.resolution.DependencyResult;
 
+import java.io.File;
+import java.util.Collections;
 import java.util.UUID;
 
 /**
@@ -73,5 +79,30 @@ public class CutUtils {
 
     public static boolean isCut(ClassUnderTest classUnderTest, Class targetClass) throws ClassNotFoundException {
         return classUnderTest.loadClass().equals(targetClass);
+    }
+
+    /**
+     * For internal testing purposes ...
+     *
+     * @param classUnderTest
+     */
+    public static void initializeCutDirty(ClassUnderTest classUnderTest) {
+        String mavenRepoUrl = NexusInstance.LOCAL_URL;
+        File localRepo = new File("/tmp/lalalamvn/local-repo");
+
+        DependencyResolver resolver = new DependencyResolver(mavenRepoUrl, localRepo.getAbsolutePath());
+        MavenRepository mavenRepository = new MavenRepository(resolver);
+
+        CandidatePool pool = new CandidatePool(mavenRepository, Collections.singletonList(classUnderTest));
+        // automatically resolves project-related artifacts
+        pool.initProjects();
+    }
+
+    public static boolean isMarkerType(Class<?> type) {
+        if(type == null) {
+            return false;
+        }
+
+        return FAMarker.class.equals(type);
     }
 }

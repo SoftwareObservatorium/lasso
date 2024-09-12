@@ -16,13 +16,19 @@ public class MemberResolutionUtils {
      * @param clazz
      * @param methodName
      * @param args
+     * @param hierarchy lookup class hierarchy for members
      * @return
      * @throws NoSuchMethodException
      */
-    public static Method resolveMethod(Class<?> clazz, String methodName, Class<?>[] args) throws NoSuchMethodException {
-        MemberResolver st = new MemberResolver(clazz, methodName, args);
+    public static Method resolveDeclaredMethod(Class<?> clazz, String methodName, Class<?>[] args, boolean hierarchy) throws NoSuchMethodException {
+        MemberResolver resolver;
+        if(hierarchy) {
+            resolver = new HierarchyMemberResolver(clazz, methodName, args);
+        } else {
+            resolver = new DeclaredMemberResolver(clazz, methodName, args);
+        }
 
-        return st.resolveMethod();
+        return resolver.resolveMethod();
     }
 
     /**
@@ -30,13 +36,20 @@ public class MemberResolutionUtils {
      *
      * @param clazz
      * @param args
+     * @param hierarchy lookup class hierarchy for members
      * @return
      * @throws NoSuchMethodException
      */
-    public static Constructor resolveConstructor(Class<?> clazz, Class<?>[] args) throws NoSuchMethodException {
-        // "new" seems like an ugly hack
-        MemberResolver st = new MemberResolver(clazz, args);
+    public static Constructor resolveDeclaredConstructor(Class<?> clazz, Class<?>[] args, boolean hierarchy) throws NoSuchMethodException {
+        MemberResolver resolver;
+        if(hierarchy) {
+            resolver = new HierarchyMemberResolver(clazz, args);
+        } else {
+            resolver = new DeclaredMemberResolver(clazz, args);
+        }
 
-        return st.resolveConstructor();
+        return resolver.resolveConstructor();
     }
+
+
 }

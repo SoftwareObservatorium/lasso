@@ -8,11 +8,12 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.List;
 
 /**
  * @author Marcus Kessel
  */
-public class MemberResolver {
+public abstract class MemberResolver {
 
     private static final Logger LOG = LoggerFactory.getLogger(MemberResolver.class);
 
@@ -24,6 +25,8 @@ public class MemberResolver {
     private Constructor constructor;
 
     public MemberResolver(Class targetClass, String methodName, Class[] argumentClasses) {
+        LOG.debug("resolve {},{},{}", targetClass, methodName, argumentClasses);
+
         this.targetClass = targetClass;
         this.methodName = methodName;
         this.argumentClasses = ArrayUtils.isEmpty(argumentClasses) ? new Class[0] : argumentClasses;
@@ -65,28 +68,30 @@ public class MemberResolver {
             throw new NoSuchMethodException("No matching method for statement");
         }
 
-        Method methods[] = targetClass.getDeclaredMethods();
-        for (int i = 0; i < methods.length; i++) {
-            if (!methods[i].getName().equals(methodName)) {
+        List<Method> methods = getMethods(targetClass);
+        LOG.debug("methods {}", methods.size());
+
+        for (int i = 0; i < methods.size(); i++) {
+            if (!methods.get(i).getName().equals(methodName)) {
                 continue;
             }
 
-            Class ptypes[] = methods[i].getParameterTypes();
-            if (ptypes.length != argumentClasses.length) {
+            Class parameterTypes[] = methods.get(i).getParameterTypes();
+            if (parameterTypes.length != argumentClasses.length) {
                 continue;
             }
 
-            if (!TypeUtils.isAssignable(argumentClasses, ptypes)) {
+            if (!TypeUtils.isAssignable(argumentClasses, parameterTypes)) {
                 continue;
             }
 
             if (method == null) {
-                method = methods[i];
+                method = methods.get(i);
                 continue;
             }
-            Class mptypes[] = method.getParameterTypes();
-            if (isMoreSpecific(ptypes, mptypes)) {
-                method = methods[i];
+
+            if (isMoreSpecific(parameterTypes, method.getParameterTypes())) {
+                method = methods.get(i);
             }
         }
         if (method == null) {
@@ -101,35 +106,40 @@ public class MemberResolver {
             return constructor;
         }
 
-        Constructor ctors[] = targetClass.getDeclaredConstructors();
+        List<Constructor> constructors = getConstructors(targetClass);
 
-        for (int i = 0; i < ctors.length; i++) {
-            Class ptypes[] = ctors[i].getParameterTypes();
+        LOG.debug("constructors {}", constructors.size());
 
-            if (ptypes.length != argumentClasses.length) {
+        for (int i = 0; i < constructors.size(); i++) {
+            Class parameterTypes[] = constructors.get(i).getParameterTypes();
+
+            if (parameterTypes.length != argumentClasses.length) {
                 continue;
             }
 
             // Check if constructor matches
-            if (!TypeUtils.isAssignable(argumentClasses, ptypes)) {
+            if (!TypeUtils.isAssignable(argumentClasses, parameterTypes)) {
                 continue;
             }
 
             if (constructor == null) {
-                constructor = ctors[i];
+                constructor = constructors.get(i);
                 continue;
             }
-            Class mptypes[] = constructor.getParameterTypes();
-            if (isMoreSpecific(ptypes, mptypes)) {
-                constructor = ctors[i];
+
+            if (isMoreSpecific(parameterTypes, constructor.getParameterTypes())) {
+                constructor = constructors.get(i);
             }
         }
         if (constructor == null) {
-            throw new NoSuchMethodException("No matching constructor for statement " + toString());
+            throw new NoSuchMethodException("No matching constructor for method");
         }
 
         return constructor;
     }
 
+    protected abstract List<Method> getMethods(Class<?> targetClass);
+
+    protected abstract List<Constructor> getConstructors(Class<?> targetClass);
 }
 

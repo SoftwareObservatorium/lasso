@@ -6,6 +6,7 @@ import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedInitializer;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedMember;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedMethod;
 import de.uni_mannheim.swt.lasso.arena.adaptation.permutator.PermutatorAdaptedImplementation;
+import de.uni_mannheim.swt.lasso.arena.search.InterfaceSpecification;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.adapter.InvocationInterceptor;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocation.InstanceInvocation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocation.MethodInvocation;
@@ -107,25 +108,44 @@ public class ExecutedInvocation {
         InstanceInvocation instanceInvocation = (InstanceInvocation) invocation;
         // FIXME adapt delegate
         MethodSignature constructorSig = executedInvocations.getInvocations().resolve(instanceInvocation.getAsConstructor());
-        // FIXME dangerous cast
-        PermutatorAdaptedImplementation pImpl = (PermutatorAdaptedImplementation) adaptedImplementation;
-        AdaptedInitializer adaptedInitializer = pImpl.resolveAdaptedInitializer(
-                executedInvocations.getInvocations().getInterfaceSpecifications().get(instanceInvocation.getAsConstructor().getDeclaringClass().getCanonicalName()),
-                constructorSig);
+        InterfaceSpecification interfaceSpecification = executedInvocations.getInvocations()
+                .getInterfaceSpecifications().get(instanceInvocation.getAsConstructor().getDeclaringClass().getCanonicalName());
 
-        return adaptedInitializer;
+        // FIXME dangerous cast
+        if(adaptedImplementation instanceof PermutatorAdaptedImplementation) {
+            PermutatorAdaptedImplementation pImpl = (PermutatorAdaptedImplementation) adaptedImplementation;
+            AdaptedInitializer adaptedInitializer = pImpl.resolveAdaptedInitializer(
+                    interfaceSpecification,
+                    constructorSig);
+
+            return adaptedInitializer;
+        } else {
+            int c = interfaceSpecification.getConstructors().indexOf(constructorSig);
+
+            return adaptedImplementation.getInitializer(interfaceSpecification, c);
+        }
+
     }
 
     public AdaptedMethod resolveAdaptedMethod(AdaptedImplementation adaptedImplementation) {
         MethodInvocation methodInvocation = (MethodInvocation) invocation;
         MethodSignature methodSig = executedInvocations.getInvocations().resolve(methodInvocation.getMethod());
-        // FIXME dangerous cast
-        PermutatorAdaptedImplementation pImpl = (PermutatorAdaptedImplementation) adaptedImplementation;
-        AdaptedMethod adaptedMethod = pImpl.resolveAdaptedMethod(
-                executedInvocations.getInvocations().getInterfaceSpecifications().get(methodInvocation.getMethod().getDeclaringClass().getCanonicalName()),
-                methodSig);
+        InterfaceSpecification interfaceSpecification = executedInvocations.getInvocations()
+                .getInterfaceSpecifications().get(methodInvocation.getMethod().getDeclaringClass().getCanonicalName());
 
-        return adaptedMethod;
+        // FIXME dangerous cast
+        if(adaptedImplementation instanceof PermutatorAdaptedImplementation) {
+            PermutatorAdaptedImplementation pImpl = (PermutatorAdaptedImplementation) adaptedImplementation;
+            AdaptedMethod adaptedMethod = pImpl.resolveAdaptedMethod(
+                    executedInvocations.getInvocations().getInterfaceSpecifications().get(methodInvocation.getMethod().getDeclaringClass().getCanonicalName()),
+                    methodSig);
+
+            return adaptedMethod;
+        } else {
+            int m = interfaceSpecification.getMethods().indexOf(methodSig);
+
+            return adaptedImplementation.getMethod(interfaceSpecification, m);
+        }
     }
 
     public AdaptedMember getAdaptedMember() {

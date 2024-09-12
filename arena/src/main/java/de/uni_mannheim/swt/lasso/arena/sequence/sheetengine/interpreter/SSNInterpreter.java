@@ -368,7 +368,7 @@ public class SSNInterpreter {
 //                throw new RuntimeException(e);
 //            }
 
-            Constructor constructor = MemberResolutionUtils.resolveConstructor(resolvedClass, types);
+            Constructor constructor = MemberResolutionUtils.resolveDeclaredConstructor(resolvedClass, types, false);
 
             invocation.setMember(constructor);
 
@@ -436,7 +436,7 @@ public class SSNInterpreter {
 
             // resolve "constructor" (here just a declared placeholder)
             // FIXME isAssignable (i.e., String->Object) - use more sophisticated matching here.
-            Method method = MemberResolutionUtils.resolveMethod(resolvedClass, methodName, types);
+            Method method = MemberResolutionUtils.resolveDeclaredMethod(resolvedClass, methodName, types, false);
 
             invocation.setMember(method);
 

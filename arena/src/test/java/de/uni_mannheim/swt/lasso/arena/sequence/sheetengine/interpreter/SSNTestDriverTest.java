@@ -29,7 +29,28 @@ public class SSNTestDriverTest {
 
         InterfaceSpecification interfaceSpecification = testDriver.toLQL(cutClass.getCanonicalName(), null);
 
-        LOG.debug("LQL\n{}", interfaceSpecification.toLQL());
+        String lql = interfaceSpecification.toLQL();
+        LOG.debug("LQL\n{}", lql);
+
+        assertEquals("""
+                CompositeNodeExample{
+                	CompositeNodeExample(java.lang.String)
+                	getName()->java.lang.String
+                	getParent()->de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.examples.CompositeNodeExample
+                	setName(java.lang.String)->void
+                	setParent(de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.examples.CompositeNodeExample)->void
+                	finalize()->void
+                	wait(long,int)->void
+                	wait()->void
+                	wait(long)->void
+                	equals(java.lang.Object)->boolean
+                	toString()->java.lang.String
+                	hashCode()->int
+                	getClass()->java.lang.Class
+                	clone()->java.lang.Object
+                	notify()->void
+                	notifyAll()->void
+                }""", lql);
     }
 
     /**

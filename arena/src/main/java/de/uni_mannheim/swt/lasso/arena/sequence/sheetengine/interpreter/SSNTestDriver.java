@@ -5,27 +5,25 @@ import de.uni_mannheim.swt.lasso.arena.ClassUnderTest;
 import de.uni_mannheim.swt.lasso.arena.MethodSignature;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptationStrategy;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
-import de.uni_mannheim.swt.lasso.arena.adaptation.DefaultAdaptationStrategy;
 import de.uni_mannheim.swt.lasso.arena.repository.DependencyResolver;
 import de.uni_mannheim.swt.lasso.arena.repository.MavenRepository;
 import de.uni_mannheim.swt.lasso.arena.repository.NexusInstance;
 import de.uni_mannheim.swt.lasso.arena.search.InterfaceSpecification;
 import de.uni_mannheim.swt.lasso.arena.sequence.parser.unit.ReflectionConstructorSignature;
 import de.uni_mannheim.swt.lasso.arena.sequence.parser.unit.ReflectionMethodSignature;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.adapter.PassThroughAdaptationStrategy;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.CutUtils;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.HierarchyMemberResolver;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.LQLUtils;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.ParsedSheet;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.SSNParser;
 
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.ClassUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.*;
 
 /**
@@ -37,11 +35,32 @@ public class SSNTestDriver {
 
     private static final Logger LOG = LoggerFactory.getLogger(SSNTestDriver.class);
 
-    String mavenRepoUrl = NexusInstance.LOCAL_URL;
-    File localRepo = new File("/tmp/lalalamvn/local-repo");
+    /**
+     * Dependency resolution
+     */
+    private MavenRepository mavenRepository;
 
-    DependencyResolver resolver = new DependencyResolver(mavenRepoUrl, localRepo.getAbsolutePath());
-    MavenRepository mavenRepository = new MavenRepository(resolver);
+    /**
+     * {@link AdaptationStrategy}
+     */
+    private AdaptationStrategy adaptationStrategy = new PassThroughAdaptationStrategy();
+
+    public MavenRepository getMavenRepository() {
+        // FIXME update
+        if(mavenRepository == null) {
+            String mavenRepoUrl = NexusInstance.LOCAL_URL;
+            File localRepo = new File("/tmp/lalalamvn/local-repo");
+
+            DependencyResolver resolver = new DependencyResolver(mavenRepoUrl, localRepo.getAbsolutePath());
+            this.mavenRepository = new MavenRepository(resolver);
+        }
+
+        return mavenRepository;
+    }
+
+    public void setMavenRepository(MavenRepository mavenRepository) {
+        this.mavenRepository = mavenRepository;
+    }
 
     public ExecutedInvocations runSheet(String ssnJsonlStr, String lql, Class cutClass, int limitAdapters, InvocationVisitor executionListener) throws IOException {
         // FIXME artifacts
@@ -66,14 +85,12 @@ public class SSNTestDriver {
 
         SSNInterpreter interpreter = new SSNInterpreter();
 
-        CandidatePool pool = new CandidatePool(mavenRepository, Collections.singletonList(classUnderTest));
+        CandidatePool pool = new CandidatePool(getMavenRepository(), Collections.singletonList(classUnderTest));
         // automatically resolves project-related artifacts
         pool.initProjects();
 
         // TODO call with classundertest to set classloader
         Invocations invocations = interpreter.interpret(parsedSheet, interfaceSpecificationMap, classUnderTest);
-
-        AdaptationStrategy adaptationStrategy = new DefaultAdaptationStrategy();
 
         // FIXME for all CUTs .. here only one
         String faName = interfaceSpecificationMap.keySet().stream().findFirst().get();
@@ -95,7 +112,7 @@ public class SSNTestDriver {
 
         try {
             ClassUnderTest classUnderTest = CutUtils.createExample(className, artifact);
-            CandidatePool pool = new CandidatePool(mavenRepository, Collections.singletonList(classUnderTest));
+            CandidatePool pool = new CandidatePool(getMavenRepository(), Collections.singletonList(classUnderTest));
             // automatically resolves project-related artifacts
             pool.initProjects();
 
@@ -112,7 +129,7 @@ public class SSNTestDriver {
 
             List<MethodSignature> methods = new LinkedList<>();
             // also detect all inherited, non-overridden super methods
-            getAllDeclaredMethods(clazz).forEach(m -> {
+            HierarchyMemberResolver.getAllDeclaredMethods(clazz).forEach(m -> {
                 methods.add(new ReflectionMethodSignature(m));
             });
 
@@ -124,63 +141,11 @@ public class SSNTestDriver {
         }
     }
 
-    private List<Method> getAllDeclaredMethods(Class<?> cutClass) {
-        List<Method> methods = new ArrayList<>(
-                Arrays.asList(cutClass.getDeclaredMethods()));
-        // find all protected/public methods from super hierarchy NOT
-        // overridden
-        List<Method> superMethods = new LinkedList<>();
+    public AdaptationStrategy getAdaptationStrategy() {
+        return adaptationStrategy;
+    }
 
-        // is cutClass included?
-        Iterator<Class<?>> mIt = ClassUtils.hierarchy(cutClass).iterator();
-        while (mIt.hasNext()) {
-            Class<?> superClass = mIt.next();
-
-//            if(superClass.equals(Object.class)) {
-//                // skip this one
-//                continue;
-//            }
-
-            // we are only interested in protected, public members
-            for (Method method : superClass.getDeclaredMethods()) {
-                // only add if NOT private, so we can actually access it in
-                // subclass
-                if (!Modifier.isPrivate(method.getModifiers())) {
-                    // if(methods.contains(method))
-                    superMethods.add(method);
-                }
-            }
-        }
-
-        if (!superMethods.isEmpty()) {
-            // remove all methods overridden in cut class
-            for (Method superMethod : superMethods) {
-                List<Class<?>> superMethodParams = Arrays
-                        .asList(superMethod.getParameterTypes());
-
-                boolean overridden = false;
-                // check if super methods are overridden in cut class
-                for (Method method : methods) {
-                    List<Class<?>> methodParams = Arrays
-                            .asList(method.getParameterTypes());
-
-                    // same signature?
-                    if (method.getName().equals(superMethod.getName())
-                            && CollectionUtils.isEqualCollection(
-                            methodParams, superMethodParams)) {
-                        //
-                        overridden = true;
-
-                        break;
-                    }
-                }
-
-                if (!overridden) {
-                    methods.add(superMethod);
-                }
-            }
-        }
-
-        return methods;
+    public void setAdaptationStrategy(AdaptationStrategy adaptationStrategy) {
+        this.adaptationStrategy = adaptationStrategy;
     }
 }

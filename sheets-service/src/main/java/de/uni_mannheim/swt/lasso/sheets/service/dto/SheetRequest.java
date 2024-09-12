@@ -31,6 +31,8 @@ public class SheetRequest {
     private List<SheetSpec> sheets;
     private ClassUnderTestSpec classUnderTest;
 
+    // FIXME add configuration
+
     public List<SheetSpec> getSheets() {
         return sheets;
     }
