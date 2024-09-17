@@ -14,6 +14,7 @@ import AuthService from './services/AuthService';
 import PrivateRoute from './components/navigation/PrivateRoute';
 import DocumentationPage from './pages/DocumentationPage';
 import AboutPage from './pages/AboutPage';
+import Exp from './pages/Exp';
 
 function App() {
   const [currentUser, setCurrentUser] = useState<User>()
@@ -49,6 +50,7 @@ function App() {
           <Route path="/home" element={<HomePage/>} />
           <Route path="/documentation" element={<DocumentationPage />} />
           <Route path="/about" element={<AboutPage/>} />
+          <Route path="/exp" element={<Exp/>} />
           <Route path="/login" element={<LoginPage/>} />
           <Route path="/register" element={<RegisterPage/>} />
           <Route path="/profile" element={wrapPrivateRoute(<ProfilePage />, currentUser, 'profile')} />
