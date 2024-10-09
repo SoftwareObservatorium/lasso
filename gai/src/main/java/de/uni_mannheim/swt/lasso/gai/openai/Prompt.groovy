@@ -49,6 +49,8 @@ class Prompt extends LassoSpec {
     String promptContent = ''
     String promptType = 'class'
 
+    int sampleId = 1
+
     void prompt(String queryString, String type = 'class') {
         this.promptContent = queryString
         this.promptType = type

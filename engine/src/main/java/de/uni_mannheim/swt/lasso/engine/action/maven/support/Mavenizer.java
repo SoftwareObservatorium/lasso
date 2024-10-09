@@ -29,6 +29,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.StrSubstitutor;
 
 import java.io.File;
@@ -96,7 +97,12 @@ public class Mavenizer {
     private String createPom(Candidate candidate, String pomTemplate, Map<String, Object> valueMap) {
         MavenArtifact mavenArtifact = candidate.getArtifact().asType(MavenArtifact.class);
 
-        valueMap.put("groupId", DE_UNI_MANNHEIM_SWT_LASSO_SYSTEMS);
+        String groupId = mavenArtifact.getGroupId();
+        if(StringUtils.isBlank(groupId)) {
+            groupId = DE_UNI_MANNHEIM_SWT_LASSO_SYSTEMS;
+        }
+
+        valueMap.put("groupId", groupId);
         valueMap.put("artifactId", candidate.getId());
         if(!valueMap.containsKey("version")) {
             valueMap.put("version", mavenArtifact.getVersion());

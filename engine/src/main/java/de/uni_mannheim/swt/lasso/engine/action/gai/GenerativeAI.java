@@ -110,6 +110,9 @@ public class GenerativeAI extends DefaultAction {
 
     @Override
     public Abstraction createAbstraction(LSLExecutionContext context, ActionConfiguration actionConfiguration, AbstractionSpec abstractionSpec) throws IOException {
+        // does the abstraction already exists?
+        LOG.debug("abstraction exists? {}", context.getLassoContext().getAbstractionContainerSpec().getAbstractions().containsKey(abstractionSpec.getName()));
+
         Abstraction abstraction = new Abstraction();
         abstraction.setName(abstractionSpec.getName());
 
@@ -132,12 +135,16 @@ public class GenerativeAI extends DefaultAction {
             List<String> codeMatches = contentParser.extractCode(choice.getMessage().getContent());
             generatedCode.addAll(codeMatches);
         }
+
+        // useful package names (human readable)
+        String pkg = prompt.getModel().replaceAll("\\W", ""); //StringUtils.replaceEach(prompt.getModel(), new String[]{":", "-"}, new String[]{"_", "_"});
+
         // 2. parse code
         LOG.info("Parsing code");
-        List<CodeUnit> units = generatedCode.stream().map(this::parse).collect(Collectors.toList());
+        List<CodeUnit> units = generatedCode.stream().map(c -> parse(c, pkg)).filter(Objects::nonNull).collect(Collectors.toList());
         // 3. store code in Maven project
         LOG.info("Creating Maven project");
-        MavenProject mavenProject = createProject(context, abstractionSpec, units);
+        MavenProject mavenProject = createProject(context, abstractionSpec, units, prompt, pkg);
 
         // 4. package and deploy
         LOG.info("Package and deploy code");
@@ -279,30 +286,35 @@ public class GenerativeAI extends DefaultAction {
         }
     }
 
-    CodeUnit parse(String code) {
-        if(LOG.isDebugEnabled()) {
-            LOG.debug("Parsing code\n{}", code);
+    CodeUnit parse(String code, String pkg) {
+        if(LOG.isInfoEnabled()) {
+            LOG.info("Parsing code\n{}", code);
         }
 
-        JavaParser javaParser = new JavaParser();
-        com.github.javaparser.ast.CompilationUnit cu = javaParser.parse(code).getResult().get();
+        try {
+            JavaParser javaParser = new JavaParser();
+            com.github.javaparser.ast.CompilationUnit cu = javaParser.parse(code).getResult().get();
 
-        // parse name
-        CodeUnit unit = new CodeUnit();
-        unit.setId(UUID.randomUUID().toString());
-        unit.setName(cu.getType(0).getNameAsString());
+            // parse name
+            CodeUnit unit = new CodeUnit();
+            unit.setId(UUID.randomUUID().toString());
+            unit.setName(cu.getType(0).getNameAsString());
 
-        // add package name
-        cu.setPackageDeclaration(DE_UNI_MANNHEIM_SWT_LASSO_SYSTEMS_GAI);
+            // add package name
+            cu.setPackageDeclaration(pkg);
 
-        unit.setPackagename(DE_UNI_MANNHEIM_SWT_LASSO_SYSTEMS_GAI);
-        unit.setContent(cu.toString());
-        unit.setUnitType(CodeUnit.CodeUnitType.CLASS);
+            unit.setPackagename(pkg);
+            unit.setContent(cu.toString());
+            unit.setUnitType(CodeUnit.CodeUnitType.CLASS);
 
-        return unit;
+            return unit;
+        } catch (Throwable e) {
+            LOG.warn("failed to parse code", e);
+            return null;
+        }
     }
 
-    MavenProject createProject(LSLExecutionContext context, AbstractionSpec abstractionSpec, List<CodeUnit> units) throws IOException {
+    MavenProject createProject(LSLExecutionContext context, AbstractionSpec abstractionSpec, List<CodeUnit> units, Prompt prompt, String pkg) throws IOException {
         if(LOG.isInfoEnabled()) {
             LOG.info("Executing "+  this.getClass());
         }
@@ -318,9 +330,10 @@ public class GenerativeAI extends DefaultAction {
         candidate.setId(UUID.randomUUID().toString());
         // artifact
         MavenArtifact artifact = new MavenArtifact();
-        artifact.setGroupId(DE_UNI_MANNHEIM_SWT_LASSO_SYSTEMS_GAI);
+
+        artifact.setGroupId(pkg);
         artifact.setArtifactId(candidate.getId() + "-gai");
-        artifact.setVersion(java.lang.System.currentTimeMillis() + "");
+        artifact.setVersion(String.valueOf(prompt.getSampleId()));
         candidate.setArtifact(artifact);
 
         Mavenizer mavenizer = new Mavenizer(abstractionRoot, mvnOptions);
@@ -393,6 +406,7 @@ public class GenerativeAI extends DefaultAction {
         String metadata = "\"executionId," + context.getExecutionId()
                 + "|" + "action," + getName()
                 + "|" + "model," + prompt.getModel()
+                + "|" + "sampleId," + prompt.getSampleId()
                 + "\"";
 
         String core = StringUtils.substringAfterLast(ds.getHost(), "/");
