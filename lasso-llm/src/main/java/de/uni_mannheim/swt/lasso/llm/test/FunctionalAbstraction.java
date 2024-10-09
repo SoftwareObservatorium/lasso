@@ -34,6 +34,8 @@ public class FunctionalAbstraction {
 
     private String description;
 
+    private String prompt;
+
     private Map meta;
 
     public String getId() {
@@ -74,5 +76,13 @@ public class FunctionalAbstraction {
 
     public void setMeta(Map meta) {
         this.meta = meta;
+    }
+
+    public String getPrompt() {
+        return prompt;
+    }
+
+    public void setPrompt(String prompt) {
+        this.prompt = prompt;
     }
 }

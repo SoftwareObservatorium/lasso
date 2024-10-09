@@ -69,6 +69,7 @@ public class ProblemExporter {
                 fa.setLql(parse.parseMethodSignature(problem));
                 fa.setDescription(parse.parseDescription(problem));
                 fa.setSequences(ss);
+                fa.setPrompt(problem.getPrompt());
 
                 // store FA somewhere
                 FileUtils.writeStringToFile(new File(baseDir, problem.getName() + ".json"),
