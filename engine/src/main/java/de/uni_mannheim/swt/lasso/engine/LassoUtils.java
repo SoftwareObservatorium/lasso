@@ -23,6 +23,7 @@ import de.uni_mannheim.swt.lasso.core.model.Abstraction;
 import de.uni_mannheim.swt.lasso.core.model.CodeUnit;
 
 import de.uni_mannheim.swt.lasso.core.model.System;
+import de.uni_mannheim.swt.lasso.corpus.Datasource;
 import de.uni_mannheim.swt.lasso.engine.workspace.Workspace;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ClassUtils;
@@ -92,6 +93,40 @@ public final class LassoUtils {
 //
 //        return refImpl;
 //    }
+
+    /**
+     * Resolve data source
+     *
+     * <pre>
+     *     1. try provided one
+     *     2. try the default one in script
+     *     3. try the first one defined in the executable corpus configuration.
+     * </pre>
+     *
+     * @param context
+     * @param dataSourceGiven
+     * @return
+     */
+    public static String resolveDataSource(LSLExecutionContext context, String dataSourceGiven) {
+        if(StringUtils.isNotBlank(dataSourceGiven)) {
+            return dataSourceGiven;
+        }
+
+        // default data source defined in script
+        if(CollectionUtils.isNotEmpty(context.getLassoContext().getDataSources())) {
+            return context.getLassoContext().getDataSources().get(0);
+        }
+
+        Datasource ds = context.getConfiguration().getExecutableCorpus().getDatasources().get(0);
+
+        //
+        return ds.getId();
+    }
+
+    public static Optional<Datasource> getDataSource(LSLExecutionContext context, String dataSourceId) {
+        return context.getConfiguration().getExecutableCorpus().getDatasources().stream()
+                .filter(ds -> StringUtils.equalsIgnoreCase(ds.getId(), dataSourceId)).findFirst();
+    }
 
     /**
      * Find and remove duplicates (alternatively, throwing exception).

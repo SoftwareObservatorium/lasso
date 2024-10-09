@@ -49,7 +49,6 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
@@ -314,7 +313,7 @@ public class GAITestGen extends DefaultAction {
                             LOG.debug("Generated prompt\n{}", prompt);
                         }
 
-                        Gpt4AllCompletionRequest request = new Gpt4AllCompletionRequest();
+                        OllamaCompletionRequest request = new OllamaCompletionRequest();
                         Message message = new Message();
                         message.setRole("user");
                         message.setContent(prompt);

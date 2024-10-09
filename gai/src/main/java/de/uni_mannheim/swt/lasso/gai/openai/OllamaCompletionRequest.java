@@ -19,13 +19,11 @@
  */
 package de.uni_mannheim.swt.lasso.gai.openai;
 
-import java.util.List;
-
 /**
  *
  * @author Marcus Kessel
  */
-public class Gpt4AllCompletionRequest extends CompletionRequest {
+public class OllamaCompletionRequest extends CompletionRequest {
 
     double top_k;
 

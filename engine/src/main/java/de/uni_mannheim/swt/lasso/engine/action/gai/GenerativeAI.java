@@ -31,6 +31,7 @@ import de.uni_mannheim.swt.lasso.datasource.maven.MavenDataSource;
 import de.uni_mannheim.swt.lasso.datasource.maven.build.Candidate;
 import de.uni_mannheim.swt.lasso.datasource.maven.lsl.MavenQuery;
 import de.uni_mannheim.swt.lasso.engine.LSLExecutionContext;
+import de.uni_mannheim.swt.lasso.engine.LassoUtils;
 import de.uni_mannheim.swt.lasso.engine.action.DefaultAction;
 import de.uni_mannheim.swt.lasso.engine.action.annotations.LassoAction;
 import de.uni_mannheim.swt.lasso.engine.action.annotations.LassoInput;
@@ -84,8 +85,8 @@ public class GenerativeAI extends DefaultAction {
     public static final String DE_UNI_MANNHEIM_SWT_LASSO_SYSTEMS_GAI = "de.uni_mannheim.swt.lasso.systems.gai";
     public static final String URL = "https://api.openai.com/v1/chat/completions";
 
-    @LassoInput(desc = "Data Source", optional = true)
-    public String dataSource = "gitimport";
+    @LassoInput(desc = "Override Data Source", optional = true)
+    public String dataSource = null;
 
     @LassoInput(desc = "How to match code snippet", optional = true)
     public String regex;
@@ -145,13 +146,14 @@ public class GenerativeAI extends DefaultAction {
         doPackage(context, actionConfiguration, manager, mavenProject);
 
         // 5. index
+        String dataSourceId = LassoUtils.resolveDataSource(context, dataSource);
+        Datasource ds = LassoUtils.getDataSource(context, dataSourceId).orElseThrow(() -> new IllegalArgumentException("Cannot find data source " + dataSourceId));
         LOG.info("Index code");
-        doAnalyzeAndStore(context, actionConfiguration, manager, prompt, mavenProject);
+        doAnalyzeAndStore(context, actionConfiguration, manager, prompt, mavenProject, ds);
 
         // 6. select from data source
         LOG.info("Selecting code");
-        String dataSourceId = dataSource != null ? dataSource : abstractionSpec.getLasso().getDataSources().get(0);
-        List<System> systems = select(context, dataSourceId);
+        List<System> systems = select(context, ds);
         abstraction.setSystems(systems);
 
         // TODO
@@ -230,7 +232,7 @@ public class GenerativeAI extends DefaultAction {
 
             response = client.complete(request);
         } else {
-            Gpt4AllCompletionRequest request = new Gpt4AllCompletionRequest();
+            OllamaCompletionRequest request = new OllamaCompletionRequest();
             Message message = new Message();
             message.setRole(prompt.getRole());
             message.setContent(prompt.getPromptContent());
@@ -255,8 +257,8 @@ public class GenerativeAI extends DefaultAction {
         return response;
     }
 
-    List<System> select(LSLExecutionContext context, String dataSourceId) throws IOException {
-        DataSource dataSource = context.getDataSourceMap().get(dataSourceId);
+    List<System> select(LSLExecutionContext context, Datasource datasource) throws IOException {
+        DataSource dataSource = context.getDataSourceMap().get(datasource.getId());
         try {
             MavenDataSource ds = (MavenDataSource) dataSource;
             MavenQuery mavenQuery = (MavenQuery) ds.createQueryModelForLSL();
@@ -379,7 +381,7 @@ public class GenerativeAI extends DefaultAction {
         return mavenExecutionEnvironment;
     }
 
-    void doAnalyzeAndStore(LSLExecutionContext context, ActionConfiguration actionConfiguration, MavenProjectManager manager, Prompt prompt, MavenProject mavenProject) {
+    void doAnalyzeAndStore(LSLExecutionContext context, ActionConfiguration actionConfiguration, MavenProjectManager manager, Prompt prompt, MavenProject mavenProject, Datasource ds) {
         // mvn indexer-maven-plugin:index
         File projectRoot = mavenProject.getBaseDir();
 
@@ -392,10 +394,6 @@ public class GenerativeAI extends DefaultAction {
                 + "|" + "action," + getName()
                 + "|" + "model," + prompt.getModel()
                 + "\"";
-
-        ExecutableCorpus executableCorpus = context.getConfiguration().getExecutableCorpus();
-        // FIXME select default ds
-        Datasource ds = executableCorpus.getDatasources().get(0);
 
         String core = StringUtils.substringAfterLast(ds.getHost(), "/");
         String url = StringUtils.substringBeforeLast(ds.getHost(), "/");

@@ -19,9 +19,7 @@
  */
 package de.uni_mannheim.swt.lasso.gai.openai;
 
-import com.google.gson.Gson;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
@@ -31,16 +29,16 @@ import java.util.Collections;
  *
  * @author Marcus Kessel
  */
-public class LlamaCppClientIntegrationTest {
+public class OllamaClientIntegrationTest {
 
     // 1. http://bagdana.informatik.uni-mannheim.de:8080/ or http://dybbuk.informatik.uni-mannheim.de:8080/
-    OpenAiClient client = new OpenAiClient("http://bagdana.informatik.uni-mannheim.de:8080/v1/chat/completions",
-            "swt4321");
+    OpenAiClient client = new OpenAiClient("http://bagdana.informatik.uni-mannheim.de:8080/api/chat/completions",
+            "sk-f5690a9943504087a40eeecd881c4170");
 
     //@Disabled
     @Test
     public void test_DeepSeekCoder33BInstruct_complete() {
-        Gpt4AllCompletionRequest request = new Gpt4AllCompletionRequest();
+        OllamaCompletionRequest request = new OllamaCompletionRequest();
         Message message = new Message();
         message.setRole("user");
         message.setContent("// this java method encodes text to a byte array using Base64 with padding\npublic static byte[] encodeBase64(String str) {");
@@ -56,7 +54,7 @@ public class LlamaCppClientIntegrationTest {
         request.setMessages(Collections.singletonList(message));
 
         // not really necessary
-        request.setModel("deepseek-coder-33b-instruct.Q5_K_M.gguf");
+        request.setModel("deepseek-coder-v2:latest");
 
         CompletionResponse response = client.complete(request);
 
@@ -72,7 +70,7 @@ public class LlamaCppClientIntegrationTest {
 
     @Test
     public void test_DeepSeekCoder33BInstruct_generate() {
-        Gpt4AllCompletionRequest request = new Gpt4AllCompletionRequest();
+        OllamaCompletionRequest request = new OllamaCompletionRequest();
         Message message = new Message();
         message.setRole("user");
         message.setContent("generate a java class that contains a method that encodes a string to base64");
@@ -104,7 +102,7 @@ public class LlamaCppClientIntegrationTest {
 
     @Test
     public void test_DeepSeekCoder33BInstruct_tests() {
-        Gpt4AllCompletionRequest request = new Gpt4AllCompletionRequest();
+        OllamaCompletionRequest request = new OllamaCompletionRequest();
         Message message = new Message();
         message.setRole("user");
         message.setContent("write 10 tests to verify the functionality of determining the length of a string (method signature is \"strlen(String):long\"). Use a tabular representation with two columns. the first column contains the test input, whereas the second column the expected output.");
