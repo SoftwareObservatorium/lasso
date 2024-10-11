@@ -34,6 +34,10 @@ There are ways to get started:
 
 Read our [quickstart.md](doc%2Fquickstart.md) guide to get started with the LASSO platform.
 
+### Tool Demo
+
+The scripts of the tool demo can be found in [script_examples/benchmarking_llms](script_examples/benchmarking_llms)
+
 ### Publications
 
 A comprehensive description of LASSO and its core concepts and data structures is provided in
