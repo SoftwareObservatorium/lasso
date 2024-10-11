@@ -34,7 +34,9 @@ There are ways to get started:
 
 Read our [quickstart.md](doc%2Fquickstart.md) guide to get started with the LASSO platform.
 
-### Tool Demo
+### (Tool Demo) Test-driven Software Experimentation with LASSO: an LLM Benchmarking Example
+
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/tzY9oNTWXzw/0.jpg)](https://www.youtube.com/watch?v=tzY9oNTWXzw)
 
 The scripts of the tool demo can be found in [script_examples/benchmarking_llms](script_examples/benchmarking_llms)
 
