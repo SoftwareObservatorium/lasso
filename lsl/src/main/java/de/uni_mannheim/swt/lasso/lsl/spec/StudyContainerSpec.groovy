@@ -20,10 +20,16 @@
 package de.uni_mannheim.swt.lasso.lsl.spec
 
 /**
+ * Represents a container of one or more StudySpec.
+ *
+ * Note: Currently, we support one study block only.
  *
  * @author Marcus Kessel
  */
 class StudyContainerSpec extends LassoSpec {
 
+    /**
+     * StudySpec's by name
+     */
     Map<String, StudySpec> studies = Collections.synchronizedMap(new LinkedHashMap<>())
 }

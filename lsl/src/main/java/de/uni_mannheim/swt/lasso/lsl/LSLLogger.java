@@ -20,6 +20,7 @@
 package de.uni_mannheim.swt.lasso.lsl;
 
 /**
+ * Simple logging interface to plug in different loggers.
  *
  * @author Marcus Kessel
  */

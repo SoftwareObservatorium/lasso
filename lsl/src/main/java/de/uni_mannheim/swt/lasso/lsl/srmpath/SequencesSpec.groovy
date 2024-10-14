@@ -24,6 +24,7 @@ import de.uni_mannheim.swt.lasso.core.model.Sequence
 import de.uni_mannheim.swt.lasso.lsl.spec.LassoSpec
 
 /**
+ * Experimental DSL support for SRMs
  * 
  * @author Marcus Kessel
  */

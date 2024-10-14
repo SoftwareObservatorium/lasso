@@ -20,20 +20,39 @@
 package de.uni_mannheim.swt.lasso.lsl.spec
 
 /**
+ * The environment block inside the profile block
+ *
+ * <code>
+ *      environment(map) {closure}
+ * </code>
  *
  * @author Marcus Kessel
  */
 class EnvironmentSpec extends LassoSpec {
-
+    /**
+     * Properties of the environment
+     */
     Map<String, ?> map
+    /**
+     * Closure of the environment to call
+     */
     Closure closure
-
+    /**
+     * Docker image for target execution environment
+     */
     String image
 
+    /**
+     *
+     * @return name of environment
+     */
     String getName() {
         map.name
     }
 
+    /**
+     * Internal method to call the closure
+     */
     void apply() {
         callRehydrate(closure, this, null, null)
     }

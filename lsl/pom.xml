@@ -41,6 +41,14 @@
 
     <dependencies>
 
+        <!-- groovydoc seems to depend on this -->
+        <dependency>
+            <groupId>com.github.javaparser</groupId>
+            <artifactId>javaparser-core</artifactId>
+            <version>${javaparser.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
         <!-- groovy-all OVERRIDE spring-boot -->
         <dependency>
             <groupId>org.codehaus.groovy</groupId>

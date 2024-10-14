@@ -23,6 +23,11 @@ import de.uni_mannheim.swt.lasso.core.model.Abstraction
 import de.uni_mannheim.swt.lasso.core.model.CodeUnit
 import de.uni_mannheim.swt.lasso.core.model.System
 
+/**
+ * For debugging purposes.
+ *
+ * @author Marcus Kessel
+ */
 class example {
 
     static void main(String[] args) {

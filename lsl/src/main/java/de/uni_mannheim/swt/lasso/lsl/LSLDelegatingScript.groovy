@@ -23,6 +23,14 @@ package de.uni_mannheim.swt.lasso.lsl
 import de.uni_mannheim.swt.lasso.lsl.spec.StudySpec
 
 /**
+ * This class represents an LSL script and all its core building blocks
+ *
+ * <code>
+ *      dataSource 'xxx'
+ *      study(map) {
+ *          action(map) {closure}
+ *      }
+ * </code>
  *
  * @author Marcus Kessel
  */
@@ -66,6 +74,11 @@ class LSLDelegatingScript {
         return lasso.executionContext.benchmarkManager.load(benchmarkId)
     }
 
+    /**
+     * Log messages
+     *
+     * @param msg
+     */
     void log(String msg) {
         logger.log(msg)
     }

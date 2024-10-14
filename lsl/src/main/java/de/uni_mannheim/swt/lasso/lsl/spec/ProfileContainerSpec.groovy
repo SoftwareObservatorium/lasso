@@ -20,6 +20,7 @@
 package de.uni_mannheim.swt.lasso.lsl.spec
 
 /**
+ * Container for profiles.
  *
  * @author Marcus Kessel
  */

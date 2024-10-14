@@ -29,7 +29,7 @@ import de.uni_mannheim.swt.lasso.lsl.spec.LassoSpec
 import org.apache.commons.lang3.StringUtils
 
 /**
- * SRMPath DSL spec.
+ * SRMPath DSL commands to evaluate SRMs (e.g., doing equivalence checks etc.).
  *
  * @author Marcus Kessel
  */

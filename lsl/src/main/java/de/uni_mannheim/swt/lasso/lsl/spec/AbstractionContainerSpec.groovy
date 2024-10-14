@@ -20,6 +20,7 @@
 package de.uni_mannheim.swt.lasso.lsl.spec
 
 /**
+ * A container of abtraction containers (i.e., AbstractionSpec).
  *
  * @author Marcus Kessel
  */

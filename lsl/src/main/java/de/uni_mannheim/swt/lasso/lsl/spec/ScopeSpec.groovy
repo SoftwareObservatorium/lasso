@@ -20,26 +20,55 @@
 package de.uni_mannheim.swt.lasso.lsl.spec
 
 /**
+ * Scope block inside EnvironmentSpec.
+ *
+ * <code>
+ *     scope(map) {closure}
+ * </code>
  *
  * @author Marcus Kessel
  */
 class ScopeSpec extends LassoSpec {
-
+    /**
+     * Properties of the scope
+     */
     Map<String, ?> map
+    /**
+     * Closure of the scope
+     */
     Closure closure
-
+    /**
+     * analysis type (e.g., 'class')
+     */
     String type
-
+    /**
+     * whitelist by package name
+     */
     List<String> pkgWhitelist
+    /**
+     * blacklist by package name
+     */
     List<String> pkgBlacklist
-
+    /**
+     * method blacklist
+     */
     List<String> methodBlacklist
+    /**
+     * method whitelist
+     */
     List<String> methodWhitelist
 
+    /**
+     *
+     * @return name of scope
+     */
     String getName() {
         map.name
     }
 
+    /**
+     * Internal method to call closure
+     */
     void apply() {
         callRehydrate(closure, this, null, null)
     }

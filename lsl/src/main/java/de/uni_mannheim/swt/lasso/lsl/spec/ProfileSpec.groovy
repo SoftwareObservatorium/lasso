@@ -20,17 +20,43 @@
 package de.uni_mannheim.swt.lasso.lsl.spec
 
 /**
+ * A profile block
+ *
+ * <code>
+ *     profile(map) {closure}
+ * </code>
  *
  * @author Marcus Kessel
  */
 class ProfileSpec extends LassoSpec {
-
+    /**
+     * Properties of the profile (e.g., name)
+     */
     Map<String, ?> map
-
+    /**
+     * Internal variable for name
+     */
     String name
+    /**
+     * Environment block
+     */
     EnvironmentSpec environmentSpec
+    /**
+     * Analysis class
+     */
     ScopeSpec scopeSpec
 
+    /**
+     * Set environment
+     *
+     * <code>
+     *     environment(name) {closure}
+     * </code>
+     *
+     * @param name
+     * @param closure
+     * @return
+     */
     def environment(String name, Closure<EnvironmentSpec> closure) {
         // apply closure to action
         Map<String, ?> aMap = [:]
@@ -45,6 +71,17 @@ class ProfileSpec extends LassoSpec {
         environmentSpec.apply()
     }
 
+    /**
+     * Set analysis scope
+     *
+     * <code>
+     *     scope(name) {closure}
+     * </code>
+     *
+     * @param name
+     * @param closure
+     * @return
+     */
     def scope(String name, Closure<ScopeSpec> closure) {
         // apply closure to action
         Map<String, ?> aMap = [:]

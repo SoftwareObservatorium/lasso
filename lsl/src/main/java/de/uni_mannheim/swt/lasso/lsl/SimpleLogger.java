@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * SLF4J Logger
  *
  * @author Marcus Kessel
  */

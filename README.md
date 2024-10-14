@@ -40,6 +40,14 @@ Read our [quickstart.md](doc%2Fquickstart.md) guide to get started with the LASS
 
 The scripts of the tool demo can be found in [script_examples/benchmarking_llms](script_examples/benchmarking_llms)
 
+A preprint of the tool demo paper is available on [arxiv](https://arxiv.org/abs/2410.08911).
+
+### LASSO Scripting Language (LSL) - DSL Commands
+
+The (Groovy) DSL command documentation can be found [dsl](doc%2Fdsl) and examples of the DSL commands can be found in [LSLLanguageSystemTest.groovy](service%2Fsrc%2Ftest%2Fjava%2Fde%2Funi_mannheim%2Fswt%2Flasso%2Fservice%2Fsystemtests%2Fintegration%2FLSLLanguageSystemTest.groovy).
+
+Examples of the language are provided in [systemtests](service%2Fsrc%2Ftest%2Fjava%2Fde%2Funi_mannheim%2Fswt%2Flasso%2Fservice%2Fsystemtests).
+
 ### Publications
 
 A comprehensive description of LASSO and its core concepts and data structures is provided in

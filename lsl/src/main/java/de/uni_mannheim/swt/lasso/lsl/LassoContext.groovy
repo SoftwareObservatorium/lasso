@@ -31,6 +31,7 @@ import de.uni_mannheim.swt.lasso.lsl.spec.StudyContainerSpec
 import de.uni_mannheim.swt.lasso.lsl.spec.StudySpec
 
 /**
+ * Evaluation/Execution context of an LSL script.
  *
  * @author Marcus Kessel
  */

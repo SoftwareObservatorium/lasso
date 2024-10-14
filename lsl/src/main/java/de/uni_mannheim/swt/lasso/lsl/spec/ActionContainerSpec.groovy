@@ -20,10 +20,16 @@
 package de.uni_mannheim.swt.lasso.lsl.spec
 
 /**
+ * Represents a container of one or more ActionSpec.
+ *
+ * Note: Currently, we support one study block only.
  *
  * @author Marcus Kessel
  */
 class ActionContainerSpec extends LassoSpec {
 
+    /**
+     * ActionSpec by name
+     */
     Map<String, ActionSpec> actions = Collections.synchronizedMap(new LinkedHashMap<>())
 }

@@ -26,6 +26,7 @@ import de.uni_mannheim.swt.lasso.lsl.spec.ActionSpec
 import de.uni_mannheim.swt.lasso.lsl.spec.LassoSpec
 
 /**
+ * Experimental DSL support for SRMs
  * 
  * @author Marcus Kessel
  */

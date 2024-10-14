@@ -27,6 +27,10 @@ import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.customizers.ImportCustomizer;
 
 /**
+ * Runner for LSL scripts (i.e., {@link LSLDelegatingScript}.
+ *
+ * Note that it runs the script only independent of LASSO's workflow engine.
+ *
  * @author Marcus Kessel
  */
 public class LSLRunner {

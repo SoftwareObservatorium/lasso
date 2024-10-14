@@ -20,7 +20,13 @@
 package de.uni_mannheim.swt.lasso.lsl.spec
 
 /**
- * Simple sheet model.
+ * Sequence sheet model
+ *
+ * <code>
+ *      sheet(base64:'Base64', p2:"Hello World") {
+ *          row '',  'create', '?base64'
+ *          row 'SGVsbG8gV29ybGQ','encode',  'A1',   '?p2' }
+ * </code>
  *
  * @author Marcus Kessel
  */
@@ -29,14 +35,28 @@ class SheetSpec extends LassoSpec {
     // must be transient since Closure's cannot be easily serialized
     transient Closure closure
 
+    /**
+     * Input parameters of a sequence sheet
+     */
     Map<String, ?> inputParameters
-
+    /**
+     * Rows of a sequence sheet
+     */
     List<Object[]> rows = []
 
+    /**
+     * A row (i.e., statement)
+     *
+     * @param cells
+     * @return
+     */
     def row(Object... cells) {
         rows << cells
     }
 
+    /**
+     * Internal method to call closure
+     */
     void apply() {
         callRehydrate(closure, this, null, null)
     }

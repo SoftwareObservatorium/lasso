@@ -22,6 +22,7 @@ package de.uni_mannheim.swt.lasso.lsl.spec
 import de.uni_mannheim.swt.lasso.lsl.LassoContext
 
 /**
+ * Base class of all Specs in the DSL. Provides basic functionality like logging.
  *
  * @author Marcus Kessel
  */
@@ -59,10 +60,23 @@ abstract class LassoSpec {
         }
     }
 
+    /**
+     * Debug messages
+     *
+     * @param msg
+     * @return
+     */
     def debug(def msg) {
         lasso.logger.log("DEBUG => ${msg}")
     }
 
+
+    /**
+     * Log messages
+     *
+     * @param msg
+     * @return
+     */
     def log(def msg) {
         lasso.logger.log("INFO => ${msg}")
     }

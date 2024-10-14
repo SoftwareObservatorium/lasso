@@ -20,22 +20,47 @@
 package de.uni_mannheim.swt.lasso.lsl.spec
 
 /**
+ * Represents a study block in LSL.
+ *
+ * <code>
+ *      study(map) {closure}
+ * </code>
  *
  * @author Marcus Kessel
  */
 class StudySpec extends LassoSpec {
 
+    /**
+     * Properties passed to study block
+     */
     Map<String, ?> map
+    /**
+     * Closure which is called to populate study block
+     */
     Closure<StudySpec> closure
 
+    /**
+     *
+     * @return study name
+     */
     String getName() {
         map.name
     }
 
+    /**
+     * Call the closure
+     */
     void apply() {
         this.with(closure)
     }
 
+    /**
+     * Add new action
+     *
+     * @param map Properties of action (name, type etc.)
+     * @param closure Closure to call
+     * @return
+     */
     def action(Map<String, ?> map, Closure<ActionSpec> closure) {
         if(!map.containsKey('type')) {
             map.put('type', 'NoOp') // default to NoOp
@@ -49,6 +74,13 @@ class StudySpec extends LassoSpec {
         actionSpec.apply()
     }
 
+    /**
+     * Add new profile (i.e., target execution profile)
+     *
+     * @param name Unique name of execution profile
+     * @param closure Closure to call
+     * @return
+     */
     def profile(String name, Closure<ProfileSpec> closure) {
         ProfileSpec profileSpec = new ProfileSpec(name:name)
         callRehydrate(closure, profileSpec, this, null)
