@@ -26,12 +26,15 @@ import java.util.List;
  * @author Marcus Kessel
  *
  */
-public class SheetResponse {
+public class TestResult {
 
     private String executionId;
     private String status;
 
-    private List<TestResult> testResults;
+    private ClassUnderTestSpec classUnderTestSpec;
+
+    private List<SheetSpec> actuationSheets;
+    private List<SheetSpec> adaptedActuationSheets;
 
     public String getExecutionId() {
         return executionId;
@@ -49,11 +52,27 @@ public class SheetResponse {
         this.status = status;
     }
 
-    public List<TestResult> getTestResults() {
-        return testResults;
+    public List<SheetSpec> getActuationSheets() {
+        return actuationSheets;
     }
 
-    public void setTestResults(List<TestResult> testResults) {
-        this.testResults = testResults;
+    public void setActuationSheets(List<SheetSpec> actuationSheets) {
+        this.actuationSheets = actuationSheets;
+    }
+
+    public List<SheetSpec> getAdaptedActuationSheets() {
+        return adaptedActuationSheets;
+    }
+
+    public void setAdaptedActuationSheets(List<SheetSpec> adaptedActuationSheets) {
+        this.adaptedActuationSheets = adaptedActuationSheets;
+    }
+
+    public ClassUnderTestSpec getClassUnderTestSpec() {
+        return classUnderTestSpec;
+    }
+
+    public void setClassUnderTestSpec(ClassUnderTestSpec classUnderTestSpec) {
+        this.classUnderTestSpec = classUnderTestSpec;
     }
 }

@@ -29,7 +29,9 @@ import java.util.List;
 public class SheetRequest {
 
     private List<SheetSpec> sheets;
-    private ClassUnderTestSpec classUnderTest;
+
+    // multiple classes under test
+    private List<ClassUnderTestSpec> classesUnderTest;
 
     // FIXME add configuration
 
@@ -41,11 +43,11 @@ public class SheetRequest {
         this.sheets = sheets;
     }
 
-    public ClassUnderTestSpec getClassUnderTest() {
-        return classUnderTest;
+    public List<ClassUnderTestSpec> getClassesUnderTest() {
+        return classesUnderTest;
     }
 
-    public void setClassUnderTest(ClassUnderTestSpec classUnderTest) {
-        this.classUnderTest = classUnderTest;
+    public void setClassesUnderTest(List<ClassUnderTestSpec> classesUnderTest) {
+        this.classesUnderTest = classesUnderTest;
     }
 }

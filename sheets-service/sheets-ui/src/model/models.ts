@@ -1,6 +1,6 @@
 export class SheetRequest {
     sheets!: SheetSpec[]
-    classUnderTest!: ClassUnderTestSpec
+    classesUnderTest!: ClassUnderTestSpec[]
 }
 
 export class SheetSpec {
@@ -14,12 +14,20 @@ export class ClassUnderTestSpec {
     artifacts!: string[]
 }
 
+export class TestResult {
+    executionId!: string
+    status!: string
+    classUnderTest!: ClassUnderTestSpec
+
+    actuationSheets!: SheetSpec[]
+    adaptedActuationSheets!: SheetSpec[]
+}
+
 export class SheetResponse {
     executionId!: string
     status!: string
 
-    actuationSheets!: SheetSpec[]
-    adaptedActuationSheets!: SheetSpec[]
+    testResults!: TestResult[]
 }
 
 export class User {

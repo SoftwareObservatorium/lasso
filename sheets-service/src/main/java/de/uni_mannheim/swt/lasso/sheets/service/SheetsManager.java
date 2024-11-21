@@ -1,17 +1,11 @@
 package de.uni_mannheim.swt.lasso.sheets.service;
 
 import de.uni_mannheim.swt.lasso.arena.search.InterfaceSpecification;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.ExecutedInvocations;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.SSNTestDriver;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize.GsonMapper;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize.ObjectMapperVisitor;
+import de.uni_mannheim.swt.lasso.sheets.service.driver.LocalSimpleTestDriver;
 import de.uni_mannheim.swt.lasso.sheets.service.dto.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Arrays;
-import java.util.List;
 
 /**
  *
@@ -22,46 +16,11 @@ public class SheetsManager {
     private static final Logger LOG = LoggerFactory.getLogger(SheetsManager.class);
 
     public SheetResponse execute(SheetRequest request, UserInfo userInfo) {
-        ObjectMapperVisitor visitor = new ObjectMapperVisitor(new GsonMapper());
-
-        ClassUnderTestSpec classUnderTestSpec = request.getClassUnderTest();
-
-        List<SheetSpec> sheetSpecs = request.getSheets();
-
-        // FIXME support for more sheets
-        SheetSpec sheetSpec = sheetSpecs.get(0);
-
-        SSNTestDriver testDriver = new SSNTestDriver();
-
+        // FIXME decide which driver
         try {
-            ExecutedInvocations executedInvocations = testDriver.runSheet(sheetSpec.getBody(), sheetSpec.getInterfaceSpecification(), classUnderTestSpec.getClassName(), classUnderTestSpec.getArtifacts(), 1, visitor);
+            LocalSimpleTestDriver testDriver = new LocalSimpleTestDriver();
 
-            LOG.debug("executed invocations\n{}", executedInvocations);
-
-            Sheet<Integer, Integer, String> actuationSheet = visitor.getActuationSheet();
-            Sheet<Integer, Integer, String> adaptedActuationSheet = visitor.getAdaptedActuationSheet();
-
-            actuationSheet.debug();
-            adaptedActuationSheet.debug();
-
-            LOG.info("JSON actuationSheet\n{}", actuationSheet.toJsonl());
-            LOG.info("JSON adaptedActuationSheet\n{}", adaptedActuationSheet.toJsonl());
-
-            SheetSpec actuationSheetResult = new SheetSpec();
-            actuationSheetResult.setName(sheetSpec.getName());
-            actuationSheetResult.setInterfaceSpecification(sheetSpec.getInterfaceSpecification());
-            actuationSheetResult.setBody(actuationSheet.toJsonl());
-
-            SheetSpec adaptedActuationSheetResult = new SheetSpec();
-            adaptedActuationSheetResult.setName(sheetSpec.getName());
-            adaptedActuationSheetResult.setInterfaceSpecification(sheetSpec.getInterfaceSpecification());
-            adaptedActuationSheetResult.setBody(adaptedActuationSheet.toJsonl());
-
-            SheetResponse sheetResponse = new SheetResponse();
-            sheetResponse.setStatus("SUCCESS"); // FIXME
-            sheetResponse.setExecutionId("FIXME"); // FIXME
-            sheetResponse.setActuationSheets(Arrays.asList(actuationSheetResult));
-            sheetResponse.setAdaptedActuationSheets(Arrays.asList(adaptedActuationSheetResult));
+            SheetResponse sheetResponse = testDriver.execute(request);
 
             return sheetResponse;
         } catch (Throwable e) {

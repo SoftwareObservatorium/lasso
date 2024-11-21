@@ -142,7 +142,7 @@ function SheetEditorPage() {
     console.log("cut handler " + JSON.stringify(classUnderTestSpec))
 
     const request = new SheetRequest()
-    request.classUnderTest = classUnderTestSpec
+    request.classesUnderTest = [classUnderTestSpec]
     request.sheets = []
 
     const sheet = new SheetSpec()
@@ -317,14 +317,14 @@ function SheetEditorPage() {
         <>
           <Box component="section" sx={{ p: 2, border: '1px dashed grey' }}>
             <Alert severity="success">Actuation Sheet</Alert>
-            {sheetResponse.actuationSheets.map((sheet) => (
+            {sheetResponse.testResults[0].actuationSheets.map((sheet) => (
               <Sheet key={sheetResponseUpdate} isResult={true} defaultSheetName={sheet.name} sheetData={() => parseActuationSheet(sheet)} executeHandler={() => console.log("not implemented")} />
             ))
             }
           </Box>
           <Box component="section" sx={{ p: 2, border: '1px dashed grey' }}>
             <Alert severity="success">Adapted Actuation Sheet</Alert>
-            {sheetResponse.adaptedActuationSheets.map((sheet) => (
+            {sheetResponse.testResults[0].adaptedActuationSheets.map((sheet) => (
               <Sheet key={sheetResponseUpdate} isResult={true} defaultSheetName={sheet.name} sheetData={() => parseAdaptedActuationSheet(sheet)} executeHandler={() => console.log("not implemented")} />
             ))
             }
