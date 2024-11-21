@@ -3,7 +3,8 @@ import Spreadsheet, { CellBase, Matrix } from "react-spreadsheet";
 import "./Sheet.css";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Button from "@mui/material/Button";
-import { TextField } from "@mui/material";
+import { Box, Card, CardActions, CardContent, TextField, Typography } from "@mui/material";
+import React from "react";
 
 const Sheet = ({ sheetId, defaultSheetName, sheetData, changeHandler, isResult }: any) => {
   const [sheetName, setSheetName] = useState(defaultSheetName)
@@ -87,37 +88,36 @@ const Sheet = ({ sheetId, defaultSheetName, sheetData, changeHandler, isResult }
   //     sendSheet(data)
   //   }, [setData]);
 
-  return (
-    <div className="Sheet">
-
+  const card = (
+    <React.Fragment>
+      <CardContent>
+        <Typography gutterBottom sx={{ color: 'text.secondary', fontSize: 14 }}>
+          Stimulus Sheet
+        </Typography>
+        <Typography variant="h5" component="div">
+        <TextField onChange={onChangeSheetName} value={sheetName} id="outlined-basic" label="Sheet Name" variant="outlined" />
+        </Typography>
+        <Typography sx={{ color: 'text.secondary', mb: 1.5 }}>Body</Typography>
+        <Typography variant="body2">
+          <Spreadsheet data={data} onChange={setData} />
+        </Typography>
+      </CardContent>
       {!isResult && (
-        <>
-          {/* <h2>Stimulus Sheet editor</h2> */}
-          <ButtonGroup variant="outlined" aria-label="Basic button group">
-            <Button onClick={(event) => addRow()}>Add Row</Button>
-            <Button onClick={(event) => addColumn()}>Add Column</Button>
-            <Button onClick={(event) => removeRow()}>Remove Row</Button>
-            <Button onClick={(event) => removeColumn()}>Remove Column</Button>
-          </ButtonGroup>
-
-          <br></br>
-        </>
+        <CardActions>
+          <Button size="small" onClick={(event) => addRow()}>Add Row</Button>
+          <Button size="small" onClick={(event) => addColumn()}>Add Column</Button>
+          <Button size="small" onClick={(event) => removeRow()}>Remove Row</Button>
+          <Button size="small" onClick={(event) => removeColumn()}>Remove Column</Button>
+        </CardActions>
       )}
 
-      <TextField onChange={onChangeSheetName} value={sheetName} id="outlined-basic" label="Sheet Name" variant="outlined" />
+    </React.Fragment>
+  );
 
-      <Spreadsheet data={data} onChange={setData} />
-
-      {/* {!isResult && (
-        <>
-          <br></br>
-          <ButtonGroup variant="outlined" aria-label="Basic button group">
-            <Button onClick={(event) => executeHandler(sheetName, data)}>Execute Sheet</Button>
-          </ButtonGroup>
-        </>
-      )} */}
-
-    </div>
+  return (
+    <Box sx={{ minWidth: 275 }}>
+      <Card variant="outlined">{card}</Card>
+    </Box>
   );
 
 }

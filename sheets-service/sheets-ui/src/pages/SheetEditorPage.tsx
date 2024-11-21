@@ -135,9 +135,49 @@ function SheetEditorPage() {
 
   const lqlEditorRef = useRef<any>(null)
 
-  // useEffect(() => {
-  //   console.log("bla")
-  // }, [sheetResponse]);
+  const loadExample = () => {
+    // cut
+    const cut: ClassUnderTestSpec = new ClassUnderTestSpec()
+    cut.className = "java.util.Blub"
+    cut.artifacts = [""]
+    
+    // lql
+    const interfaceSpecification = `Blub {
+    push(java.lang.String)->java.lang.String
+    size()->int
+}`
+
+    // sheets
+    const jsonl = `
+    {"sheet": "Sheet 1", "header": "Row 1", "cells": {"A1": {}, "B1": "create", "C1": "Stack"}}
+    {"sheet": "Sheet 1", "header": "Row 2", "cells": {"A2": {}, "B2": "$eval", "C2": "Arrays.toString(new char[]{'a', 'b'})"}}
+    {"sheet": "Sheet 1", "header": "Row 3", "cells": {"A3": {}, "B3": "push", "C3": "A1", "D3": "A2"}}
+    {"sheet": "Sheet 1", "header": "Row 4", "cells": {"A4": 1, "B4": "size", "C4": "A1"}}
+    `
+    
+    const sheet: StimulusSheet = new StimulusSheet()
+    sheet.name = "test1"
+    sheet.data = loadSheetJsonl(jsonl)
+
+    //let example: SheetRequest = {"sheets":[{"name":"test5","interfaceSpecification":"Stack {\n    push(java.lang.String)->java.lang.String\n    size()->int\n}","body":"{\"sheet\":\"Sheet 1\",\"header\":\"Row 1\",\"cells\":{\"A1\":{},\"B1\":\"create\",\"C1\":\"Stack\"}}\n{\"sheet\":\"Sheet 1\",\"header\":\"Row 2\",\"cells\":{\"A2\":{},\"B2\":\"$eval\",\"C2\":\"Arrays.toString(new char[]{'a', 'b'})\"}}\n{\"sheet\":\"Sheet 1\",\"header\":\"Row 3\",\"cells\":{\"A3\":{},\"B3\":\"push\",\"C3\":\"A1\",\"D3\":\"A2\"}}\n{\"sheet\":\"Sheet 1\",\"header\":\"Row 4\",\"cells\":{\"A4\":1,\"B4\":\"size\",\"C4\":\"A1\"}}"}],"classesUnderTest":[{"className":"java.util.Stack","artifacts":[""]}]}
+
+    //let example: SheetRequest = JSON.parse(json)
+
+    // update monaco LQL editor
+    //lqlEditorRef.current.getModel().setValue(example.sheets[0].interfaceSpecification);
+    lqlEditorRef.current.getModel().setValue(interfaceSpecification);
+
+    //let myCut: ClassUnderTestSpec = example.classesUnderTest[0]
+    classUnderTestSpec.className = "blub"
+    setClassUnderTestSpec(classUnderTestSpec)
+
+    // update sheets
+    const mySheet: StimulusSheet = new StimulusSheet()
+    sheet.name = "test5"
+    sheet.data = loadSheetJsonl(jsonl)
+
+    setStimulusSheets([mySheet])
+  }
 
   const handleCodeAnalyzer = (
     event: React.MouseEvent<HTMLElement>,
@@ -339,6 +379,7 @@ function SheetEditorPage() {
 
         <ButtonGroup variant="outlined" aria-label="Basic button group">
           <Button onClick={(event) => addStimulusSheet()}>Add Sheet</Button>
+          <Button onClick={(event) => loadExample()}>Load Example</Button>
           <Button onClick={(event) => executeAllHandler()}>Execute!</Button>
         </ButtonGroup>
         

@@ -78,6 +78,48 @@ public class TestSSNInterpreter {
     }
 
     @Test
+    public void testArrayList() throws IOException {
+        String ssnJsonlStr = "{\"sheet\": \"Sheet 1\", \"header\": \"Row 1\", \"cells\": {\"A1\": null, \"B1\": \"create\", \"C1\": \"ArrayList\"}}";
+
+        SSNParser ssnParser = new SSNParser();
+        ParsedSheet parsedSheet = ssnParser.parseJsonl(ssnJsonlStr);
+
+        String lql = "ArrayList{\n" +
+                "\tArrayList()\n" +
+                "\tArrayList(int)\n" +
+                "\tadd(java.lang.Object)->boolean\n" +
+                "\tcontains(java.lang.Object)->boolean\n" +
+                "}";
+        Map<String, InterfaceSpecification> interfaceSpecificationMap = LQLUtils.lqlToMap(lql);
+
+        SSNInterpreter interpreter = new SSNInterpreter();
+
+        // TODO call with classundertest to set classloader
+        Invocations invocations = interpreter.interpret(parsedSheet, interfaceSpecificationMap);
+
+        LOG.debug("Invocations\n{}", invocations);
+
+        // now take it and adapt! we can directly inject an adapter and delegate dynamically
+        // Option 1. Stack { push(..) { delegate.XXX("push", args ...); } }
+        // Option 2. just use invocation as a template and directly call adaptee! (like in randoop)
+
+        ClassUnderTest classUnderTest = CutUtils.createExample(ArrayList.class);
+        CandidatePool pool = new CandidatePool(mavenRepository, Collections.singletonList(classUnderTest));
+        // automatically resolves project-related artifacts
+        pool.initProjects();
+
+        AdaptationStrategy adaptationStrategy = new DefaultAdaptationStrategy();
+        int limitAdapters = 1;
+
+        List<AdaptedImplementation> adaptedImplementations = adaptationStrategy.adapt(interfaceSpecificationMap.get("ArrayList"), classUnderTest, limitAdapters);
+
+        InvocationVisitor executionListener = new InvocationVisitor();
+        // run
+        ExecutedInvocations executedInvocations = interpreter.run(invocations, adaptedImplementations.get(0), executionListener);
+        LOG.debug("Executed Invocations\n{}", executedInvocations);
+    }
+
+    @Test
     public void testLqlToJava() throws IOException, NoSuchMethodException, ClassNotFoundException {
         String lql = "Stack {\n" +
                 "push(java.lang.String)->java.lang.String\n" +
