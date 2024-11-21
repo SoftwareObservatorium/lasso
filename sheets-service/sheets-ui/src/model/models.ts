@@ -43,3 +43,10 @@ export class User {
     // roles
     roles!: string[];
 }
+
+// ui models
+
+export class StimulusSheet {
+    name!: string;
+    data!: any[][];
+}

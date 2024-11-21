@@ -5,7 +5,7 @@ import ButtonGroup from "@mui/material/ButtonGroup";
 import Button from "@mui/material/Button";
 import { TextField } from "@mui/material";
 
-const Sheet = ({ defaultSheetName, sheetData, executeHandler, isResult }: any) => {
+const Sheet = ({ sheetId, defaultSheetName, sheetData, changeHandler, isResult }: any) => {
   const [sheetName, setSheetName] = useState(defaultSheetName)
   const [data, setData] = useState<Matrix<CellBase<any>>>(
     //    [
@@ -35,7 +35,9 @@ const Sheet = ({ defaultSheetName, sheetData, executeHandler, isResult }: any) =
 
   useEffect(() => {
     console.log(data);
-  }, [data]);
+    changeHandler(sheetId, sheetName, data)
+
+  }, [sheetName, data]);
 
   const onChangeSheetName = (e: any) => {
     setSheetName(e.target.value);
@@ -90,7 +92,7 @@ const Sheet = ({ defaultSheetName, sheetData, executeHandler, isResult }: any) =
 
       {!isResult && (
         <>
-          <h2>Stimulus Sheet editor</h2>
+          {/* <h2>Stimulus Sheet editor</h2> */}
           <ButtonGroup variant="outlined" aria-label="Basic button group">
             <Button onClick={(event) => addRow()}>Add Row</Button>
             <Button onClick={(event) => addColumn()}>Add Column</Button>
@@ -106,14 +108,14 @@ const Sheet = ({ defaultSheetName, sheetData, executeHandler, isResult }: any) =
 
       <Spreadsheet data={data} onChange={setData} />
 
-      {!isResult && (
+      {/* {!isResult && (
         <>
           <br></br>
           <ButtonGroup variant="outlined" aria-label="Basic button group">
             <Button onClick={(event) => executeHandler(sheetName, data)}>Execute Sheet</Button>
           </ButtonGroup>
         </>
-      )}
+      )} */}
 
     </div>
   );

@@ -1,11 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Sheet from '../components/sheet/Sheet';
 import LQLEditor from '../components/editor/LQLEditor';
-import { Alert, Backdrop, Box, CircularProgress, Container, Divider, TextField, ToggleButton, ToggleButtonGroup } from '@mui/material';
+import { Alert, Backdrop, Box, Button, ButtonGroup, CircularProgress, Container, Divider, TextField, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { CellBase, Matrix } from 'react-spreadsheet';
 import ClassUnderTest from '../components/cut/ClassUnderTest';
-import { ClassUnderTestSpec, SheetRequest, SheetResponse, SheetSpec } from '../model/models';
+import { ClassUnderTestSpec, SheetRequest, SheetResponse, SheetSpec, StimulusSheet, TestResult } from '../model/models';
 import SheetService from '../services/SheetService';
+
+import Grid from '@mui/material/Grid2';
 
 
 const lqlCode =
@@ -14,7 +16,7 @@ const lqlCode =
     size()->int
 }`
 
-function loadSheet() {
+function loadDefaultSheet() {
   // FIXME load remotely
   const jsonl = `
 {"sheet": "Sheet 1", "header": "Row 1", "cells": {"A1": {}, "B1": "create", "C1": "Stack"}}
@@ -23,7 +25,11 @@ function loadSheet() {
 {"sheet": "Sheet 1", "header": "Row 4", "cells": {"A4": 1, "B4": "size", "C4": "A1"}}
 `
 
-  return loadSheetJsonl(jsonl)
+  const sheet: StimulusSheet = new StimulusSheet()
+  sheet.name = "test1"
+  sheet.data = loadSheetJsonl(jsonl)
+
+  return sheet
 }
 
 function loadSheetJsonl(jsonl: any) {
@@ -113,7 +119,7 @@ function rowIndexToLabel(row: number) {
 
 function SheetEditorPage() {
   // load
-  const sheetData = loadSheet()
+  const [stimulusSheets, setStimulusSheets] = useState<StimulusSheet[]>([loadDefaultSheet()])
 
   const [classUnderTestSpec, setClassUnderTestSpec] = useState<ClassUnderTestSpec>(new ClassUnderTestSpec());
   const [interfaceSpecification, setInterfaceSpecification] = useState<string>("");
@@ -121,12 +127,17 @@ function SheetEditorPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  const [sheetResponse, setSheetResponse] = useState<SheetResponse>();
+  //const [sheetResponse, setSheetResponse] = useState<SheetResponse>();
+  const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [sheetResponseUpdate, setSheetResponseUpdate] = useState(0);
 
   const [codeAnalyzers, setCodeAnalyzers] = React.useState<string[]>([]);
 
   const lqlEditorRef = useRef<any>(null)
+
+  // useEffect(() => {
+  //   console.log("bla")
+  // }, [sheetResponse]);
 
   const handleCodeAnalyzer = (
     event: React.MouseEvent<HTMLElement>,
@@ -135,63 +146,95 @@ function SheetEditorPage() {
     setCodeAnalyzers(analyzers);
   };
 
-  // execute sheet
-  const executeHandler = (sheetName: string, sheetData: Matrix<CellBase<any>>) => {
-    console.log("executed sheet '" + sheetName + "' data: " + sheetData)
-    console.log("lql handler " + interfaceSpecification)
-    console.log("cut handler " + JSON.stringify(classUnderTestSpec))
+  const addStimulusSheet = () => {
+    const stimulusSheet: StimulusSheet = new StimulusSheet()
+    stimulusSheet.name = `test${stimulusSheets.length + 1}`
 
-    const request = new SheetRequest()
-    request.classesUnderTest = [classUnderTestSpec]
-    request.sheets = []
+    // create same dimensions based on existing
+    const sampleSheet = stimulusSheets[0]
+    stimulusSheet.data = [...sampleSheet.data]
 
-    const sheet = new SheetSpec()
-    sheet.name = sheetName
-    sheet.interfaceSpecification = interfaceSpecification
-    const bodyJsonl = toSheetJSONL(sheetData)
-    sheet.body = bodyJsonl
-
-    request.sheets.push(sheet)
-
-    console.log(JSON.stringify(request))
-
-    setMessage("");
-    setLoading(true);
-
-    const valid: boolean = true
-
-    if (valid) {
-      SheetService.executeSheet(request).then(
-        (response) => {
-          //navigate("/profile");
-          //window.location.reload();
-
-          // FIXME show results
-          console.log(`response ${JSON.stringify(response.data)}`)
-
-          setSheetResponse(response.data)
-
-          // ugly hack to re-render actuation sheets
-          setSheetResponseUpdate(sheetResponseUpdate + 1)
-
-          setLoading(false);
-        },
-        (error) => {
-          const resMessage =
-            (error.response &&
-              error.response.data &&
-              error.response.data.message) ||
-            error.message ||
-            error.toString();
-
-          setLoading(false);
-          setMessage(resMessage);
-        }
-      );
-    } else {
-      setLoading(false);
-    }
+    setStimulusSheets([...stimulusSheets, stimulusSheet]);
   }
+
+  const stimulusSheetChangeHandler = (sheetId: number, sheetName: string, sheetData: Matrix<CellBase<any>>) => {
+    console.log("changed " + sheetId)
+
+    const nStimulusSheets = [...stimulusSheets];
+    const stimulusSheet: StimulusSheet = new StimulusSheet()
+    stimulusSheet.name = sheetName
+    stimulusSheet.data = sheetData
+    nStimulusSheets[sheetId] = stimulusSheet
+
+    setStimulusSheets(nStimulusSheets);
+  };
+
+  // execute sheet
+  const executeAllHandler = () => {
+      //console.log("executed sheet '" + sheetName + "' data: " + sheetData)
+      console.log("lql handler " + interfaceSpecification)
+      console.log("cut handler " + JSON.stringify(classUnderTestSpec))
+  
+      const request = new SheetRequest()
+      request.classesUnderTest = [classUnderTestSpec]
+      request.sheets = []
+
+      console.log("total number of sheets " + stimulusSheets.length)
+
+      stimulusSheets.forEach( (stimulusSheet) => {
+        console.log("sheet " + stimulusSheet.name)
+
+        const sheet = new SheetSpec()
+        sheet.name = stimulusSheet.name
+        sheet.interfaceSpecification = interfaceSpecification
+        const bodyJsonl = toSheetJSONL(stimulusSheet.data)
+        sheet.body = bodyJsonl
+    
+        request.sheets.push(sheet)
+      });
+  
+      console.log(JSON.stringify(request))
+  
+      setMessage("");
+      setLoading(true);
+  
+      const valid: boolean = true
+  
+      if (valid) {
+        SheetService.executeSheet(request).then(
+          (response) => {
+            //navigate("/profile");
+            //window.location.reload();
+  
+            // FIXME show results
+            console.log(`response ${JSON.stringify(response.data)}`)
+  
+            const newTestResults = [...response.data.testResults]
+
+            setTestResults(newTestResults)
+            //setSheetResponse(newSheetResponse)
+  
+            // ugly hack to re-render actuation sheets
+            setSheetResponseUpdate(sheetResponseUpdate + 1)
+  
+            setLoading(false);
+          },
+          (error) => {
+            const resMessage =
+              (error.response &&
+                error.response.data &&
+                error.response.data.message) ||
+              error.message ||
+              error.toString();
+  
+            setLoading(false);
+            setMessage(resMessage);
+          }
+        );
+      } else {
+        setLoading(false);
+      }
+    }
 
   // toLQL handler
   const detectInterfaceHandler = (className: string, artifacts: string[]) => {
@@ -289,7 +332,16 @@ function SheetEditorPage() {
             <CircularProgress color="inherit" />
           </Backdrop>
         )}
-        <Sheet defaultSheetName="test1" sheetData={sheetData} executeHandler={executeHandler} />
+        
+        {stimulusSheets.map( (stimulusSheet, index) => (
+          <Sheet sheetId={index} defaultSheetName={stimulusSheet.name} sheetData={stimulusSheet.data} changeHandler={stimulusSheetChangeHandler} />
+        ))}
+
+        <ButtonGroup variant="outlined" aria-label="Basic button group">
+          <Button onClick={(event) => addStimulusSheet()}>Add Sheet</Button>
+          <Button onClick={(event) => executeAllHandler()}>Execute!</Button>
+        </ButtonGroup>
+        
         <Divider>Additional Analyzers</Divider>
         <ToggleButtonGroup
           color="primary"
@@ -313,24 +365,24 @@ function SheetEditorPage() {
       )}
 
 
-      {sheetResponse && (
-        <>
-          <Box component="section" sx={{ p: 2, border: '1px dashed grey' }}>
-            <Alert severity="success">Actuation Sheet</Alert>
-            {sheetResponse.testResults[0].actuationSheets.map((sheet) => (
-              <Sheet key={sheetResponseUpdate} isResult={true} defaultSheetName={sheet.name} sheetData={() => parseActuationSheet(sheet)} executeHandler={() => console.log("not implemented")} />
-            ))
-            }
-          </Box>
-          <Box component="section" sx={{ p: 2, border: '1px dashed grey' }}>
-            <Alert severity="success">Adapted Actuation Sheet</Alert>
-            {sheetResponse.testResults[0].adaptedActuationSheets.map((sheet) => (
-              <Sheet key={sheetResponseUpdate} isResult={true} defaultSheetName={sheet.name} sheetData={() => parseAdaptedActuationSheet(sheet)} executeHandler={() => console.log("not implemented")} />
-            ))
-            }
-          </Box>
-        </>
-      )}
+    {testResults.map((testResult) => (
+      <>
+                  <Box component="section" sx={{ p: 2, border: '1px dashed grey' }}>
+                  <Alert severity="success">Actuation Sheet</Alert>
+                  {testResult.actuationSheets.map((sheet) => (
+                    <Sheet isResult={true} defaultSheetName={sheet.name} sheetData={() => parseActuationSheet(sheet)} changeHandler={() => console.log("not implemented")} />
+                  ))
+                  }
+                </Box>
+                <Box component="section" sx={{ p: 2, border: '1px dashed grey' }}>
+                  <Alert severity="success">Adapted Actuation Sheet</Alert>
+                  {testResult.adaptedActuationSheets.map((sheet) => (
+                    <Sheet isResult={true} defaultSheetName={sheet.name} sheetData={() => parseAdaptedActuationSheet(sheet)} changeHandler={() => console.log("not implemented")} />
+                  ))
+                  }
+                </Box>
+                </>
+    ))}
 
     </Container>
   );
