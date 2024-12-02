@@ -35,7 +35,7 @@ const LQLEditor = ({ editorHandler, lqlHandler, defaultLqlCode }: any) => {
 
   return (
     <>
-      <h2>LQL Interface Specification</h2>
+      {/* <h2>LQL Interface Specification</h2> */}
       <Editor
         height="200px"
         defaultLanguage="lql"

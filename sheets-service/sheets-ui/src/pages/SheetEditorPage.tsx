@@ -19,9 +19,9 @@ const lqlCode =
 function loadDefaultSheet() {
   // FIXME load remotely
   const jsonl = `
-{"sheet": "Sheet 1", "header": "Row 1", "cells": {"A1": {}, "B1": "create", "C1": "Stack"}}
-{"sheet": "Sheet 1", "header": "Row 2", "cells": {"A2": {}, "B2": "$eval", "C2": "Arrays.toString(new char[]{'a', 'b'})"}}
-{"sheet": "Sheet 1", "header": "Row 3", "cells": {"A3": {}, "B3": "push", "C3": "A1", "D3": "A2"}}
+{"sheet": "Sheet 1", "header": "Row 1", "cells": {"A1": "<instance>", "B1": "create", "C1": "Stack"}}
+{"sheet": "Sheet 1", "header": "Row 2", "cells": {"A2": "<instance>", "B2": "$eval", "C2": "Arrays.toString(new char[]{'a', 'b'})"}}
+{"sheet": "Sheet 1", "header": "Row 3", "cells": {"A3": "<instance>", "B3": "push", "C3": "A1", "D3": "A2"}}
 {"sheet": "Sheet 1", "header": "Row 4", "cells": {"A4": 1, "B4": "size", "C4": "A1"}}
 `
 
@@ -355,11 +355,15 @@ function SheetEditorPage() {
   return (
     <Container maxWidth="xl">
 
+      <h2>Sheet Editor</h2>
+
       <Box component="section" sx={{ p: 2, border: '1px dashed grey' }}>
+      <Divider>Interface Specification (LQL)</Divider>
         <LQLEditor editorHandler={lqlEditorHandler} lqlHandler={lqlHandler} defaultLqlCode={lqlCode} />
       </Box>
 
       <Box component="section" sx={{ p: 2, border: '1px dashed grey' }}>
+      <Divider>Class Under Test</Divider>
         <ClassUnderTest detectInterfaceHandler={detectInterfaceHandler} cutHandler={cutHandler} />
       </Box>
 
@@ -372,18 +376,22 @@ function SheetEditorPage() {
             <CircularProgress color="inherit" />
           </Backdrop>
         )}
+
+        <Divider>Stimulus Sheets</Divider>
         
         {stimulusSheets.map( (stimulusSheet, index) => (
           <Sheet sheetId={index} defaultSheetName={stimulusSheet.name} sheetData={stimulusSheet.data} changeHandler={stimulusSheetChangeHandler} />
         ))}
 
+        <Divider>Actions</Divider>
+
         <ButtonGroup variant="outlined" aria-label="Basic button group">
           <Button onClick={(event) => addStimulusSheet()}>Add Sheet</Button>
-          <Button onClick={(event) => loadExample()}>Load Example</Button>
-          <Button onClick={(event) => executeAllHandler()}>Execute!</Button>
+          {/* <Button onClick={(event) => loadExample()}>Load Example</Button> */}
+          <Button onClick={(event) => executeAllHandler()}>Run Tests</Button>
         </ButtonGroup>
         
-        <Divider>Additional Analyzers</Divider>
+        {/* <Divider>Additional Analyzers</Divider>
         <ToggleButtonGroup
           color="primary"
           value={codeAnalyzers}
@@ -396,7 +404,7 @@ function SheetEditorPage() {
           <ToggleButton value="mt" aria-label="italic">
             Mutation Testing
           </ToggleButton>
-        </ToggleButtonGroup>
+        </ToggleButtonGroup> */}
       </Box>
 
       {message && (
@@ -409,14 +417,14 @@ function SheetEditorPage() {
     {testResults.map((testResult) => (
       <>
                   <Box component="section" sx={{ p: 2, border: '1px dashed grey' }}>
-                  <Alert severity="success">Actuation Sheet</Alert>
+                  <Alert severity="success">Actuation Sheet (based on Interface Specification)</Alert>
                   {testResult.actuationSheets.map((sheet) => (
                     <Sheet isResult={true} defaultSheetName={sheet.name} sheetData={() => parseActuationSheet(sheet)} changeHandler={() => console.log("not implemented")} />
                   ))
                   }
                 </Box>
                 <Box component="section" sx={{ p: 2, border: '1px dashed grey' }}>
-                  <Alert severity="success">Adapted Actuation Sheet</Alert>
+                  <Alert severity="success">Adapted Actuation Sheet (based on the Candidate's Class Interface)</Alert>
                   {testResult.adaptedActuationSheets.map((sheet) => (
                     <Sheet isResult={true} defaultSheetName={sheet.name} sheetData={() => parseAdaptedActuationSheet(sheet)} changeHandler={() => console.log("not implemented")} />
                   ))

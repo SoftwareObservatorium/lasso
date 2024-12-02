@@ -28,10 +28,10 @@ const ClassUnderTest = ({ detectInterfaceHandler, cutHandler }: any) => {
 
   return (
     <>
-      <h2>Class Under Test</h2>
-      <TextField onChange={onChangeClassname} value={className} id="outlined-basic" label="Class Under Test" variant="outlined" />
+      {/* <h2>Class Under Test</h2> */}
+      <TextField onChange={onChangeClassname} value={className} id="outlined-basic" label="Class Name (fully qualified)" variant="outlined" />
       <TextField onChange={onChangeArtifacts} value={artifacts} id="outlined-basic" label="Artifacts" variant="outlined" />
-      <Divider>Interface Specification</Divider>
+      <Divider>Actions</Divider>
           <ButtonGroup variant="outlined" aria-label="Basic button group">
             <Button onClick={(event) => detectInterfaceHandler(className, toArtifacts())}>Detect (Declared) Interface</Button>
           </ButtonGroup>
