@@ -89,4 +89,8 @@ public class Invocations {
     public MethodSignature resolve(Member member) {
         return resolvedMappings.get(member);
     }
+
+    public ParsedSheet getParsedSheet() {
+        return parsedSheet;
+    }
 }

@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -26,6 +27,15 @@ public class ObjectMapperVisitor extends InvocationVisitor {
 
     public ObjectMapperVisitor(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
+    }
+
+    @Override
+    public void visitBeforeExecution(AdaptedImplementation adaptedImplementation) {
+    }
+
+    @Override
+    public void visitAfterExecution(AdaptedImplementation adaptedImplementation) {
+
     }
 
     @Override

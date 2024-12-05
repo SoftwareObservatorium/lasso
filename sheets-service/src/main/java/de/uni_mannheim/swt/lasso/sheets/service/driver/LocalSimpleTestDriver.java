@@ -1,10 +1,9 @@
 package de.uni_mannheim.swt.lasso.sheets.service.driver;
 
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.ExecutedInvocations;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.SSNTestDriver;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.*;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize.GsonMapper;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize.ObjectMapperVisitor;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.ParsedSheet;
 import de.uni_mannheim.swt.lasso.sheets.service.dto.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -25,42 +25,52 @@ public class LocalSimpleTestDriver implements TestDriver {
     public SheetResponse execute(SheetRequest request) throws IOException {
         List<TestResult> testResults = new ArrayList<>(request.getClassesUnderTest().size());
 
+        List<SheetSpec> sheetSpecs = request.getSheets();
+        String interfaceSpecification = sheetSpecs.get(0).getInterfaceSpecification();
+
+        // parse stimulus sheets
+        List<ParsedSheet> parsedSheets = SSNTestDriver.parseSheets(sheetSpecs.stream().map(SheetSpec::getBody).collect(Collectors.toList()));
+
         // for each CUT
         for(ClassUnderTestSpec classUnderTestSpec : request.getClassesUnderTest()) {
-            List<SheetSpec> sheetSpecs = request.getSheets();
 
             SSNTestDriver testDriver = new SSNTestDriver();
-            ObjectMapperVisitor visitor = new ObjectMapperVisitor(new GsonMapper());
+            //ObjectMapperVisitor visitor = new ObjectMapperVisitor(new GsonMapper());
+            GsonMapper gsonMapper = new GsonMapper();
+            InvocationVisitor visitor = new InvocationVisitor();
 
             List<SheetSpec> actuationSheetResults = new ArrayList<>(sheetSpecs.size());
             List<SheetSpec> adaptedActuationSheetResults = new ArrayList<>(sheetSpecs.size());
 
-            for(SheetSpec sheetSpec : sheetSpecs) {
-                try {
-                    ExecutedInvocations executedInvocations = testDriver.runSheet(sheetSpec.getBody(), sheetSpec.getInterfaceSpecification(), classUnderTestSpec.getClassName(), classUnderTestSpec.getArtifacts(), 1, visitor);
+            List<ActuationSheet> actuationSheets = testDriver.runSheet(parsedSheets, interfaceSpecification, classUnderTestSpec.getClassName(), classUnderTestSpec.getArtifacts(), 1, visitor);
 
+            for(ActuationSheet actuationSheet : actuationSheets) {
+                try {
+                    ExecutedInvocations executedInvocations = actuationSheet.getExecutedInvocations();
                     LOG.debug("executed invocations\n{}", executedInvocations);
 
-                    Sheet<Integer, Integer, String> actuationSheet = visitor.getActuationSheet();
-                    Sheet<Integer, Integer, String> adaptedActuationSheet = visitor.getAdaptedActuationSheet();
+                    List<Sheet<Integer, Integer, String>> sheets = actuationSheet.toSheetData(gsonMapper);
 
-                    actuationSheet.debug();
-                    adaptedActuationSheet.debug();
+                    Sheet<Integer, Integer, String> actuationSheetData = sheets.get(0);
+                    Sheet<Integer, Integer, String> adaptedActuationSheetData = sheets.get(1);
 
-                    LOG.info("JSON actuationSheet\n{}", actuationSheet.toJsonl());
-                    LOG.info("JSON adaptedActuationSheet\n{}", adaptedActuationSheet.toJsonl());
+                    actuationSheetData.debug();
+                    adaptedActuationSheetData.debug();
+
+                    LOG.info("JSON actuationSheet\n{}", actuationSheetData.toJsonl());
+                    LOG.info("JSON adaptedActuationSheet\n{}", adaptedActuationSheetData.toJsonl());
 
                     SheetSpec actuationSheetResult = new SheetSpec();
-                    actuationSheetResult.setName(sheetSpec.getName());
-                    actuationSheetResult.setInterfaceSpecification(sheetSpec.getInterfaceSpecification());
-                    actuationSheetResult.setBody(actuationSheet.toJsonl());
+                    actuationSheetResult.setName(actuationSheet.getExecutedInvocations().getInvocations().getParsedSheet().getName());
+                    actuationSheetResult.setInterfaceSpecification(interfaceSpecification);
+                    actuationSheetResult.setBody(actuationSheetData.toJsonl());
 
                     actuationSheetResults.add(actuationSheetResult);
 
                     SheetSpec adaptedActuationSheetResult = new SheetSpec();
-                    adaptedActuationSheetResult.setName(sheetSpec.getName());
-                    adaptedActuationSheetResult.setInterfaceSpecification(sheetSpec.getInterfaceSpecification());
-                    adaptedActuationSheetResult.setBody(adaptedActuationSheet.toJsonl());
+                    adaptedActuationSheetResult.setName(actuationSheet.getExecutedInvocations().getInvocations().getParsedSheet().getName());
+                    adaptedActuationSheetResult.setInterfaceSpecification(interfaceSpecification);
+                    adaptedActuationSheetResult.setBody(adaptedActuationSheetData.toJsonl());
 
                     adaptedActuationSheetResults.add(adaptedActuationSheetResult);
                 } catch (Throwable e) {

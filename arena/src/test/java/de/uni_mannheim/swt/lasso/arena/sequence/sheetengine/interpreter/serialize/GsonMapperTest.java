@@ -45,7 +45,7 @@ public class GsonMapperTest {
         Class cutClass = StackEmptyConstructorExample.class;
 
         SSNTestDriver testDriver = new SSNTestDriver();
-        ExecutedInvocations executedInvocations = testDriver.runSheet(ssnJsonlStr, lql, cutClass, 1, invocationVisitor);
+        ExecutedInvocations executedInvocations = testDriver.runSheets(SSNTestDriver.parseSheets(Arrays.asList(ssnJsonlStr)), lql, cutClass, 1, invocationVisitor).get(0).getExecutedInvocations();
 
         Sheet<Integer, Integer, String> actuationSheet = visitor.getActuationSheet();
         Sheet<Integer, Integer, String> adaptedActuationSheet = visitor.getAdaptedActuationSheet();

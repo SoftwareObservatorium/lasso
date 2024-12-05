@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -70,32 +69,36 @@ public class SSNTestDriver {
         this.mavenRepository = mavenRepository;
     }
 
-    public ExecutedInvocations runSheet(String ssnJsonlStr, String lql, Class cutClass, int limitAdapters, InvocationVisitor executionListener) throws IOException {
-        // FIXME artifacts
-        return runSheet(ssnJsonlStr, lql, CutUtils.createExample(cutClass), limitAdapters, executionListener);
+    public static List<ParsedSheet> parseSheets(List<String> ssnSheets) throws IOException {
+        SSNParser ssnParser = new SSNParser();
+
+        List<ParsedSheet> parsedSheets = new ArrayList<>(ssnSheets.size());
+        for(String ssnSheet : ssnSheets) {
+            ParsedSheet parsedSheet = ssnParser.parseJsonl(ssnSheet);
+            parsedSheets.add(parsedSheet);
+        }
+
+        return parsedSheets;
     }
 
-    public ExecutedInvocations runSheet(String ssnJsonlStr, String lql, String cutClass, List<String> artifacts, int limitAdapters, InvocationVisitor executionListener) throws IOException {
+    public List<ActuationSheet> runSheets(List<ParsedSheet> parsedSheets, String lql, Class cutClass, int limitAdapters, InvocationVisitor executionListener) throws IOException {
+        // FIXME artifacts
+        return runSheets(parsedSheets, lql, CutUtils.createExample(cutClass), limitAdapters, executionListener);
+    }
+
+    public List<ActuationSheet> runSheet(List<ParsedSheet> parsedSheets, String lql, String cutClass, List<String> artifacts, int limitAdapters, InvocationVisitor executionListener) throws IOException {
         // artifacts
         String artifact = null;
         if(CollectionUtils.isNotEmpty(artifacts)) {
             artifact = artifacts.get(0);
         }
 
-        return runSheet(ssnJsonlStr, lql, CutUtils.createExample(cutClass, artifact), limitAdapters, executionListener);
+        return runSheets(parsedSheets, lql, CutUtils.createExample(cutClass, artifact), limitAdapters, executionListener);
     }
 
-    public ExecutedInvocations runSheet(String ssnJsonlStr, String lql, ClassUnderTest classUnderTest, int limitAdapters, InvocationVisitor executionListener) throws IOException {
-        SSNParser ssnParser = new SSNParser();
-        ParsedSheet parsedSheet = ssnParser.parseJsonl(ssnJsonlStr);
-
-        Map<String, InterfaceSpecification> interfaceSpecificationMap = LQLUtils.lqlToMap(lql);
-
-        SSNInterpreter interpreter = new SSNInterpreter();
-
+    public List<ActuationSheet> runSheets(List<ParsedSheet> parsedSheets, String lql, ClassUnderTest classUnderTest, int limitAdapters, InvocationVisitor executionListener) throws IOException {
         CandidatePool pool = new CandidatePool(getMavenRepository(), Collections.singletonList(classUnderTest));
 
-        // FIXME do it over all sequence sheets
         if(isEnableJaCoCoCoverage()) {
             // set scope
             Scope scope = new Scope();
@@ -111,33 +114,42 @@ public class SSNTestDriver {
         // automatically resolves project-related artifacts
         pool.initProjects();
 
-        Invocations invocations = interpreter.interpret(parsedSheet, interfaceSpecificationMap, classUnderTest);
+        Map<String, InterfaceSpecification> interfaceSpecificationMap = LQLUtils.lqlToMap(lql);
+        SSNInterpreter interpreter = new SSNInterpreter();
 
         // FIXME for all CUTs .. here only one
         String faName = interfaceSpecificationMap.keySet().stream().findFirst().get();
-
         List<AdaptedImplementation> adaptedImplementations = adaptationStrategy.adapt(interfaceSpecificationMap.get(faName), classUnderTest, limitAdapters);
 
-        // FIXME move to global
-        executionListener.visitBeforeExecution(adaptedImplementations.get(0));
+        // prepare executable sheets
+        List<Invocations> invocationsList = new ArrayList<>(parsedSheets.size());
+        for(ParsedSheet parsedSheet : parsedSheets) {
+            Invocations invocations = interpreter.interpret(parsedSheet, interfaceSpecificationMap, classUnderTest);
+            invocationsList.add(invocations);
+        }
 
-        // run
-        ExecutedInvocations executedInvocations = interpreter.run(invocations, adaptedImplementations.get(0), executionListener);
+        List<ActuationSheet> actuationSheets = new LinkedList<>();
+        for(AdaptedImplementation adaptedImplementation : adaptedImplementations) {
+            executionListener.visitBeforeExecution(adaptedImplementation);
 
-        // FIXME move to global
-        executionListener.visitAfterExecution(adaptedImplementations.get(0));
+            // run
+            for(Invocations invocations : invocationsList) {
+                ExecutedInvocations executedInvocations = interpreter.run(invocations, adaptedImplementation, executionListener);
 
-        return executedInvocations;
+                ActuationSheet actuationSheet = new ActuationSheet();
+                actuationSheet.setAdaptedImplementation(adaptedImplementation);
+                actuationSheet.setExecutedInvocations(executedInvocations);
+
+                actuationSheets.add(actuationSheet);
+            }
+
+            executionListener.visitAfterExecution(adaptedImplementation);
+        }
+
+        return actuationSheets;
     }
 
-    public Map<ClassUnderTest, ExecutedInvocations> runSheetAndMutate(String ssnJsonlStr, String lql, ClassUnderTest classUnderTest, int limitAdapters, InvocationVisitor executionListener) throws IOException {
-        SSNParser ssnParser = new SSNParser();
-        ParsedSheet parsedSheet = ssnParser.parseJsonl(ssnJsonlStr);
-
-        Map<String, InterfaceSpecification> interfaceSpecificationMap = LQLUtils.lqlToMap(lql);
-
-        SSNInterpreter interpreter = new SSNInterpreter();
-
+    public List<ActuationSheet> mutateAndRunSheets(List<ParsedSheet> parsedSheets, String lql, ClassUnderTest classUnderTest, int limitAdapters, InvocationVisitor executionListener) throws IOException {
         CandidatePool pool = new CandidatePool(getMavenRepository(), Collections.singletonList(classUnderTest));
         pool.initProjects();
 
@@ -149,34 +161,48 @@ public class SSNTestDriver {
         // automatically resolves project-related artifacts
         pool.initProjects();
 
-        Map<ClassUnderTest, ExecutedInvocations> results = new LinkedHashMap<>(pool.getClassesUnderTest().size());
+        Map<String, InterfaceSpecification> interfaceSpecificationMap = LQLUtils.lqlToMap(lql);
+        SSNInterpreter interpreter = new SSNInterpreter();
+
+        List<ActuationSheet> actuationSheets = new LinkedList<>();
         for(ClassUnderTest variant : pool.getClassesUnderTest()) {
-            Invocations invocations = interpreter.interpret(parsedSheet, interfaceSpecificationMap, classUnderTest);
+
+            // prepare executable sheets
+            List<Invocations> invocationsList = new ArrayList<>(parsedSheets.size());
+            for(ParsedSheet parsedSheet : parsedSheets) {
+                Invocations invocations = interpreter.interpret(parsedSheet, interfaceSpecificationMap, variant);
+                invocationsList.add(invocations);
+            }
 
             // FIXME for all CUTs .. here only one
             String faName = interfaceSpecificationMap.keySet().stream().findFirst().get();
+            List<AdaptedImplementation> adaptedImplementations = adaptationStrategy.adapt(interfaceSpecificationMap.get(faName), variant, limitAdapters);
 
-            List<AdaptedImplementation> adaptedImplementations = adaptationStrategy.adapt(interfaceSpecificationMap.get(faName), classUnderTest, limitAdapters);
+            for(AdaptedImplementation adaptedImplementation : adaptedImplementations) {
+                executionListener.visitBeforeExecution(adaptedImplementation);
 
-            // FIXME move to global
-            executionListener.visitBeforeExecution(adaptedImplementations.get(0));
+                // run
+                for(Invocations invocations : invocationsList) {
+                    ExecutedInvocations executedInvocations = interpreter.run(invocations, adaptedImplementation, executionListener);
 
-            // run
-            ExecutedInvocations executedInvocations = interpreter.run(invocations, adaptedImplementations.get(0), executionListener);
+                    ActuationSheet actuationSheet = new ActuationSheet();
+                    actuationSheet.setAdaptedImplementation(adaptedImplementation);
+                    actuationSheet.setExecutedInvocations(executedInvocations);
 
-            // FIXME move to global
-            executionListener.visitAfterExecution(adaptedImplementations.get(0));
+                    actuationSheets.add(actuationSheet);
 
-            results.put(variant, executedInvocations);
+                    // save details
+                    if(mutants.containsKey(variant)) {
+                        MutationDetails mutationDetails = mutants.get(variant);
+                        // FIXME mutant data
+                    }
+                }
 
-            // save details
-            if(mutants.containsKey(variant)) {
-                MutationDetails mutationDetails = mutants.get(variant);
-                // FIXME mutant data
+                executionListener.visitAfterExecution(adaptedImplementation);
             }
         }
 
-        return results;
+        return actuationSheets;
     }
 
     public Map<ClassUnderTest, MutationDetails> createMutants(CandidatePool pool, ClassUnderTest classUnderTest, Pitest pitest, boolean generateReport, String reportSuffix) {
