@@ -2,7 +2,7 @@ package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.seriali
 
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.*;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.event.CompositeInvocationVisitor;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.examples.StackEmptyConstructorExample;
+import examples_new.StackEmptyConstructorExample;
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;

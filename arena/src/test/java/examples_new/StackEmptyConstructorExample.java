@@ -1,4 +1,4 @@
-package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.examples;
+package examples_new;
 
 import java.util.Stack;
 

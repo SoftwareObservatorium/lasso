@@ -1,6 +1,7 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter;
 
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
+import de.uni_mannheim.swt.lasso.arena.sequence.SequenceExecutionRecords;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,6 +13,23 @@ public class InvocationVisitor {
 
     private static final Logger LOG = LoggerFactory
             .getLogger(InvocationVisitor.class);
+
+    /**
+     * Called BEFORE the execution of a suite/set of sequences.
+     *
+     * @param adaptedImplementation
+     */
+    public void visitBeforeExecution(AdaptedImplementation adaptedImplementation) {
+
+    }
+    /**
+     * Called AFTER the execution of a suite/set of sequences.
+     *
+     * @param adaptedImplementation
+     */
+    public void visitAfterExecution(AdaptedImplementation adaptedImplementation) {
+
+    }
 
     public void visitBeforeStatement(ExecutedInvocations executedInvocations, int index, AdaptedImplementation adaptedImplementation) {
         Invocation invocation = executedInvocations.getSequence().get(index);

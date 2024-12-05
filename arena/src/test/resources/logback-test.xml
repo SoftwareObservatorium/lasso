@@ -25,7 +25,7 @@
     </appender>
 
     <logger name="de.uni_mannheim.swt.lasso" level="DEBUG" />
-    <logger name="de.uni_mannheim.swt.lasso.arena.classloader" level="INFO" />
+    <logger name="de.uni_mannheim.swt.lasso.arena.classloader" level="DEBUG" />
     <logger name="org.springframework" level="INFO" />
     <logger name="org.apache.http" level="INFO" />
 

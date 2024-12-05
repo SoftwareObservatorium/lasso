@@ -422,16 +422,16 @@ public class LQLParserTest {
     @Test
     public void testCompositeNode_fully_qualified() {
         String lqlQuery = """
-de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.examples.CompositeNodeExample{
+examples_new.CompositeNodeExample{
 	CompositeNodeExample(java.lang.String)
 	getName()->java.lang.String
-	getParent()->de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.examples.CompositeNodeExample
+	getParent()->examples_new.CompositeNodeExample
 	setName(java.lang.String)->void
-	setParent(de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.examples.CompositeNodeExample)->void
+	setParent(examples_new.CompositeNodeExample)->void
 	getName()->java.lang.String
-	getParent()->de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.examples.CompositeNodeExample
+	getParent()->examples_new.CompositeNodeExample
 	setName(java.lang.String)->void
-	setParent(de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.examples.CompositeNodeExample)->void
+	setParent(examples_new.CompositeNodeExample)->void
 	finalize()->void
 	wait(long,int)->void
 	wait()->void

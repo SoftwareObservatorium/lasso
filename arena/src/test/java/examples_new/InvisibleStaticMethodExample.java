@@ -17,7 +17,7 @@
  * You should have received a copy of the GNU General Public License
  * along with LASSO.  If not, see <https://www.gnu.org/licenses/>.
  */
-package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.examples;
+package examples_new;
 
 public class InvisibleStaticMethodExample {
 

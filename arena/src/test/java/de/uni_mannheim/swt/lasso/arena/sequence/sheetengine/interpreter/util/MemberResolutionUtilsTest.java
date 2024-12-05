@@ -1,6 +1,6 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util;
 
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.examples.StackNonEmptyConstructorExample;
+import examples_new.StackNonEmptyConstructorExample;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Constructor;

@@ -17,11 +17,34 @@
  * You should have received a copy of the GNU General Public License
  * along with LASSO.  If not, see <https://www.gnu.org/licenses/>.
  */
-package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.examples;
+package examples_new;
 
-public class StaticMethodExample {
+/**
+ * Composite example
+ */
+public class CompositeNodeExample {
 
-    public static int sum(int a, int b) {
-        return a+b;
+    private String name;
+
+    private CompositeNodeExample parent;
+
+    public CompositeNodeExample(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public CompositeNodeExample getParent() {
+        return parent;
+    }
+
+    public void setParent(CompositeNodeExample parent) {
+        this.parent = parent;
     }
 }

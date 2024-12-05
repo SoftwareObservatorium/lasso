@@ -1,15 +1,21 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter;
 
+import de.uni_mannheim.swt.lasso.arena.ClassUnderTest;
 import de.uni_mannheim.swt.lasso.arena.search.InterfaceSpecification;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.examples.*;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.event.CompositeInvocationVisitor;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.event.JaCoCoListener;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize.GsonMapper;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize.ObjectMapperVisitor;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.CutUtils;
+import examples_new.*;
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -373,6 +379,101 @@ public class SSNTestDriverTest {
         assertEquals("A1", invocations.getInvocation(2).getExpectedOutput().getExpression());
 
         assertEquals(3, executedInvocations.getSequence().size());
+    }
+
+    /**
+     * JaCoCo Coverage
+     *
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
+    @Test
+    public void test_BoundedQueue_JaCoCo_Coverage() throws IOException, ClassNotFoundException {
+        @Language("jsonl")
+        String ssnJsonlStr = """
+                {"sheet": "Sheet 1", "header": "Row 1", "cells": {"A1": {}, "B1": "create", "C1": "BoundedQueue", "D1": 10}}
+                {"sheet": "Sheet 1", "header": "Row 3", "cells": {"A2": {}, "B2": "enQueue", "C2": "A1", "D2": "'Hello World!'"}}
+                {"sheet": "Sheet 1", "header": "Row 3", "cells": {"A3": false, "B3": "isEmpty", "C3": "A1"}}
+                {"sheet": "Sheet 1", "header": "Row 4", "cells": {"A4": false, "B4": "isFull", "C4": "A1"}}
+                {"sheet": "Sheet 1", "header": "Row 5", "cells": {"A5": "D2", "B5": "deQueue", "C5": "A1"}}
+                {"sheet": "Sheet 1", "header": "Row 6", "cells": {"A6": true, "B6": "isEmpty", "C6": "A1"}}
+                """;
+
+        String lql = """
+                BoundedQueue {
+                    BoundedQueue(int)
+                    enQueue(java.lang.Object)->void
+                    deQueue()->java.lang.Object
+                    isEmpty()->boolean
+                    isFull()->boolean
+                }
+                """;
+        //ObjectMapperVisitor visitor = createVisitor();
+
+        ObjectMapperVisitor visitor = new ObjectMapperVisitor(new GsonMapper());
+        InvocationVisitor invocationVisitor = new CompositeInvocationVisitor(
+                Arrays.asList(visitor, new JaCoCoListener())); // add jacoco listener
+
+        Class cutClass = BoundedQueue.class;
+
+        SSNTestDriver testDriver = new SSNTestDriver();
+        testDriver.setEnableJaCoCoCoverage(true);
+
+        ExecutedInvocations executedInvocations = testDriver.runSheet(ssnJsonlStr, lql, cutClass, 1, invocationVisitor);
+        LOG.debug("executed invocations\n{}", executedInvocations);
+        visitor.getActuationSheet().debug();
+        visitor.getAdaptedActuationSheet().debug();
+        Invocations invocations = executedInvocations.getInvocations();
+    }
+
+    /**
+     * Mutation Coverage with PIT
+     *
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
+    @Test
+    public void test_BoundedQueue_Mutation_Coverage() throws IOException, ClassNotFoundException {
+        @Language("jsonl")
+        String ssnJsonlStr = """
+                {"sheet": "Sheet 1", "header": "Row 1", "cells": {"A1": {}, "B1": "create", "C1": "BoundedQueue", "D1": 10}}
+                {"sheet": "Sheet 1", "header": "Row 3", "cells": {"A2": {}, "B2": "enQueue", "C2": "A1", "D2": "'Hello World!'"}}
+                {"sheet": "Sheet 1", "header": "Row 3", "cells": {"A3": false, "B3": "isEmpty", "C3": "A1"}}
+                {"sheet": "Sheet 1", "header": "Row 4", "cells": {"A4": false, "B4": "isFull", "C4": "A1"}}
+                {"sheet": "Sheet 1", "header": "Row 5", "cells": {"A5": "D2", "B5": "deQueue", "C5": "A1"}}
+                {"sheet": "Sheet 1", "header": "Row 6", "cells": {"A6": true, "B6": "isEmpty", "C6": "A1"}}
+                """;
+
+        String lql = """
+                BoundedQueue {
+                    BoundedQueue(int)
+                    enQueue(java.lang.Object)->void
+                    deQueue()->java.lang.Object
+                    isEmpty()->boolean
+                    isFull()->boolean
+                }
+                """;
+        //ObjectMapperVisitor visitor = createVisitor();
+
+        ObjectMapperVisitor visitor = new ObjectMapperVisitor(new GsonMapper());
+        InvocationVisitor invocationVisitor = new CompositeInvocationVisitor(
+                Arrays.asList(visitor)); // add jacoco listener
+
+        Class cutClass = BoundedQueue.class;
+
+        SSNTestDriver testDriver = new SSNTestDriver();
+
+        Map<ClassUnderTest, ExecutedInvocations> executedInvocationsMap = testDriver.runSheetAndMutate(ssnJsonlStr, lql, CutUtils.createExample(cutClass), 1, invocationVisitor);
+
+        for(ClassUnderTest variant : executedInvocationsMap.keySet()) {
+            ExecutedInvocations executedInvocations = executedInvocationsMap.get(variant);
+            LOG.debug("executed invocations for '{}' \n{}", variant.getVariantId(), executedInvocations);
+            visitor.getActuationSheet().debug();
+            visitor.getAdaptedActuationSheet().debug();
+            Invocations invocations = executedInvocations.getInvocations();
+        }
+
+        assertEquals(29, executedInvocationsMap.keySet().size()); // original + 28 mutants
     }
 
     private ObjectMapperVisitor createVisitor() {

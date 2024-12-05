@@ -25,6 +25,30 @@ public class CompositeInvocationVisitor extends InvocationVisitor {
 
 
     @Override
+    public void visitBeforeExecution(AdaptedImplementation adaptedImplementation) {
+        listenerList.forEach(listener -> {
+            try {
+                listener.visitBeforeExecution(adaptedImplementation);
+            } catch (Throwable e){
+                LOG.warn("listener failed '{}'", listener.getClass());
+                LOG.warn("listener failed", e);
+            }
+        });
+    }
+
+    @Override
+    public void visitAfterExecution(AdaptedImplementation adaptedImplementation) {
+        listenerList.forEach(listener -> {
+            try {
+                listener.visitAfterExecution(adaptedImplementation);
+            } catch (Throwable e){
+                LOG.warn("listener failed '{}'", listener.getClass());
+                LOG.warn("listener failed", e);
+            }
+        });
+    }
+
+    @Override
     public void visitBeforeStatement(ExecutedInvocations executedInvocations, int index, AdaptedImplementation adaptedImplementation) {
         listenerList.forEach(listener -> {
             try {

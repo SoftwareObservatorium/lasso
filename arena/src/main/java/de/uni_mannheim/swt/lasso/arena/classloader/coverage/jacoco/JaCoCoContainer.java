@@ -271,7 +271,7 @@ public class JaCoCoContainer extends Container {
 
         //
         for(String className : getClasses().keySet()) {
-//            // TODO class filters
+            // TODO class filters
 //            if(scope.getConfiguration().containsKey("pkgWhitelist")) {
 //                // should be done on class level
 //            } else if(scope.getConfiguration().containsKey("pkgBlacklist")) {

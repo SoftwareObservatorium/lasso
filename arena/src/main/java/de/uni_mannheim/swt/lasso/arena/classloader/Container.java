@@ -53,7 +53,7 @@ public abstract class Container extends ClassRealm {
     public static String[] getNastyPackages() {
         return new String[]{"java.", "javax.", "sun.", "org.xml", "org.w3c.",
                 "apple.", "com.apple.", "com.sun.", "org.junit.", "junit.framework.",
-                "org.evosuite.", "randoop.", "org.jacoco.", "de.uni_mannheim.swt.lasso."
+                "org.evosuite.", "randoop.", "org.jacoco.", "de.uni_mannheim.swt.lasso.", "org.springframework.cglib."
         };
     }
 
