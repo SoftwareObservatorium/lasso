@@ -170,12 +170,12 @@ public class GsonMapper implements ObjectMapper {
             if(ClassUtils.isPrimitiveOrWrapper(obj.getType())) {
                 // FIXME special handling of primitive types?
                 serializedStr = gson.toJson(obj.getValue());
-            } else if(TypeUtils.isAssignable(obj.getType(), String.class)) {
+            } else if(TypeUtils.isStrictlyAssignable(obj.getType(), String.class)) {
                 // FIXME use Charsequence instead?
                 // TODO if string, use additional double-quotes as in Sequence sheets in JSONL notation
                 // e.g. "'Hello World!'"
                 serializedStr = gson.toJson(obj.getValue());
-            } else if(TypeUtils.isAssignable(obj.getType(), Void.class, true)) {
+            } else if(TypeUtils.isStrictlyAssignable(obj.getType(), Void.class)) {
                 // FIXME notation: use "{}" (empty object)?
                 serializedStr = gson.toJson(new Object());
             } else {

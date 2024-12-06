@@ -15,6 +15,24 @@ import java.util.List;
  */
 public class SSNParser {
 
+    private final ObjectMapper mapper;
+
+    public SSNParser() {
+        this(createObjectMapper());
+    }
+
+    public SSNParser(ObjectMapper mapper) {
+        this.mapper = mapper;
+    }
+
+    public static ObjectMapper createObjectMapper() {
+        return new ObjectMapper();
+    }
+
+    public ObjectMapper getMapper() {
+        return mapper;
+    }
+
     /**
      * Parse JSONL
      *
@@ -24,8 +42,6 @@ public class SSNParser {
      */
     // FIXME parse to de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet
     public ParsedSheet parseJsonl(String jsonlStr) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-
         ParsedSheet parsedSheet = new ParsedSheet();
         try (MappingIterator<JsonNode> it = mapper.readerFor(JsonNode.class)
                 .readValues(jsonlStr)) {

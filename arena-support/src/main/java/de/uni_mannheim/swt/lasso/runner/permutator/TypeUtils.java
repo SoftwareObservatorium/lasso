@@ -105,6 +105,19 @@ public class TypeUtils {
      * @param toClazz
      * @return
      */
+    public static boolean isStrictlyAssignable(Class<?> clazz, Class<?> toClazz) {
+        return isAssignable(new Class<?>[] { clazz },
+                new Class<?>[] { toClazz });
+    }
+
+    /**
+     * Check if first class is assignable to the second (including casting of
+     * primitives)
+     *
+     * @param clazz
+     * @param toClazz
+     * @return
+     */
     public static boolean isAssignable(Class<?> clazz, Class<?> toClazz) {
         return isAssignable(clazz, toClazz, false);
     }

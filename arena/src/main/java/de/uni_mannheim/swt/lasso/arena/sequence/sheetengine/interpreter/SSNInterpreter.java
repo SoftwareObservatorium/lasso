@@ -1,5 +1,7 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import de.uni_mannheim.swt.lasso.arena.ClassUnderTest;
 import de.uni_mannheim.swt.lasso.arena.MethodSignature;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
@@ -13,10 +15,7 @@ import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocati
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.CodeExpressionUtils;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.FAMarker;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.MemberResolutionUtils;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.ParsedCell;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.ParsedRow;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.ParsedSheet;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.SheetResolver;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.ClassUtils;
@@ -517,11 +516,24 @@ public class SSNInterpreter {
             return new Parameter(coordinate, invocation.getTargetClass(), arg.getNodeValue().textValue(), null);
         }
 
+//        // special handling required for arrays
+//        if(arg.getNodeValue().isArray()) {
+//            ObjectMapper objectMapper = SSNParser.createObjectMapper();
+//
+//            // TODO get from specification
+//            Object obj = objectMapper.convertValue(arg.getNodeValue(), byte[].class);
+//
+//            LOG.debug("Used jackson to convert to array: {}", obj);
+//
+//            return new Parameter(obj.getClass(), arg.getNodeValue().toString(), obj);
+//        } else {
+//
+//        }
+
         // value expression to be evaluated
         String expression = CodeExpressionUtils.cleanExpression(arg.getNodeValue().asText());
 
         LOG.debug("expression = {}", expression);
-
         // can be any code expression
         Object output = CodeInvocation.evalCode(eval, expression);
         Class targetClass = output == null ? null : output.getClass();
@@ -554,6 +566,16 @@ public class SSNInterpreter {
                 ExecutedInvocation ref = executedInvocations.getExecutedInvocation(parameter.getReference()[0]);
                 inputs.add(ref.getOutput());
             } else {
+
+
+//                // FIXME arrays
+//                // special handling required for arrays FIXME need JsonNode ...
+//                if(parameter.getValue() != null) {
+//                    inputs.add(Obj.fromValue(parameter.getValue(), Obj.PRODUCER_INDEX_NONE));
+//                } else {
+//
+//                }
+
                 // just interpret expression
                 try {
                     Object value = CodeInvocation.evalCode(executedInvocations.getInvocations().getEval(), CodeExpressionUtils.cleanExpression(parameter.getExpression()));
