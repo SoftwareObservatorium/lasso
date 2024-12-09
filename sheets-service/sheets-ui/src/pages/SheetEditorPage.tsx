@@ -218,6 +218,9 @@ function SheetEditorPage() {
       const request = new SheetRequest()
       request.classesUnderTest = [classUnderTestSpec]
       request.sheets = []
+      request.analyzers = codeAnalyzers
+
+      console.log("total number of analyzers " + codeAnalyzers.length)
 
       console.log("total number of sheets " + stimulusSheets.length)
 
@@ -385,13 +388,6 @@ function SheetEditorPage() {
 
         <Divider>Actions</Divider>
 
-        <ButtonGroup variant="outlined" aria-label="Basic button group">
-          <Button onClick={(event) => addStimulusSheet()}>Add Sheet</Button>
-          {/* <Button onClick={(event) => loadExample()}>Load Example</Button> */}
-          <Button onClick={(event) => executeAllHandler()}>Run Tests</Button>
-        </ButtonGroup>
-        
-        {/* <Divider>Additional Analyzers</Divider>
         <ToggleButtonGroup
           color="primary"
           value={codeAnalyzers}
@@ -404,7 +400,13 @@ function SheetEditorPage() {
           <ToggleButton value="mt" aria-label="italic">
             Mutation Testing
           </ToggleButton>
-        </ToggleButtonGroup> */}
+        </ToggleButtonGroup>
+
+        <ButtonGroup variant="outlined" aria-label="Basic button group">
+          <Button onClick={(event) => addStimulusSheet()}>Add Sheet</Button>
+          {/* <Button onClick={(event) => loadExample()}>Load Example</Button> */}
+          <Button onClick={(event) => executeAllHandler()}>Run Tests</Button>
+        </ButtonGroup>
       </Box>
 
       {message && (
@@ -426,7 +428,10 @@ function SheetEditorPage() {
                 <Box component="section" sx={{ p: 2, border: '1px dashed grey' }}>
                   <Alert severity="success">Adapted Actuation Sheet (based on the Candidate's Class Interface)</Alert>
                   {testResult.adaptedActuationSheets.map((sheet) => (
-                    <Sheet isResult={true} defaultSheetName={sheet.name} sheetData={() => parseAdaptedActuationSheet(sheet)} changeHandler={() => console.log("not implemented")} />
+                    <>
+                    <h4>Implementation {sheet.implementation}</h4>
+                                        <Sheet isResult={true} defaultSheetName={sheet.name} sheetData={() => parseAdaptedActuationSheet(sheet)} changeHandler={() => console.log("not implemented")} />
+                    </>
                   ))
                   }
                 </Box>

@@ -30,6 +30,9 @@ public class SheetSpec {
     private String interfaceSpecification;
     private String body;
 
+    // FIXME add implementation details
+    private String implementation;
+
     public String getName() {
         return name;
     }
@@ -52,5 +55,13 @@ public class SheetSpec {
 
     public void setBody(String body) {
         this.body = body;
+    }
+
+    public String getImplementation() {
+        return implementation;
+    }
+
+    public void setImplementation(String implementation) {
+        this.implementation = implementation;
     }
 }

@@ -1,6 +1,7 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter;
 
 import de.uni_mannheim.swt.lasso.arena.ClassUnderTest;
+import de.uni_mannheim.swt.lasso.arena.classloader.coverage.pitest.PitestContainer;
 import de.uni_mannheim.swt.lasso.arena.repository.DependencyResolver;
 import de.uni_mannheim.swt.lasso.arena.repository.MavenRepository;
 import de.uni_mannheim.swt.lasso.arena.repository.NexusInstance;
@@ -462,7 +463,7 @@ public class SSNTestDriverTest {
 
         ObjectMapperVisitor visitor = new ObjectMapperVisitor(new GsonMapper());
         InvocationVisitor invocationVisitor = new CompositeInvocationVisitor(
-                Arrays.asList(visitor)); // add jacoco listener
+                Arrays.asList(visitor));
 
         Class cutClass = BoundedQueue.class;
 
@@ -476,6 +477,13 @@ public class SSNTestDriverTest {
             visitor.getActuationSheet().debug();
             visitor.getAdaptedActuationSheet().debug();
             Invocations invocations = executedInvocations.getInvocations();
+
+            if(actuationSheet.getAdaptedImplementation().getAdaptee().getVariantId().equals("original")) {
+                // original impl.
+            } else {
+                PitestContainer pitestContainer = (PitestContainer) actuationSheet.getAdaptedImplementation().getAdaptee().getProject().getContainer();
+                LOG.debug("Mutant {}", pitestContainer.getMutant().getDetails());
+            }
         }
 
         assertEquals(29, actuationSheets.stream().map(a -> a.getAdaptedImplementation().getAdaptee()).collect(Collectors.toSet()).size()); // original + 28 mutants

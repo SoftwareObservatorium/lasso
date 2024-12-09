@@ -33,6 +33,8 @@ public class SheetRequest {
     // multiple classes under test
     private List<ClassUnderTestSpec> classesUnderTest;
 
+    private List<String> analyzers;
+
     // FIXME add configuration
 
     public List<SheetSpec> getSheets() {
@@ -49,5 +51,13 @@ public class SheetRequest {
 
     public void setClassesUnderTest(List<ClassUnderTestSpec> classesUnderTest) {
         this.classesUnderTest = classesUnderTest;
+    }
+
+    public List<String> getAnalyzers() {
+        return analyzers;
+    }
+
+    public void setAnalyzers(List<String> analyzers) {
+        this.analyzers = analyzers;
     }
 }

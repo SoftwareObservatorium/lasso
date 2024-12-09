@@ -54,7 +54,7 @@ public class SSNTestDriver {
 
     public MavenRepository getMavenRepository() {
         // FIXME update
-        if(mavenRepository == null) {
+        if (mavenRepository == null) {
             String mavenRepoUrl = NexusInstance.LOCAL_URL;
             File localRepo = new File("/tmp/lalalamvn/local-repo");
 
@@ -73,7 +73,7 @@ public class SSNTestDriver {
         SSNParser ssnParser = new SSNParser();
 
         List<ParsedSheet> parsedSheets = new ArrayList<>(ssnSheets.size());
-        for(String ssnSheet : ssnSheets) {
+        for (String ssnSheet : ssnSheets) {
             ParsedSheet parsedSheet = ssnParser.parseJsonl(ssnSheet);
             parsedSheets.add(parsedSheet);
         }
@@ -89,7 +89,7 @@ public class SSNTestDriver {
     public List<ActuationSheet> runSheet(List<ParsedSheet> parsedSheets, String lql, String cutClass, List<String> artifacts, int limitAdapters, InvocationVisitor executionListener) throws IOException {
         // artifacts
         String artifact = null;
-        if(CollectionUtils.isNotEmpty(artifacts)) {
+        if (CollectionUtils.isNotEmpty(artifacts)) {
             artifact = artifacts.get(0);
         }
 
@@ -99,7 +99,7 @@ public class SSNTestDriver {
     public List<ActuationSheet> runSheets(List<ParsedSheet> parsedSheets, String lql, ClassUnderTest classUnderTest, int limitAdapters, InvocationVisitor executionListener) throws IOException {
         CandidatePool pool = new CandidatePool(getMavenRepository(), Collections.singletonList(classUnderTest));
 
-        if(isEnableJaCoCoCoverage()) {
+        if (isEnableJaCoCoCoverage()) {
             // set scope
             Scope scope = new Scope();
             scope.setType("class");
@@ -123,17 +123,17 @@ public class SSNTestDriver {
 
         // prepare executable sheets
         List<Invocations> invocationsList = new ArrayList<>(parsedSheets.size());
-        for(ParsedSheet parsedSheet : parsedSheets) {
+        for (ParsedSheet parsedSheet : parsedSheets) {
             Invocations invocations = interpreter.interpret(parsedSheet, interfaceSpecificationMap, classUnderTest);
             invocationsList.add(invocations);
         }
 
         List<ActuationSheet> actuationSheets = new LinkedList<>();
-        for(AdaptedImplementation adaptedImplementation : adaptedImplementations) {
+        for (AdaptedImplementation adaptedImplementation : adaptedImplementations) {
             executionListener.visitBeforeExecution(adaptedImplementation);
 
             // run
-            for(Invocations invocations : invocationsList) {
+            for (Invocations invocations : invocationsList) {
                 ExecutedInvocations executedInvocations = interpreter.run(invocations, adaptedImplementation, executionListener);
 
                 ActuationSheet actuationSheet = new ActuationSheet();
@@ -165,11 +165,11 @@ public class SSNTestDriver {
         SSNInterpreter interpreter = new SSNInterpreter();
 
         List<ActuationSheet> actuationSheets = new LinkedList<>();
-        for(ClassUnderTest variant : pool.getClassesUnderTest()) {
+        for (ClassUnderTest variant : pool.getClassesUnderTest()) {
 
             // prepare executable sheets
             List<Invocations> invocationsList = new ArrayList<>(parsedSheets.size());
-            for(ParsedSheet parsedSheet : parsedSheets) {
+            for (ParsedSheet parsedSheet : parsedSheets) {
                 Invocations invocations = interpreter.interpret(parsedSheet, interfaceSpecificationMap, variant);
                 invocationsList.add(invocations);
             }
@@ -178,11 +178,11 @@ public class SSNTestDriver {
             String faName = interfaceSpecificationMap.keySet().stream().findFirst().get();
             List<AdaptedImplementation> adaptedImplementations = adaptationStrategy.adapt(interfaceSpecificationMap.get(faName), variant, limitAdapters);
 
-            for(AdaptedImplementation adaptedImplementation : adaptedImplementations) {
+            for (AdaptedImplementation adaptedImplementation : adaptedImplementations) {
                 executionListener.visitBeforeExecution(adaptedImplementation);
 
                 // run
-                for(Invocations invocations : invocationsList) {
+                for (Invocations invocations : invocationsList) {
                     ExecutedInvocations executedInvocations = interpreter.run(invocations, adaptedImplementation, executionListener);
 
                     ActuationSheet actuationSheet = new ActuationSheet();
@@ -190,12 +190,6 @@ public class SSNTestDriver {
                     actuationSheet.setExecutedInvocations(executedInvocations);
 
                     actuationSheets.add(actuationSheet);
-
-                    // save details
-                    if(mutants.containsKey(variant)) {
-                        MutationDetails mutationDetails = mutants.get(variant);
-                        // FIXME mutant data
-                    }
                 }
 
                 executionListener.visitAfterExecution(adaptedImplementation);
@@ -203,6 +197,16 @@ public class SSNTestDriver {
         }
 
         return actuationSheets;
+    }
+
+    public List<ActuationSheet> mutateAndRunSheets(List<ParsedSheet> parsedSheets, String lql, String cutClass, List<String> artifacts, int limitAdapters, InvocationVisitor executionListener) throws IOException {
+        // artifacts
+        String artifact = null;
+        if (CollectionUtils.isNotEmpty(artifacts)) {
+            artifact = artifacts.get(0);
+        }
+
+        return mutateAndRunSheets(parsedSheets, lql, CutUtils.createExample(cutClass, artifact), limitAdapters, executionListener);
     }
 
     public Map<ClassUnderTest, MutationDetails> createMutants(CandidatePool pool, ClassUnderTest classUnderTest, Pitest pitest, boolean generateReport, String reportSuffix) {
@@ -252,7 +256,7 @@ public class SSNTestDriver {
     public InterfaceSpecification toLQL(String className, List<String> artifacts) {
         // artifacts
         String artifact = null;
-        if(CollectionUtils.isNotEmpty(artifacts)) {
+        if (CollectionUtils.isNotEmpty(artifacts)) {
             artifact = artifacts.get(0);
         }
 

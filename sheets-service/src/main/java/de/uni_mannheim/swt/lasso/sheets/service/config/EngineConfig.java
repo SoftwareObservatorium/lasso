@@ -50,20 +50,18 @@ public class EngineConfig {
     private Environment env;
 
     @Bean
-    public SheetsManager sheetsManager(SSNTestDriver ssnTestDriver) {
-        SheetsManager sheetsManager = new SheetsManager(new LocalSimpleTestDriver(ssnTestDriver));
+    public SheetsManager sheetsManager(MavenRepository mavenRepository) {
+        SheetsManager sheetsManager = new SheetsManager(new LocalSimpleTestDriver(mavenRepository));
 
         return sheetsManager;
     }
 
     @Bean
-    public SSNTestDriver ssnTestDriver() {
-        SSNTestDriver testDriver = new SSNTestDriver();
+    public MavenRepository mavenRepository() {
+        // FIXME change maven repo
         String mavenRepoUrl = NexusInstance.LASSOHP12_URL;
         File localRepo = new File("/tmp/my_repo/local-repo");
         DependencyResolver resolver = new DependencyResolver(mavenRepoUrl, localRepo.getAbsolutePath());
-        testDriver.setMavenRepository(new MavenRepository(resolver));
-
-        return testDriver;
+        return new MavenRepository(resolver);
     }
 }

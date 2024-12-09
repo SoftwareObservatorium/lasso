@@ -27,7 +27,7 @@
     <logger name="org.springframework" level="INFO" />
     <logger name="org.apache.http" level="INFO" />
 
-    <logger name="de.uni_mannheim.swt.lasso" level="INFO" />
+    <logger name="de.uni_mannheim.swt.lasso" level="DEBUG" />
 
     <root level="INFO">
         <appender-ref ref="STDOUT" />

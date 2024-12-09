@@ -1,12 +1,14 @@
 export class SheetRequest {
     sheets!: SheetSpec[]
     classesUnderTest!: ClassUnderTestSpec[]
+    analyzers!: string[]
 }
 
 export class SheetSpec {
     name!: string
     interfaceSpecification!: string
     body!: string
+    implementation!: string
 }
 
 export class ClassUnderTestSpec {
