@@ -19,7 +19,12 @@
  */
 package de.uni_mannheim.swt.lasso.sheets.service.config;
 
+import de.uni_mannheim.swt.lasso.arena.repository.DependencyResolver;
+import de.uni_mannheim.swt.lasso.arena.repository.MavenRepository;
+import de.uni_mannheim.swt.lasso.arena.repository.NexusInstance;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.SSNTestDriver;
 import de.uni_mannheim.swt.lasso.sheets.service.SheetsManager;
+import de.uni_mannheim.swt.lasso.sheets.service.driver.LocalSimpleTestDriver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -27,6 +32,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
+
+import java.io.File;
 
 /**
  * Basic engine config.
@@ -43,9 +50,20 @@ public class EngineConfig {
     private Environment env;
 
     @Bean
-    public SheetsManager sheetsManager() {
-        SheetsManager sheetsManager = new SheetsManager();
+    public SheetsManager sheetsManager(SSNTestDriver ssnTestDriver) {
+        SheetsManager sheetsManager = new SheetsManager(new LocalSimpleTestDriver(ssnTestDriver));
 
         return sheetsManager;
+    }
+
+    @Bean
+    public SSNTestDriver ssnTestDriver() {
+        SSNTestDriver testDriver = new SSNTestDriver();
+        String mavenRepoUrl = NexusInstance.LASSOHP12_URL;
+        File localRepo = new File("/tmp/my_repo/local-repo");
+        DependencyResolver resolver = new DependencyResolver(mavenRepoUrl, localRepo.getAbsolutePath());
+        testDriver.setMavenRepository(new MavenRepository(resolver));
+
+        return testDriver;
     }
 }

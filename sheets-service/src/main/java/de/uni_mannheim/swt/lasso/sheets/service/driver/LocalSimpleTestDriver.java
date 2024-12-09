@@ -1,13 +1,16 @@
 package de.uni_mannheim.swt.lasso.sheets.service.driver;
 
+import de.uni_mannheim.swt.lasso.arena.repository.DependencyResolver;
+import de.uni_mannheim.swt.lasso.arena.repository.MavenRepository;
+import de.uni_mannheim.swt.lasso.arena.repository.NexusInstance;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.*;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize.GsonMapper;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize.ObjectMapperVisitor;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.ParsedSheet;
 import de.uni_mannheim.swt.lasso.sheets.service.dto.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +23,12 @@ import java.util.stream.Collectors;
 public class LocalSimpleTestDriver implements TestDriver {
 
     private static final Logger LOG = LoggerFactory.getLogger(LocalSimpleTestDriver.class);
+
+    private final SSNTestDriver testDriver;
+
+    public LocalSimpleTestDriver(SSNTestDriver testDriver) {
+        this.testDriver = testDriver;
+    }
 
     @Override
     public SheetResponse execute(SheetRequest request) throws IOException {
@@ -35,7 +44,11 @@ public class LocalSimpleTestDriver implements TestDriver {
         for(ClassUnderTestSpec classUnderTestSpec : request.getClassesUnderTest()) {
 
             SSNTestDriver testDriver = new SSNTestDriver();
-            //ObjectMapperVisitor visitor = new ObjectMapperVisitor(new GsonMapper());
+            String mavenRepoUrl = NexusInstance.LASSOHP12_URL;
+            File localRepo = new File("/tmp/my_repo/local-repo");
+            DependencyResolver resolver = new DependencyResolver(mavenRepoUrl, localRepo.getAbsolutePath());
+            testDriver.setMavenRepository(new MavenRepository(resolver));
+
             GsonMapper gsonMapper = new GsonMapper();
             InvocationVisitor visitor = new InvocationVisitor();
 

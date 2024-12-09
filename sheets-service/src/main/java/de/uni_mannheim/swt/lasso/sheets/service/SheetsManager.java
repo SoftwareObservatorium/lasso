@@ -3,6 +3,7 @@ package de.uni_mannheim.swt.lasso.sheets.service;
 import de.uni_mannheim.swt.lasso.arena.search.InterfaceSpecification;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.SSNTestDriver;
 import de.uni_mannheim.swt.lasso.sheets.service.driver.LocalSimpleTestDriver;
+import de.uni_mannheim.swt.lasso.sheets.service.driver.TestDriver;
 import de.uni_mannheim.swt.lasso.sheets.service.dto.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,11 +16,15 @@ public class SheetsManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(SheetsManager.class);
 
+    private final TestDriver testDriver;
+
+    public SheetsManager(TestDriver testDriver) {
+        this.testDriver = testDriver;
+    }
+
     public SheetResponse execute(SheetRequest request, UserInfo userInfo) {
         // FIXME decide which driver
         try {
-            LocalSimpleTestDriver testDriver = new LocalSimpleTestDriver();
-
             SheetResponse sheetResponse = testDriver.execute(request);
 
             return sheetResponse;
