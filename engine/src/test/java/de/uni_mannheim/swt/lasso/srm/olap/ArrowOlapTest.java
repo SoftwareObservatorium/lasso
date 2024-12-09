@@ -23,6 +23,7 @@ import de.uni_mannheim.swt.lasso.srm.JDBC;
 import de.uni_mannheim.swt.lasso.srm.SRHRepository;
 import joinery.DataFrame;
 import org.apache.arrow.vector.VectorSchemaRoot;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
@@ -82,6 +83,24 @@ public class ArrowOlapTest {
         String path = "/tmp/blub.parquet";
 
         olap.writeParquet(jdbc.getJdbcTemplate(), sql, path, args);
+    }
+
+    @Test
+    @Disabled
+    public void testWriteAll() throws SQLException {
+        String executionId = "c6704dee-9954-4087-87b7-dd06a3695d81";
+
+        JDBC.JDBC_URL = "jdbc:ignite:thin://lassohp1.informatik.uni-mannheim.de";
+        JDBC jdbc = new JDBC();
+
+        ArrowOlap olap = new ArrowOlap();
+
+        String sql = "SELECT * FROM srm.cellvalue where executionid = ?";
+        Object[] args = {executionId};
+
+        String path = "/tmp/blub.parquet";
+
+        olap.sqlToParquet(jdbc.getJdbcTemplate(), sql, path, args);
     }
 
     @Test

@@ -38,7 +38,7 @@ public class JDBC {
     private static final Logger LOG = LoggerFactory
             .getLogger(JDBC.class);
 
-    private static final String JDBC_URL = "jdbc:ignite:thin://127.0.0.1";
+    public static String JDBC_URL = "jdbc:ignite:thin://127.0.0.1";
 
     private JdbcTemplate jdbcTemplate;
 

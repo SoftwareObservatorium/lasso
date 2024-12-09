@@ -254,6 +254,68 @@ public class ArrowOlap {
         }
     }
 
+    /**
+     * JDBC Ignite to Apache Arrow to DuckDB in order to write parquet files.
+     *
+     * @param jdbcTemplate
+     * @param sql
+     * @param path
+     * @param args
+     */
+    public void sqlToParquet(JdbcTemplate jdbcTemplate, String sql, String path, Object ... args) {
+        BufferAllocator allocator = new RootAllocator();
+        JdbcToArrowConfig config = new JdbcToArrowConfigBuilder(allocator,
+                JdbcToArrowUtils.getUtcCalendar()).build();
+
+        ArrowReader reader = jdbcTemplate.query(sql, resultSet -> {
+            try {
+                ArrowVectorIterator it = JdbcToArrow.sqlToArrowVectorIterator(
+                        resultSet, allocator);
+                ArrowReader r = new JdbcReader(allocator, it, config);
+                r.getVectorSchemaRoot();
+
+                return r;
+            } catch (SQLException | IOException e) {
+                LOG.warn("ArrowReader failed", e);
+            }
+
+            return null;
+        }, args);
+
+        try (ArrowArrayStream arrow_array_stream = ArrowArrayStream.allocateNew(allocator)) {
+            Data.exportArrayStream(allocator, reader, arrow_array_stream);
+
+            String fromTable = "asdf";
+            String toTable = "bbb";
+
+            // DuckDB stuff
+            try (DuckDBConnection conn = (DuckDBConnection) DriverManager.getConnection("jdbc:duckdb:")) {
+                conn.registerArrowStream(fromTable, arrow_array_stream);
+
+                // FIXME for some reason, PIVOT does not work on Arrow Stream
+                // workaround is to copy table (view doesn't work either)
+                String copyTableSql = "CREATE TABLE "+toTable+" AS select * from " + fromTable;
+
+                // run a query
+                try (Statement stmt = conn.createStatement()) {
+                    boolean rs = stmt.execute(copyTableSql);
+                }
+
+                String pivSql = "SELECT * FROM " + toTable;
+                String copySql = "COPY ("+pivSql+") TO '"+path+"' (FORMAT PARQUET);";
+
+                // run a query
+                try (Statement stmt = conn.createStatement()) {
+                    boolean rs = stmt.execute(copySql);
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public DataFrame readParquetAsDataFrame(String path) {
         // DuckDB stuff
         try (DuckDBConnection conn = (DuckDBConnection) DriverManager.getConnection("jdbc:duckdb:")) {

@@ -1,7 +1,5 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
 import de.uni_mannheim.swt.lasso.arena.ClassUnderTest;
 import de.uni_mannheim.swt.lasso.arena.MethodSignature;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
@@ -129,7 +127,7 @@ public class SSNInterpreter {
             } else if(StringUtils.equalsAnyIgnoreCase(operationName, $_EVAL)) {
                 // code to evaluate
 
-                // FIXME code to eval
+                // FIXME code to eval (currently bsh)
                 // -- use "eval" command? or some simple syntax like in SpEL #{ <expression string> }
 
                 LOG.debug("code invocation = {}", operationName);
@@ -516,20 +514,6 @@ public class SSNInterpreter {
             return new Parameter(coordinate, invocation.getTargetClass(), arg.getNodeValue().textValue(), null);
         }
 
-//        // special handling required for arrays
-//        if(arg.getNodeValue().isArray()) {
-//            ObjectMapper objectMapper = SSNParser.createObjectMapper();
-//
-//            // TODO get from specification
-//            Object obj = objectMapper.convertValue(arg.getNodeValue(), byte[].class);
-//
-//            LOG.debug("Used jackson to convert to array: {}", obj);
-//
-//            return new Parameter(obj.getClass(), arg.getNodeValue().toString(), obj);
-//        } else {
-//
-//        }
-
         // value expression to be evaluated
         String expression = CodeExpressionUtils.cleanExpression(arg.getNodeValue().asText());
 
@@ -566,16 +550,6 @@ public class SSNInterpreter {
                 ExecutedInvocation ref = executedInvocations.getExecutedInvocation(parameter.getReference()[0]);
                 inputs.add(ref.getOutput());
             } else {
-
-
-//                // FIXME arrays
-//                // special handling required for arrays FIXME need JsonNode ...
-//                if(parameter.getValue() != null) {
-//                    inputs.add(Obj.fromValue(parameter.getValue(), Obj.PRODUCER_INDEX_NONE));
-//                } else {
-//
-//                }
-
                 // just interpret expression
                 try {
                     Object value = CodeInvocation.evalCode(executedInvocations.getInvocations().getEval(), CodeExpressionUtils.cleanExpression(parameter.getExpression()));

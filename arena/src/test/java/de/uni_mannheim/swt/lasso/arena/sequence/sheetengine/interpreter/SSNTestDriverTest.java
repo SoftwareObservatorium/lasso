@@ -532,6 +532,57 @@ public class SSNTestDriverTest {
 
     }
 
+    @Test
+    public void test_Base64_remote_string() throws IOException, ClassNotFoundException {
+//        Gson gson = new Gson();
+//        String input = gson.toJson("Hello World!".getBytes());
+//
+//        System.out.println(input); [72,101,108,108,111,32,87,111,114,108,100,33]
+
+        @Language("jsonl")
+        String ssnJsonlStr = """
+                {"sheet": "Sheet 1", "header": "Row 1", "cells": {"A1": {}, "B1": "create", "C1": "Base64"}}
+                {"sheet": "Sheet 1", "header": "Row 2", "cells": {"A2": {}, "B2": "encode", "C2": "A1", "D2": "\\"Hello World!\\".getBytes()"}}
+                """;
+
+        String lql = """
+                Base64{
+                    encode(byte[])->byte[]
+                }
+                """;
+        ObjectMapperVisitor visitor = createVisitor();
+
+        SSNTestDriver testDriver = new SSNTestDriver();
+        String mavenRepoUrl = NexusInstance.LASSOHP12_URL;
+        File localRepo = new File("/tmp/my_repo/local-repo");
+        DependencyResolver resolver = new DependencyResolver(mavenRepoUrl, localRepo.getAbsolutePath());
+        testDriver.setMavenRepository(new MavenRepository(resolver));
+
+        // commons-codec:commons-codec:1.15
+        ClassUnderTest classUnderTest = CutUtils.createExample("org.apache.commons.codec.binary.Base64", "commons-codec:commons-codec:1.15");
+
+        ExecutedInvocations executedInvocations = testDriver.runSheets(SSNTestDriver.parseSheets(Arrays.asList(ssnJsonlStr)), lql, classUnderTest, 1, visitor).get(0).getExecutedInvocations();
+        LOG.debug("executed invocations\n{}", executedInvocations);
+        visitor.getActuationSheet().debug();
+        visitor.getAdaptedActuationSheet().debug();
+        Invocations invocations = executedInvocations.getInvocations();
+
+        assertEquals(2, invocations.getSequence().size());
+
+        System.out.println(new String((byte[]) executedInvocations.getExecutedInvocation(1).getOutput().getValue()));
+
+        assertEquals(invocations.getEval().resolveClass("Base64"), invocations.getInvocation(0).getTargetClass());
+        assertEquals(0, invocations.getInvocation(0).getParameters().size());
+        assertEquals(invocations.getEval().resolveClass("Base64"), invocations.getInvocation(1).getTargetClass());
+        assertEquals(1, invocations.getInvocation(1).getParameters().size());
+        // test oracle values (first column)
+        assertTrue(invocations.getInvocation(0).getExpectedOutput().isUndefined());
+        assertTrue(invocations.getInvocation(1).getExpectedOutput().isUndefined());
+
+        assertEquals("SGVsbG8gV29ybGQh", new String((byte[]) executedInvocations.getExecutedInvocation(1).getOutput().getValue()));
+
+    }
+
     private ObjectMapperVisitor createVisitor() {
         ObjectMapperVisitor visitor = new ObjectMapperVisitor(new GsonMapper());
 //        InvocationVisitor invocationVisitor = new CompositeInvocationVisitor(
