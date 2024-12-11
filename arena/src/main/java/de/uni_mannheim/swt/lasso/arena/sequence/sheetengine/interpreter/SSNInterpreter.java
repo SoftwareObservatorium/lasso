@@ -10,6 +10,7 @@ import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.eval.Eva
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocation.CodeInvocation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocation.InstanceInvocation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocation.MethodInvocation;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.TestInvocation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.CodeExpressionUtils;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.FAMarker;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.MemberResolutionUtils;
@@ -50,54 +51,75 @@ public class SSNInterpreter {
      * Interpret sheet specifications.
      *
      * @param parsedSheet
-     * @param interfaceSpecificationMap
      * @return
      */
-    public Invocations interpret(ParsedSheet parsedSheet, Map<String, InterfaceSpecification> interfaceSpecificationMap) {
-        return interpret(parsedSheet, interfaceSpecificationMap, SSNInterpreter.class.getClassLoader());
+    public Invocations interpret(ParsedSheet parsedSheet) {
+        return interpret(parsedSheet, SSNInterpreter.class.getClassLoader(), new TestInvocation(parsedSheet.getName(), ""));
     }
 
     /**
      * Interpret sheet specifications.
      *
      * @param parsedSheet
-     * @param interfaceSpecificationMap
+     * @param testInvocation
+     * @return
+     */
+    public Invocations interpret(ParsedSheet parsedSheet, TestInvocation testInvocation) {
+        return interpret(parsedSheet, SSNInterpreter.class.getClassLoader(), testInvocation);
+    }
+
+    /**
+     * Interpret sheet specifications.
+     *
+     * @param parsedSheet
+     * @param classUnderTest
+     * @param testInvocation
+     * @return
+     */
+    public Invocations interpret(ParsedSheet parsedSheet, ClassUnderTest classUnderTest, TestInvocation testInvocation) {
+        return interpret(parsedSheet, classUnderTest.getProject().getContainer(), testInvocation);
+    }
+
+    /**
+     * Interpret sheet specifications.
+     *
+     * @param parsedSheet
      * @param classUnderTest
      * @return
      */
-    public Invocations interpret(ParsedSheet parsedSheet, Map<String, InterfaceSpecification> interfaceSpecificationMap, ClassUnderTest classUnderTest) {
-        return interpret(parsedSheet, interfaceSpecificationMap, classUnderTest.getProject().getContainer());
+    public Invocations interpret(ParsedSheet parsedSheet, ClassUnderTest classUnderTest) {
+        return interpret(parsedSheet, classUnderTest.getProject().getContainer(), new TestInvocation(parsedSheet.getName(), ""));
     }
 
     /**
      * Interpret
      *
      * @param parsedSheet
-     * @param interfaceSpecificationMap
      * @param classLoader
+     * @param testInvocation
      * @return
      */
-    public Invocations interpret(ParsedSheet parsedSheet, Map<String, InterfaceSpecification> interfaceSpecificationMap, ClassLoader classLoader) {
+    public Invocations interpret(ParsedSheet parsedSheet, ClassLoader classLoader, TestInvocation testInvocation) {
         // our interpreter that holds signatures on the fly for resolution
         Eval eval = new BshEval();
         eval.setClassLoader(classLoader);
 
-        return interpret(parsedSheet, interfaceSpecificationMap, eval);
+        return interpret(parsedSheet, testInvocation, eval);
     }
 
     /**
      * Interpret sheet specifications.
      *
      * @param parsedSheet
-     * @param interfaceSpecificationMap
+     * @param testInvocation
      * @param eval
      * @return
      */
-    public Invocations interpret(ParsedSheet parsedSheet, Map<String, InterfaceSpecification> interfaceSpecificationMap, Eval eval) {
+    public Invocations interpret(ParsedSheet parsedSheet, TestInvocation testInvocation, Eval eval) {
         // all LQL specs to Java (here classes)
-        Map<Member, MethodSignature> resolvedMappings = lqlToJava(eval, interfaceSpecificationMap);
+        Map<Member, MethodSignature> resolvedMappings = lqlToJava(eval, parsedSheet.getInterfaceSpecification());
 
-        Invocations invocations = new Invocations(interfaceSpecificationMap, parsedSheet, resolvedMappings, eval);
+        Invocations invocations = new Invocations(parsedSheet, testInvocation, resolvedMappings, eval);
 
         // now build the call sequence
         for(ParsedRow row : parsedSheet.getRows()) {
@@ -210,22 +232,6 @@ public class SSNInterpreter {
         }
 
         return executedInvocations;
-    }
-
-    /**
-     * Translate LQL into a concrete Java class and return a mapping.
-     *
-     * @param eval
-     * @param interfaceSpecificationMap
-     * @return
-     */
-    Map<Member, MethodSignature> lqlToJava(Eval eval, Map<String, InterfaceSpecification> interfaceSpecificationMap) {
-        Map<Member, MethodSignature> mappings = new LinkedHashMap<>();
-        for(String clazz : interfaceSpecificationMap.keySet()) {
-            mappings.putAll(lqlToJava(eval, interfaceSpecificationMap.get(clazz)));
-        }
-
-        return mappings;
     }
 
     /**
@@ -514,13 +520,47 @@ public class SSNInterpreter {
             return new Parameter(coordinate, invocation.getTargetClass(), arg.getNodeValue().textValue(), null);
         }
 
+        // resolve sheet (test) parameter
+        if(arg.isTestParameter()) {
+            String value = arg.getNodeValue().textValue();
+            String param = StringUtils.substringAfter(value, "?");
+
+            LOG.debug("Found test parameter '{}'", param);
+
+            int i = -1;
+            for(int p = 0;  p < invocations.getParsedSheet().getSignature().getMethod().getInputNames().size(); p++) {
+                String inputName = invocations.getParsedSheet().getSignature().getMethod().getInputNames().get(p);
+                if(StringUtils.equals(inputName, param)) {
+                    i = p;
+                }
+            }
+
+            if(i < 0) {
+                throw new IllegalArgumentException("Cannot resolve parameter " + value);
+            }
+
+            TestInvocation testInvocation = invocations.getTestInvocation();
+            // FIXME needed: CodeExpressionUtils.cleanExpression(?)
+            Object[] inputValues = testInvocation.resolveInputParameters(eval);
+            Object inputValue = inputValues[i];
+            Class targetClass = resolveTargetClass(inputValue);
+
+            return new Parameter(targetClass, testInvocation.getInvocationExpression(), inputValue);
+        }
+
         // value expression to be evaluated
         String expression = CodeExpressionUtils.cleanExpression(arg.getNodeValue().asText());
 
         LOG.debug("expression = {}", expression);
         // can be any code expression
         Object output = CodeInvocation.evalCode(eval, expression);
-        Class targetClass = output == null ? null : output.getClass();
+        Class targetClass = resolveTargetClass(output);
+
+        return new Parameter(targetClass, expression, output);
+    }
+
+    Class resolveTargetClass(Object value) {
+        Class targetClass = value == null ? null : value.getClass();
         if(targetClass != null) {
             // FIXME convert primitive wrappers to primitives - is this reliable?
             if(ClassUtils.isPrimitiveWrapper(targetClass)) {
@@ -528,7 +568,7 @@ public class SSNInterpreter {
             }
         }
 
-        return new Parameter(targetClass, expression, output);
+        return targetClass;
     }
 
     /**

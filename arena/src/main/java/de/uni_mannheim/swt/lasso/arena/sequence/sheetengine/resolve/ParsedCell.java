@@ -1,6 +1,7 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  *
@@ -19,11 +20,7 @@ public class ParsedCell {
     }
 
     public boolean isValueReference() {
-        if(isString() && isValidCellReference(getNodeValue().textValue())) {
-            return true;
-        }
-
-        return false;
+        return isString() && isValidCellReference(getNodeValue().textValue());
     }
 
     public boolean isString() {
@@ -36,6 +33,10 @@ public class ParsedCell {
 
     public JsonNode getNodeValue() {
         return node;
+    }
+
+    public boolean isTestParameter() {
+        return isString() && StringUtils.startsWith(getNodeValue().textValue(), "?");
     }
 
     public static boolean isValidCellReference(String cell) {

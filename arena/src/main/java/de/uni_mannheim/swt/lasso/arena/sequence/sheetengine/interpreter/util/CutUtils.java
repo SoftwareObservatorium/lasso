@@ -74,7 +74,7 @@ public class CutUtils {
     }
 
     public static boolean isFaCut(Invocations invocations, Class targetClass) {
-        return invocations.getInterfaceSpecifications().containsKey(targetClass.getCanonicalName());
+        return invocations.getParsedSheet().getInterfaceSpecification().getClassName().equals(targetClass.getCanonicalName());
     }
 
     public static boolean isCut(ClassUnderTest classUnderTest, Class targetClass) throws ClassNotFoundException {

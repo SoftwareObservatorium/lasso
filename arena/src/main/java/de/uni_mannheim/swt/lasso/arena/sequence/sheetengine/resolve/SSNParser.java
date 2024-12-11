@@ -67,7 +67,7 @@ public class SSNParser {
             List<JsonNode> rowNodes = it.readAll();
 
             // read sheet name
-            JsonNode firstRowNode = rowNodes.get(0);
+//            JsonNode firstRowNode = rowNodes.get(0);
 //            if(firstRowNode.has("sheet")) {
 //                parsedSheet.setName(firstRowNode.get("sheet").textValue());
 //            }

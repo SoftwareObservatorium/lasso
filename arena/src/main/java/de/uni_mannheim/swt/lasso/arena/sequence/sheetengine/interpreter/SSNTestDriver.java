@@ -35,7 +35,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * SSN test driver.
@@ -75,6 +74,7 @@ public class SSNTestDriver {
         this.mavenRepository = mavenRepository;
     }
 
+    @Deprecated
     public static List<ParsedSheet> parseAll(List<SheetDto> sheets) throws IOException {
         SSNParser ssnParser = new SSNParser();
 
@@ -115,11 +115,14 @@ public class SSNTestDriver {
         return stimulusMatrix;
     }
 
+    @Deprecated
     public List<ActuationSheet> runSheets(List<ParsedSheet> parsedSheets, Class cutClass, int limitAdapters, InvocationVisitor executionListener) throws IOException {
         // FIXME artifacts
         return runSheets(parsedSheets, CutUtils.createExample(cutClass), limitAdapters, executionListener);
     }
 
+
+    @Deprecated
     public List<ActuationSheet> runSheet(List<ParsedSheet> parsedSheets, String cutClass, List<String> artifacts, int limitAdapters, InvocationVisitor executionListener) throws IOException {
         // artifacts
         String artifact = null;
@@ -170,7 +173,7 @@ public class SSNTestDriver {
                 // prepare executable sheet
                 Test test = testInvocation.getKey();
                 ParsedSheet parsedSheet = test.getParsedSheet();
-                Invocations invocations = interpreter.interpret(parsedSheet, Collections.singletonMap(parsedSheet.getInterfaceSpecification().getClassName(), parsedSheet.getInterfaceSpecification()), classUnderTest);
+                Invocations invocations = interpreter.interpret(parsedSheet, classUnderTest, testInvocation.getValue());
 
                 for (AdaptedImplementation adaptedImplementation : adaptedImplementations) {
                     executionListener.visitBeforeExecution(adaptedImplementation);
@@ -189,6 +192,7 @@ public class SSNTestDriver {
         return stimulusResponseMatrix;
     }
 
+    @Deprecated
     public List<ActuationSheet> runSheets(List<ParsedSheet> parsedSheets, ClassUnderTest classUnderTest, int limitAdapters, InvocationVisitor executionListener) throws IOException {
         CandidatePool pool = new CandidatePool(getMavenRepository(), Collections.singletonList(classUnderTest));
 
@@ -216,7 +220,7 @@ public class SSNTestDriver {
         // prepare executable sheets
         List<Invocations> invocationsList = new ArrayList<>(parsedSheets.size());
         for (ParsedSheet parsedSheet : parsedSheets) {
-            Invocations invocations = interpreter.interpret(parsedSheet, Collections.singletonMap(parsedSheet.getInterfaceSpecification().getClassName(), parsedSheet.getInterfaceSpecification()), classUnderTest);
+            Invocations invocations = interpreter.interpret(parsedSheet, classUnderTest);
             invocationsList.add(invocations);
         }
 
@@ -241,6 +245,65 @@ public class SSNTestDriver {
         return actuationSheets;
     }
 
+    public StimulusResponseMatrix<Test, AdaptedImplementation, ExecutedInvocations> mutateAndRunSheets(StimulusResponseMatrix<Test, ClassUnderTest, TestInvocation> stimulusMatrix, int limitAdapters, InvocationVisitor executionListener) throws IOException {
+        // classes under test
+        Set<ClassUnderTest> classesUnderTest = stimulusMatrix.getTable().columnKeySet();
+        CandidatePool pool = new CandidatePool(getMavenRepository(), new ArrayList<>(classesUnderTest));
+        pool.initProjects();
+
+        // create mutants
+        for(ClassUnderTest classUnderTest : classesUnderTest) {
+            // Pitest
+            Pitest pitest = new Pitest(classUnderTest);
+            Map<ClassUnderTest, MutationDetails> mutants = createMutants(pool, classUnderTest, pitest, true, "original");
+
+            // automatically resolves project-related artifacts
+            pool.initProjects();
+        }
+
+        SSNInterpreter interpreter = new SSNInterpreter();
+
+        // SRM
+        StimulusResponseMatrix<Test, AdaptedImplementation, ExecutedInvocations> stimulusResponseMatrix = new StimulusResponseMatrix<>();
+
+        for(ClassUnderTest classUnderTest : classesUnderTest) {
+            for (ClassUnderTest variant : pool.getClassesUnderTest()) {
+                Map<Test, TestInvocation> testInvocationMap = stimulusMatrix.getTable().column(classUnderTest);
+                // take some random test to get interface
+                Test randomTest = testInvocationMap.keySet().iterator().next();
+
+                // get interface
+                ParsedSheet randomSheet = randomTest.getParsedSheet();
+                InterfaceSpecification interfaceSpecification = randomSheet.getInterfaceSpecification();
+
+                List<AdaptedImplementation> adaptedImplementations = adaptationStrategy.adapt(interfaceSpecification, variant, limitAdapters);
+
+                for(Map.Entry<Test, TestInvocation> testInvocation : testInvocationMap.entrySet()) {
+                    // prepare executable sheet
+                    Test test = testInvocation.getKey();
+                    ParsedSheet parsedSheet = test.getParsedSheet();
+                    Invocations invocations = interpreter.interpret(parsedSheet, variant, testInvocation.getValue());
+
+                    for (AdaptedImplementation adaptedImplementation : adaptedImplementations) {
+                        executionListener.visitBeforeExecution(adaptedImplementation);
+
+                        // run
+                        ExecutedInvocations executedInvocations = interpreter.run(invocations, adaptedImplementation, executionListener);
+
+                        executionListener.visitAfterExecution(adaptedImplementation);
+
+                        // add to SRM
+                        stimulusResponseMatrix.put(test, adaptedImplementation, executedInvocations);
+                    }
+                }
+            }
+        }
+
+        return stimulusResponseMatrix;
+    }
+
+
+    @Deprecated
     public List<ActuationSheet> mutateAndRunSheets(List<ParsedSheet> parsedSheets, ClassUnderTest classUnderTest, int limitAdapters, InvocationVisitor executionListener) throws IOException {
         CandidatePool pool = new CandidatePool(getMavenRepository(), Collections.singletonList(classUnderTest));
         pool.initProjects();
@@ -261,7 +324,7 @@ public class SSNTestDriver {
             // prepare executable sheets
             List<Invocations> invocationsList = new ArrayList<>(parsedSheets.size());
             for (ParsedSheet parsedSheet : parsedSheets) {
-                Invocations invocations = interpreter.interpret(parsedSheet, Collections.singletonMap(parsedSheet.getInterfaceSpecification().getClassName(), parsedSheet.getInterfaceSpecification()), variant);
+                Invocations invocations = interpreter.interpret(parsedSheet, variant);
                 invocationsList.add(invocations);
             }
 
@@ -289,6 +352,8 @@ public class SSNTestDriver {
         return actuationSheets;
     }
 
+
+    @Deprecated
     public List<ActuationSheet> mutateAndRunSheets(List<ParsedSheet> parsedSheets, String cutClass, List<String> artifacts, int limitAdapters, InvocationVisitor executionListener) throws IOException {
         // artifacts
         String artifact = null;

@@ -6,6 +6,7 @@ import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.eval.Eva
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocation.CodeInvocation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocation.InstanceInvocation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocation.MethodInvocation;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.TestInvocation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.ParsedSheet;
 
 import java.lang.reflect.Member;
@@ -20,16 +21,16 @@ import java.util.Map;
  */
 public class Invocations {
 
-    private final Map<String, InterfaceSpecification> interfaceSpecifications;
     private final ParsedSheet parsedSheet;
     private final Eval eval;
     private final Map<Member, MethodSignature> resolvedMappings;
+    private final TestInvocation testInvocation;
 
     private List<Invocation> sequence = new ArrayList<>();
 
-    public Invocations(Map<String, InterfaceSpecification> interfaceSpecifications, ParsedSheet parsedSheet, Map<Member, MethodSignature> resolvedMappings, Eval eval) {
-        this.interfaceSpecifications = interfaceSpecifications;
+    public Invocations(ParsedSheet parsedSheet, TestInvocation testInvocation, Map<Member, MethodSignature> resolvedMappings, Eval eval) {
         this.parsedSheet = parsedSheet;
+        this.testInvocation = testInvocation;
         this.resolvedMappings = resolvedMappings;
         this.eval = eval;
     }
@@ -78,10 +79,6 @@ public class Invocations {
         return eval;
     }
 
-    public Map<String, InterfaceSpecification> getInterfaceSpecifications() {
-        return interfaceSpecifications;
-    }
-
     public Map<Member, MethodSignature> getResolvedMappings() {
         return resolvedMappings;
     }
@@ -92,5 +89,9 @@ public class Invocations {
 
     public ParsedSheet getParsedSheet() {
         return parsedSheet;
+    }
+
+    public TestInvocation getTestInvocation() {
+        return testInvocation;
     }
 }

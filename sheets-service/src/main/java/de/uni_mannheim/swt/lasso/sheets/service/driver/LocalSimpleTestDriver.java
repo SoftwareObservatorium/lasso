@@ -1,18 +1,25 @@
 package de.uni_mannheim.swt.lasso.sheets.service.driver;
 
+import com.google.common.collect.Table;
+import de.uni_mannheim.swt.lasso.arena.ClassUnderTest;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
 import de.uni_mannheim.swt.lasso.arena.classloader.coverage.pitest.PitestContainer;
 import de.uni_mannheim.swt.lasso.arena.repository.MavenRepository;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.*;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.event.CompositeInvocationVisitor;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.event.JaCoCoListener;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.StimulusResponseMatrix;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.TestInvocation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.dto.SheetDto;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.dto.SheetInvocationDto;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize.GsonMapper;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize.ObjectMapperVisitor;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.CutUtils;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.ParsedSheet;
 import de.uni_mannheim.swt.lasso.sheets.service.dto.*;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +28,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  *
@@ -44,8 +50,24 @@ public class LocalSimpleTestDriver implements TestDriver {
 
         List<SheetSpec> sheetSpecs = request.getSheets();
 
-        // parse stimulus sheets
-        List<ParsedSheet> parsedSheets = SSNTestDriver.parseAll(sheetSpecs.stream().map(s -> new SheetDto(s.getSignature(), s.getBody(), s.getInterfaceSpecification())).collect(Collectors.toList()));
+        // sheets
+        List<SheetDto> sheetDtos = sheetSpecs.stream().map(s -> new SheetDto(s.getSignature(), s.getBody(), s.getInterfaceSpecification())).toList();
+
+        // cuts
+        List<ClassUnderTest> classesUnderTest = request.getClassesUnderTest().stream().map(cut -> {
+            // artifacts
+            String artifact = null;
+            if (CollectionUtils.isNotEmpty(cut.getArtifacts())) {
+                artifact = cut.getArtifacts().get(0);
+            }
+            return CutUtils.createExample(cut.getClassName(), artifact);
+        }).toList();
+
+        // FIXME for now, generate invocations -- get from request
+        List<SheetInvocationDto> sheetInvocations = sheetDtos.stream().map(s -> new SheetInvocationDto(StringUtils.substringBefore(s.getSignature(), "("), "")).toList();
+        // SM
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, ClassUnderTest, TestInvocation> stimulusMatrix = SSNTestDriver.parseStimulusMatrix(
+                sheetDtos, classesUnderTest, sheetInvocations);
 
         // driver
         SSNTestDriver testDriver = new SSNTestDriver();
@@ -77,79 +99,83 @@ public class LocalSimpleTestDriver implements TestDriver {
         // adapters
         int adapters = 1;
 
-        // for each CUT
-        for(ClassUnderTestSpec classUnderTestSpec : request.getClassesUnderTest()) {
-            List<SheetSpec> actuationSheetResults = new ArrayList<>(sheetSpecs.size());
-            List<SheetSpec> adaptedActuationSheetResults = new ArrayList<>(sheetSpecs.size());
+        // SRM
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> stimulusResponseMatrix;
 
-            List<ActuationSheet> actuationSheets;
-            if(mutation) {
-                actuationSheets = testDriver.mutateAndRunSheets(parsedSheets, classUnderTestSpec.getClassName(), classUnderTestSpec.getArtifacts(), adapters, invocationVisitor);
-            } else {
-                actuationSheets = testDriver.runSheet(parsedSheets, classUnderTestSpec.getClassName(), classUnderTestSpec.getArtifacts(), adapters, invocationVisitor);
-            }
-
-            for(ActuationSheet actuationSheet : actuationSheets) {
-                try {
-                    ExecutedInvocations executedInvocations = actuationSheet.getExecutedInvocations();
-                    LOG.debug("executed invocations\n{}", executedInvocations);
-
-                    List<Sheet<Integer, Integer, String>> sheets = actuationSheet.toSheetData(gsonMapper);
-
-                    Sheet<Integer, Integer, String> actuationSheetData = sheets.get(0);
-                    Sheet<Integer, Integer, String> adaptedActuationSheetData = sheets.get(1);
-
-                    actuationSheetData.debug();
-                    adaptedActuationSheetData.debug();
-
-                    LOG.info("JSON actuationSheet\n{}", actuationSheetData.toJsonl());
-                    LOG.info("JSON adaptedActuationSheet\n{}", adaptedActuationSheetData.toJsonl());
-
-                    ParsedSheet parsedSheet = actuationSheet.getExecutedInvocations().getInvocations().getParsedSheet();
-
-                    SheetSpec actuationSheetResult = new SheetSpec();
-                    actuationSheetResult.setSignature(parsedSheet.getSignature().toLQL());
-                    actuationSheetResult.setInterfaceSpecification(parsedSheet.getInterfaceSpecification().toLQL());
-                    actuationSheetResult.setBody(actuationSheetData.toJsonl());
-                    actuationSheetResult.setImplementation("ABSTRACTION");
-
-                    actuationSheetResults.add(actuationSheetResult);
-
-                    SheetSpec adaptedActuationSheetResult = new SheetSpec();
-                    adaptedActuationSheetResult.setSignature(parsedSheet.getSignature().toLQL());
-                    adaptedActuationSheetResult.setInterfaceSpecification(parsedSheet.getInterfaceSpecification().toLQL());
-                    adaptedActuationSheetResult.setBody(adaptedActuationSheetData.toJsonl());
-
-                    if(mutation && !actuationSheet.getAdaptedImplementation().getAdaptee().getVariantId().equals("original")) {
-                        PitestContainer pitestContainer = (PitestContainer) actuationSheet.getAdaptedImplementation().getAdaptee().getProject().getContainer();
-                        LOG.debug("Mutant {}", pitestContainer.getMutant().getDetails());
-
-                        String mutantId = pitestContainer.getMutant().getDetails().getId().toString();
-
-                        AdaptedImplementation adaptedImplementation = actuationSheet.getAdaptedImplementation();
-                        adaptedActuationSheetResult.setImplementation(adaptedImplementation.getAdaptee().getFullId() + "|" + adaptedImplementation.getAdapterId() + "|" + mutantId);
-                    } else {
-                        AdaptedImplementation adaptedImplementation = actuationSheet.getAdaptedImplementation();
-                        adaptedActuationSheetResult.setImplementation(adaptedImplementation.getAdaptee().getFullId() + "|" + adaptedImplementation.getAdapterId());
-                    }
-
-                    adaptedActuationSheetResults.add(adaptedActuationSheetResult);
-                } catch (Throwable e) {
-                    LOG.warn("execution failed", e);
-
-                    throw new RuntimeException(e);
-                }
-            }
-
-            TestResult testResult = new TestResult();
-            testResult.setClassUnderTestSpec(classUnderTestSpec);
-            testResult.setExecutionId("FIXME"); // FIXME
-            testResult.setStatus("SUCCESS"); // FIXME
-            testResult.setActuationSheets(actuationSheetResults);
-            testResult.setAdaptedActuationSheets(adaptedActuationSheetResults);
-
-            testResults.add(testResult);
+        if(mutation) {
+            stimulusResponseMatrix = testDriver.mutateAndRunSheets(stimulusMatrix, adapters, invocationVisitor);
+        } else {
+            stimulusResponseMatrix = testDriver.runSheets(stimulusMatrix, adapters, invocationVisitor);
         }
+
+        // for each cell
+        List<SheetSpec> actuationSheetResults = new ArrayList<>(sheetSpecs.size());
+        List<SheetSpec> adaptedActuationSheetResults = new ArrayList<>(sheetSpecs.size());
+        for(Table.Cell<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> cell : stimulusResponseMatrix.getTable().cellSet()) {
+
+            try {
+                ExecutedInvocations executedInvocations = cell.getValue();
+                LOG.debug("executed invocations\n{}", executedInvocations);
+
+                ActuationSheet actuationSheet = new ActuationSheet();
+                actuationSheet.setAdaptedImplementation(cell.getColumnKey());
+                actuationSheet.setExecutedInvocations(executedInvocations);
+
+                List<Sheet<Integer, Integer, String>> sheets = actuationSheet.toSheetData(gsonMapper);
+
+                Sheet<Integer, Integer, String> actuationSheetData = sheets.get(0);
+                Sheet<Integer, Integer, String> adaptedActuationSheetData = sheets.get(1);
+
+                actuationSheetData.debug();
+                adaptedActuationSheetData.debug();
+
+                LOG.info("JSON actuationSheet\n{}", actuationSheetData.toJsonl());
+                LOG.info("JSON adaptedActuationSheet\n{}", adaptedActuationSheetData.toJsonl());
+
+                ParsedSheet parsedSheet = actuationSheet.getExecutedInvocations().getInvocations().getParsedSheet();
+
+                SheetSpec actuationSheetResult = new SheetSpec();
+                actuationSheetResult.setSignature(parsedSheet.getSignature().toLQL());
+                actuationSheetResult.setInterfaceSpecification(parsedSheet.getInterfaceSpecification().toLQL());
+                actuationSheetResult.setBody(actuationSheetData.toJsonl());
+                actuationSheetResult.setImplementation("ABSTRACTION");
+
+                actuationSheetResults.add(actuationSheetResult);
+
+                SheetSpec adaptedActuationSheetResult = new SheetSpec();
+                adaptedActuationSheetResult.setSignature(parsedSheet.getSignature().toLQL());
+                adaptedActuationSheetResult.setInterfaceSpecification(parsedSheet.getInterfaceSpecification().toLQL());
+                adaptedActuationSheetResult.setBody(adaptedActuationSheetData.toJsonl());
+
+                if(mutation && !actuationSheet.getAdaptedImplementation().getAdaptee().getVariantId().equals("original")) {
+                    PitestContainer pitestContainer = (PitestContainer) actuationSheet.getAdaptedImplementation().getAdaptee().getProject().getContainer();
+                    LOG.debug("Mutant {}", pitestContainer.getMutant().getDetails());
+
+                    String mutantId = pitestContainer.getMutant().getDetails().getId().toString();
+
+                    AdaptedImplementation adaptedImplementation = actuationSheet.getAdaptedImplementation();
+                    adaptedActuationSheetResult.setImplementation(adaptedImplementation.getAdaptee().getFullId() + "|" + adaptedImplementation.getAdapterId() + "|" + mutantId);
+                } else {
+                    AdaptedImplementation adaptedImplementation = actuationSheet.getAdaptedImplementation();
+                    adaptedActuationSheetResult.setImplementation(adaptedImplementation.getAdaptee().getFullId() + "|" + adaptedImplementation.getAdapterId());
+                }
+
+                adaptedActuationSheetResults.add(adaptedActuationSheetResult);
+            } catch (Throwable e) {
+                LOG.warn("execution failed", e);
+
+                throw new RuntimeException(e);
+            }
+        }
+
+        TestResult testResult = new TestResult();
+        testResult.setClassUnderTestSpec(null); // FIXME
+        testResult.setExecutionId("FIXME"); // FIXME
+        testResult.setStatus("SUCCESS"); // FIXME
+        testResult.setActuationSheets(actuationSheetResults);
+        testResult.setAdaptedActuationSheets(adaptedActuationSheetResults);
+
+        testResults.add(testResult);
 
         // TODO create SRMs per metric (cf. slides)
         if(jacoco) {
