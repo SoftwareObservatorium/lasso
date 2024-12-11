@@ -24,6 +24,7 @@ import de.uni_mannheim.swt.lasso.core.model.MethodSignature;
 import de.uni_mannheim.swt.lasso.lql.LQLBaseListener;
 import de.uni_mannheim.swt.lasso.lql.LQLParser;
 import de.uni_mannheim.swt.lasso.lql.parser.LQLParseResult;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,27 +77,47 @@ public class InterfaceListener extends LQLBaseListener {
         if(ctx.inputs() != null) {
             //method.setInputs(Arrays.asList(StringUtils.split(ctx.inputs().getText(), ",")));
             List<String> inputs = new ArrayList<>(ctx.inputs().parameters().getChildCount());
-
-            // FIXME add type parameters
-            //ctx.inputs().parameters().typeparam().get(0).typeparam();
+            List<String> inputNames = new ArrayList<>(ctx.inputs().parameters().getChildCount());
 
             for(int i = 0; i < ctx.inputs().parameters().getChildCount(); i++) {
                 if(!ctx.inputs().parameters().getChild(i).getText().equals(",")) {
-                    inputs.add(ctx.inputs().parameters().getChild(i).getText());
+                    String text = ctx.inputs().parameters().getChild(i).getText();
+                    if(StringUtils.contains(text, "=")) {
+                        String[] parts = StringUtils.split(text, "=");
+                        inputs.add(parts[1]);
+                        inputNames.add(parts[0]);
+                    } else {
+                        inputs.add(text);
+                    }
                 }
             }
             method.setInputs(inputs);
+            if(CollectionUtils.isNotEmpty(inputNames)) {
+                method.setInputNames(inputNames);
+            }
         }
 
         if(ctx.outputs() != null) {
             //method.setOutputs(Arrays.asList(StringUtils.split(ctx.outputs().getText(), ",")));
             List<String> outputs = new ArrayList<>(ctx.outputs().parameters().getChildCount());
+            List<String> outputNames = new ArrayList<>(ctx.outputs().parameters().getChildCount());
+
             for(int i = 0; i < ctx.outputs().parameters().getChildCount(); i++) {
                 if(!ctx.outputs().parameters().getChild(i).getText().equals(",")) {
-                    outputs.add(ctx.outputs().parameters().getChild(i).getText());
+                    String text = ctx.outputs().parameters().getChild(i).getText();
+                    if(StringUtils.contains(text, "=")) {
+                        String[] parts = StringUtils.split(text, "=");
+                        outputs.add(parts[1]);
+                        outputNames.add(parts[0]);
+                    } else {
+                        outputs.add(text);
+                    }
                 }
             }
             method.setOutputs(outputs);
+            if(CollectionUtils.isNotEmpty(outputNames)) {
+                method.setOutputNames(outputNames);
+            }
         } else {
             method.setOutputs(Collections.singletonList("void"));
         }

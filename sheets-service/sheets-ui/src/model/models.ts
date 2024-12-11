@@ -5,7 +5,7 @@ export class SheetRequest {
 }
 
 export class SheetSpec {
-    name!: string
+    signature!: string
     interfaceSpecification!: string
     body!: string
     implementation!: string
@@ -49,6 +49,6 @@ export class User {
 // ui models
 
 export class StimulusSheet {
-    name!: string;
+    signature!: string;
     data!: any[][];
 }

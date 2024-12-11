@@ -2,6 +2,7 @@ package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.seriali
 
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.*;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.event.CompositeInvocationVisitor;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.dto.SheetDto;
 import examples_new.StackEmptyConstructorExample;
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
@@ -45,7 +46,7 @@ public class GsonMapperTest {
         Class cutClass = StackEmptyConstructorExample.class;
 
         SSNTestDriver testDriver = new SSNTestDriver();
-        ExecutedInvocations executedInvocations = testDriver.runSheets(SSNTestDriver.parseSheets(Arrays.asList(ssnJsonlStr)), lql, cutClass, 1, invocationVisitor).get(0).getExecutedInvocations();
+        ExecutedInvocations executedInvocations = testDriver.runSheets(SSNTestDriver.parseAll(Arrays.asList(new SheetDto("test()", ssnJsonlStr, lql))), cutClass, 1, invocationVisitor).get(0).getExecutedInvocations();
 
         Sheet<Integer, Integer, String> actuationSheet = visitor.getActuationSheet();
         Sheet<Integer, Integer, String> adaptedActuationSheet = visitor.getAdaptedActuationSheet();

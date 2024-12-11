@@ -1,5 +1,8 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve;
 
+import de.uni_mannheim.swt.lasso.arena.search.InterfaceSpecification;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.SheetSignature;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,8 +12,10 @@ import java.util.List;
  */
 public class ParsedSheet {
 
-    private String name;
+    private SheetSignature signature;
     private List<ParsedRow> rows = new ArrayList<>();
+
+    private InterfaceSpecification interfaceSpecification;
 
     public List<ParsedRow> getRows() {
         return rows;
@@ -21,11 +26,7 @@ public class ParsedSheet {
     }
 
     public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
+        return signature.getName();
     }
 
     public ParsedCell resolve(String cellRef) {
@@ -34,5 +35,21 @@ public class ParsedSheet {
         int[] reference = SheetResolver.resolveCellReference(cellRef);
 
         return rows.get(reference[0]).getCells().get(reference[1]);
+    }
+
+    public SheetSignature getSignature() {
+        return signature;
+    }
+
+    public void setSignature(SheetSignature signature) {
+        this.signature = signature;
+    }
+
+    public InterfaceSpecification getInterfaceSpecification() {
+        return interfaceSpecification;
+    }
+
+    public void setInterfaceSpecification(InterfaceSpecification interfaceSpecification) {
+        this.interfaceSpecification = interfaceSpecification;
     }
 }

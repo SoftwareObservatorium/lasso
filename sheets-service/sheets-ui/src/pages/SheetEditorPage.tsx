@@ -7,8 +7,6 @@ import ClassUnderTest from '../components/cut/ClassUnderTest';
 import { ClassUnderTestSpec, SheetRequest, SheetResponse, SheetSpec, StimulusSheet, TestResult } from '../model/models';
 import SheetService from '../services/SheetService';
 
-import Grid from '@mui/material/Grid2';
-
 
 const lqlCode =
   `Stack {
@@ -26,7 +24,7 @@ function loadDefaultSheet() {
 `
 
   const sheet: StimulusSheet = new StimulusSheet()
-  sheet.name = "test1"
+  sheet.signature = "test1()"
   sheet.data = loadSheetJsonl(jsonl)
 
   return sheet
@@ -156,7 +154,7 @@ function SheetEditorPage() {
     `
     
     const sheet: StimulusSheet = new StimulusSheet()
-    sheet.name = "test1"
+    sheet.signature = "test1()"
     sheet.data = loadSheetJsonl(jsonl)
 
     //let example: SheetRequest = {"sheets":[{"name":"test5","interfaceSpecification":"Stack {\n    push(java.lang.String)->java.lang.String\n    size()->int\n}","body":"{\"sheet\":\"Sheet 1\",\"header\":\"Row 1\",\"cells\":{\"A1\":{},\"B1\":\"create\",\"C1\":\"Stack\"}}\n{\"sheet\":\"Sheet 1\",\"header\":\"Row 2\",\"cells\":{\"A2\":{},\"B2\":\"$eval\",\"C2\":\"Arrays.toString(new char[]{'a', 'b'})\"}}\n{\"sheet\":\"Sheet 1\",\"header\":\"Row 3\",\"cells\":{\"A3\":{},\"B3\":\"push\",\"C3\":\"A1\",\"D3\":\"A2\"}}\n{\"sheet\":\"Sheet 1\",\"header\":\"Row 4\",\"cells\":{\"A4\":1,\"B4\":\"size\",\"C4\":\"A1\"}}"}],"classesUnderTest":[{"className":"java.util.Stack","artifacts":[""]}]}
@@ -173,7 +171,7 @@ function SheetEditorPage() {
 
     // update sheets
     const mySheet: StimulusSheet = new StimulusSheet()
-    sheet.name = "test5"
+    sheet.signature = "test5()"
     sheet.data = loadSheetJsonl(jsonl)
 
     setStimulusSheets([mySheet])
@@ -188,7 +186,7 @@ function SheetEditorPage() {
 
   const addStimulusSheet = () => {
     const stimulusSheet: StimulusSheet = new StimulusSheet()
-    stimulusSheet.name = `test${stimulusSheets.length + 1}`
+    stimulusSheet.signature = `test${stimulusSheets.length + 1}()`
 
     // create same dimensions based on existing
     const sampleSheet = stimulusSheets[0]
@@ -197,12 +195,12 @@ function SheetEditorPage() {
     setStimulusSheets([...stimulusSheets, stimulusSheet]);
   }
 
-  const stimulusSheetChangeHandler = (sheetId: number, sheetName: string, sheetData: Matrix<CellBase<any>>) => {
+  const stimulusSheetChangeHandler = (sheetId: number, sheetSignature: string, sheetData: Matrix<CellBase<any>>) => {
     console.log("changed " + sheetId)
 
     const nStimulusSheets = [...stimulusSheets];
     const stimulusSheet: StimulusSheet = new StimulusSheet()
-    stimulusSheet.name = sheetName
+    stimulusSheet.signature = sheetSignature
     stimulusSheet.data = sheetData
     nStimulusSheets[sheetId] = stimulusSheet
 
@@ -211,7 +209,7 @@ function SheetEditorPage() {
 
   // execute sheet
   const executeAllHandler = () => {
-      //console.log("executed sheet '" + sheetName + "' data: " + sheetData)
+      //console.log("executed sheet '" + sheetSignature + "' data: " + sheetData)
       console.log("lql handler " + interfaceSpecification)
       console.log("cut handler " + JSON.stringify(classUnderTestSpec))
   
@@ -225,10 +223,10 @@ function SheetEditorPage() {
       console.log("total number of sheets " + stimulusSheets.length)
 
       stimulusSheets.forEach( (stimulusSheet) => {
-        console.log("sheet " + stimulusSheet.name)
+        console.log("sheet " + stimulusSheet.signature)
 
         const sheet = new SheetSpec()
-        sheet.name = stimulusSheet.name
+        sheet.signature = stimulusSheet.signature
         sheet.interfaceSpecification = interfaceSpecification
         const bodyJsonl = toSheetJSONL(stimulusSheet.data)
         sheet.body = bodyJsonl
@@ -383,7 +381,7 @@ function SheetEditorPage() {
         <Divider>Stimulus Sheets</Divider>
         
         {stimulusSheets.map( (stimulusSheet, index) => (
-          <Sheet sheetId={index} defaultSheetName={stimulusSheet.name} sheetData={stimulusSheet.data} changeHandler={stimulusSheetChangeHandler} />
+          <Sheet sheetId={index} defaultSheetSignature={stimulusSheet.signature} sheetData={stimulusSheet.data} changeHandler={stimulusSheetChangeHandler} />
         ))}
 
         <Divider>Actions</Divider>
@@ -421,7 +419,7 @@ function SheetEditorPage() {
                   <Box component="section" sx={{ p: 2, border: '1px dashed grey' }}>
                   <Alert severity="success">Actuation Sheet (based on Interface Specification)</Alert>
                   {testResult.actuationSheets.map((sheet) => (
-                    <Sheet isResult={true} defaultSheetName={sheet.name} sheetData={() => parseActuationSheet(sheet)} changeHandler={() => console.log("not implemented")} />
+                    <Sheet isResult={true} defaultSheetSignature={sheet.signature} sheetData={() => parseActuationSheet(sheet)} changeHandler={() => console.log("not implemented")} />
                   ))
                   }
                 </Box>
@@ -430,7 +428,7 @@ function SheetEditorPage() {
                   {testResult.adaptedActuationSheets.map((sheet) => (
                     <>
                     <h4>Implementation {sheet.implementation}</h4>
-                                        <Sheet isResult={true} defaultSheetName={sheet.name} sheetData={() => parseAdaptedActuationSheet(sheet)} changeHandler={() => console.log("not implemented")} />
+                                        <Sheet isResult={true} defaultSheetSignature={sheet.signature} sheetData={() => parseAdaptedActuationSheet(sheet)} changeHandler={() => console.log("not implemented")} />
                     </>
                   ))
                   }

@@ -1,6 +1,5 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.eval;
 
-import com.google.gson.Gson;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.ParsedCell;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.ParsedSheet;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.SSNParser;
@@ -27,7 +26,7 @@ public class BshEvalTest {
                 {"sheet": "Sheet 1", "header": "Row 2", "cells": {"A2": {}, "B2": "encode", "C2": "A1", "D2": "new byte[]{72,101,108,108,111,32,87,111,114,108,100,33}"}}
                 """;
         SSNParser ssnParser = new SSNParser();
-        ParsedSheet parsedSheet = ssnParser.parseJsonl(ssnJsonlStr);
+        ParsedSheet parsedSheet = ssnParser.parseJsonl(ssnJsonlStr, "test()", "Base64{encode(byte[])->byte[]}");
 
         ParsedCell cell = parsedSheet.resolve("D2");
 

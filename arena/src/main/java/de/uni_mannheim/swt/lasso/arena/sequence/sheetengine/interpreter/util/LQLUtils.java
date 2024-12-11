@@ -2,6 +2,7 @@ package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util;
 
 import de.uni_mannheim.swt.lasso.arena.search.InterfaceSpecification;
 import de.uni_mannheim.swt.lasso.arena.search.LQLMethodSignature;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.SheetSignature;
 import de.uni_mannheim.swt.lasso.core.model.Interface;
 import de.uni_mannheim.swt.lasso.core.model.MethodSignature;
 import de.uni_mannheim.swt.lasso.lql.parser.LQL;
@@ -82,6 +83,35 @@ public class LQLUtils {
         //}
 
         return parseResults;
+    }
+
+    public static SheetSignature lqlToSheetSignature(String lqlMethodSignature) throws IOException {
+        String lql = new StringBuilder()
+                .append("$ {")
+                .append(lqlMethodSignature)
+                .append("}")
+                .toString();
+
+        // LQL
+        LQLParseResult lqlParseResult = parseLQL(lql);
+
+        Interface system = lqlParseResult.getInterfaceSpecification();
+        String className = system.getName();
+
+        List<MethodSignature> methods = system.getMethods();
+        if (methods != null) {
+            for (MethodSignature method : methods) {
+                if (!method.isConstructor()) {
+                    SheetSignature sheetSignature = new SheetSignature(method);
+
+                    return sheetSignature;
+                } else {
+                    throw new IllegalArgumentException("Constructors are unsupported");
+                }
+            }
+        }
+
+        return null;
     }
 
     public static LQLParseResult parseLQL(String lql) throws IOException {

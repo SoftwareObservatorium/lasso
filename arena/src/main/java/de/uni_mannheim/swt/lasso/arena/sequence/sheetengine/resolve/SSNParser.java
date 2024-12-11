@@ -3,13 +3,19 @@ package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.uni_mannheim.swt.lasso.arena.search.InterfaceSpecification;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.SheetSignature;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.dto.SheetDto;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.LQLUtils;
+import org.apache.commons.lang3.Validate;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
- * Parser based on Sequence Sheet Notation (SSN)
+ * Parser based on Sequence Sheet Notation (SSN) using JSONL
  *
  * @author Marcus Kessel
  */
@@ -33,25 +39,38 @@ public class SSNParser {
         return mapper;
     }
 
+    public ParsedSheet parseJsonl(SheetDto sheetDto) throws IOException {
+        return parseJsonl(sheetDto.getSignature(), sheetDto.getBody(), sheetDto.getInterfaceSpecification());
+    }
+
     /**
-     * Parse JSONL
+     * Parse sheet data.
      *
-     * @param jsonlStr
+     * @param bodyJsonl
+     * @param signatureLql
+     * @param interfaceLql
      * @return
      * @throws IOException
      */
-    // FIXME parse to de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet
-    public ParsedSheet parseJsonl(String jsonlStr) throws IOException {
+    public ParsedSheet parseJsonl(String bodyJsonl, String signatureLql, String interfaceLql) throws IOException {
         ParsedSheet parsedSheet = new ParsedSheet();
+
+        // parse signature
+        Validate.notBlank(signatureLql, "Signature must be not blank");
+
+        SheetSignature signature = LQLUtils.lqlToSheetSignature(signatureLql);
+        parsedSheet.setSignature(signature);
+
+        // parse body
         try (MappingIterator<JsonNode> it = mapper.readerFor(JsonNode.class)
-                .readValues(jsonlStr)) {
+                .readValues(bodyJsonl)) {
             List<JsonNode> rowNodes = it.readAll();
 
             // read sheet name
             JsonNode firstRowNode = rowNodes.get(0);
-            if(firstRowNode.has("sheet")) {
-                parsedSheet.setName(firstRowNode.get("sheet").textValue());
-            }
+//            if(firstRowNode.has("sheet")) {
+//                parsedSheet.setName(firstRowNode.get("sheet").textValue());
+//            }
 
             List<ParsedRow> parsedRows = new ArrayList<>(rowNodes.size());
             parsedSheet.setRows(parsedRows);
@@ -60,6 +79,12 @@ public class SSNParser {
                 parsedRows.add(parsedRow);
             }
         }
+
+        // interface
+        Map<String, InterfaceSpecification> interfaceSpecificationMap = LQLUtils.lqlToMap(interfaceLql);
+        // FIXME for all CUTs .. here only one
+        String faName = interfaceSpecificationMap.keySet().stream().findFirst().get();
+        parsedSheet.setInterfaceSpecification(interfaceSpecificationMap.get(faName));
 
         return parsedSheet;
     }

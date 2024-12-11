@@ -14,15 +14,20 @@ import de.uni_mannheim.swt.lasso.arena.search.InterfaceSpecification;
 import de.uni_mannheim.swt.lasso.arena.sequence.parser.unit.ReflectionConstructorSignature;
 import de.uni_mannheim.swt.lasso.arena.sequence.parser.unit.ReflectionMethodSignature;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.adapter.PassThroughAdaptationStrategy;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.TestInvocation;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.StimulusResponseMatrix;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.dto.SheetDto;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.dto.SheetInvocationDto;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.CutUtils;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.HierarchyMemberResolver;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.LQLUtils;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.ParsedSheet;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.SSNParser;
 
 import de.uni_mannheim.swt.lasso.core.model.CodeUnit;
 import de.uni_mannheim.swt.lasso.core.model.Scope;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.pitest.mutationtest.engine.MutationDetails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * SSN test driver.
@@ -69,34 +75,121 @@ public class SSNTestDriver {
         this.mavenRepository = mavenRepository;
     }
 
-    public static List<ParsedSheet> parseSheets(List<String> ssnSheets) throws IOException {
+    public static List<ParsedSheet> parseAll(List<SheetDto> sheets) throws IOException {
         SSNParser ssnParser = new SSNParser();
 
-        List<ParsedSheet> parsedSheets = new ArrayList<>(ssnSheets.size());
-        for (String ssnSheet : ssnSheets) {
-            ParsedSheet parsedSheet = ssnParser.parseJsonl(ssnSheet);
+        List<ParsedSheet> parsedSheets = new ArrayList<>(sheets.size());
+        for (SheetDto sheet : sheets) {
+            ParsedSheet parsedSheet = ssnParser.parseJsonl(sheet.getBody(), sheet.getSignature(), sheet.getInterfaceSpecification());
             parsedSheets.add(parsedSheet);
         }
 
         return parsedSheets;
     }
 
-    public List<ActuationSheet> runSheets(List<ParsedSheet> parsedSheets, String lql, Class cutClass, int limitAdapters, InvocationVisitor executionListener) throws IOException {
-        // FIXME artifacts
-        return runSheets(parsedSheets, lql, CutUtils.createExample(cutClass), limitAdapters, executionListener);
+    public static StimulusResponseMatrix<Test, ClassUnderTest, TestInvocation> parseStimulusMatrix(List<SheetDto> sheets, List<ClassUnderTest> classesUnderTest, List<SheetInvocationDto> sheetInvocations) throws IOException {
+        // parse sheets
+        List<ParsedSheet> parsedSheets = parseAll(sheets);
+
+        StimulusResponseMatrix<Test, ClassUnderTest, TestInvocation> stimulusMatrix = new StimulusResponseMatrix<>();
+
+        for(ParsedSheet parsedSheet : parsedSheets) {
+            List<SheetInvocationDto> filtered = sheetInvocations.stream().filter(i -> StringUtils.equals(parsedSheet.getName(), i.getName())).toList();
+
+            String baseName = parsedSheet.getName();
+
+            for(int i = 0; i < filtered.size(); i++) {
+                SheetInvocationDto sheetInvocationDto = filtered.get(i);
+                TestInvocation testInvocation = new TestInvocation(sheetInvocationDto.getName(), sheetInvocationDto.getInvocation());
+
+                String testName = baseName + "_" + i;
+
+                Test test = new Test(testName, parsedSheet);
+
+                for(ClassUnderTest classUnderTest : classesUnderTest) {
+                    stimulusMatrix.put(test, classUnderTest, testInvocation);
+                }
+            }
+        }
+
+        return stimulusMatrix;
     }
 
-    public List<ActuationSheet> runSheet(List<ParsedSheet> parsedSheets, String lql, String cutClass, List<String> artifacts, int limitAdapters, InvocationVisitor executionListener) throws IOException {
+    public List<ActuationSheet> runSheets(List<ParsedSheet> parsedSheets, Class cutClass, int limitAdapters, InvocationVisitor executionListener) throws IOException {
+        // FIXME artifacts
+        return runSheets(parsedSheets, CutUtils.createExample(cutClass), limitAdapters, executionListener);
+    }
+
+    public List<ActuationSheet> runSheet(List<ParsedSheet> parsedSheets, String cutClass, List<String> artifacts, int limitAdapters, InvocationVisitor executionListener) throws IOException {
         // artifacts
         String artifact = null;
         if (CollectionUtils.isNotEmpty(artifacts)) {
             artifact = artifacts.get(0);
         }
 
-        return runSheets(parsedSheets, lql, CutUtils.createExample(cutClass, artifact), limitAdapters, executionListener);
+        return runSheets(parsedSheets, CutUtils.createExample(cutClass, artifact), limitAdapters, executionListener);
     }
 
-    public List<ActuationSheet> runSheets(List<ParsedSheet> parsedSheets, String lql, ClassUnderTest classUnderTest, int limitAdapters, InvocationVisitor executionListener) throws IOException {
+    public StimulusResponseMatrix<Test, AdaptedImplementation, ExecutedInvocations> runSheets(StimulusResponseMatrix<Test, ClassUnderTest, TestInvocation> stimulusMatrix, int limitAdapters, InvocationVisitor executionListener) throws IOException {
+        // classes under test
+        Set<ClassUnderTest> classesUnderTest = stimulusMatrix.getTable().columnKeySet();
+        CandidatePool pool = new CandidatePool(getMavenRepository(), new ArrayList<>(classesUnderTest));
+
+        if (isEnableJaCoCoCoverage()) {
+            // set scope
+            Scope scope = new Scope();
+            scope.setType("class");
+//            List<String> pkgWhitelist = new ArrayList<>();
+//            pkgWhitelist.add("de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.examples");
+//            scope.addConfiguration("pkgWhitelist", (Serializable) pkgWhitelist);
+
+            ContainerFactory containerFactory = ContainerFactory.jacoco(scope);
+            pool.setContainerFactory(containerFactory);
+        }
+
+        // automatically resolves project-related artifacts
+        pool.initProjects();
+
+        SSNInterpreter interpreter = new SSNInterpreter();
+
+        // SRM
+        StimulusResponseMatrix<Test, AdaptedImplementation, ExecutedInvocations> stimulusResponseMatrix = new StimulusResponseMatrix<>();
+
+        for(ClassUnderTest classUnderTest : classesUnderTest) {
+            Map<Test, TestInvocation> testInvocationMap = stimulusMatrix.getTable().column(classUnderTest);
+            // take some random test to get interface
+            Test randomTest = testInvocationMap.keySet().iterator().next();
+
+            // get interface
+            ParsedSheet randomSheet = randomTest.getParsedSheet();
+            InterfaceSpecification interfaceSpecification = randomSheet.getInterfaceSpecification();
+
+            List<AdaptedImplementation> adaptedImplementations = adaptationStrategy.adapt(interfaceSpecification, classUnderTest, limitAdapters);
+
+            for(Map.Entry<Test, TestInvocation> testInvocation : testInvocationMap.entrySet()) {
+                // prepare executable sheet
+                Test test = testInvocation.getKey();
+                ParsedSheet parsedSheet = test.getParsedSheet();
+                Invocations invocations = interpreter.interpret(parsedSheet, Collections.singletonMap(parsedSheet.getInterfaceSpecification().getClassName(), parsedSheet.getInterfaceSpecification()), classUnderTest);
+
+                for (AdaptedImplementation adaptedImplementation : adaptedImplementations) {
+                    executionListener.visitBeforeExecution(adaptedImplementation);
+
+                    // run
+                    ExecutedInvocations executedInvocations = interpreter.run(invocations, adaptedImplementation, executionListener);
+
+                    executionListener.visitAfterExecution(adaptedImplementation);
+
+                    // add to SRM
+                    stimulusResponseMatrix.put(test, adaptedImplementation, executedInvocations);
+                }
+            }
+        }
+
+        return stimulusResponseMatrix;
+    }
+
+    public List<ActuationSheet> runSheets(List<ParsedSheet> parsedSheets, ClassUnderTest classUnderTest, int limitAdapters, InvocationVisitor executionListener) throws IOException {
         CandidatePool pool = new CandidatePool(getMavenRepository(), Collections.singletonList(classUnderTest));
 
         if (isEnableJaCoCoCoverage()) {
@@ -114,17 +207,16 @@ public class SSNTestDriver {
         // automatically resolves project-related artifacts
         pool.initProjects();
 
-        Map<String, InterfaceSpecification> interfaceSpecificationMap = LQLUtils.lqlToMap(lql);
         SSNInterpreter interpreter = new SSNInterpreter();
 
-        // FIXME for all CUTs .. here only one
-        String faName = interfaceSpecificationMap.keySet().stream().findFirst().get();
-        List<AdaptedImplementation> adaptedImplementations = adaptationStrategy.adapt(interfaceSpecificationMap.get(faName), classUnderTest, limitAdapters);
+        // get interface
+        InterfaceSpecification interfaceSpecification = parsedSheets.get(0).getInterfaceSpecification();
+        List<AdaptedImplementation> adaptedImplementations = adaptationStrategy.adapt(interfaceSpecification, classUnderTest, limitAdapters);
 
         // prepare executable sheets
         List<Invocations> invocationsList = new ArrayList<>(parsedSheets.size());
         for (ParsedSheet parsedSheet : parsedSheets) {
-            Invocations invocations = interpreter.interpret(parsedSheet, interfaceSpecificationMap, classUnderTest);
+            Invocations invocations = interpreter.interpret(parsedSheet, Collections.singletonMap(parsedSheet.getInterfaceSpecification().getClassName(), parsedSheet.getInterfaceSpecification()), classUnderTest);
             invocationsList.add(invocations);
         }
 
@@ -149,7 +241,7 @@ public class SSNTestDriver {
         return actuationSheets;
     }
 
-    public List<ActuationSheet> mutateAndRunSheets(List<ParsedSheet> parsedSheets, String lql, ClassUnderTest classUnderTest, int limitAdapters, InvocationVisitor executionListener) throws IOException {
+    public List<ActuationSheet> mutateAndRunSheets(List<ParsedSheet> parsedSheets, ClassUnderTest classUnderTest, int limitAdapters, InvocationVisitor executionListener) throws IOException {
         CandidatePool pool = new CandidatePool(getMavenRepository(), Collections.singletonList(classUnderTest));
         pool.initProjects();
 
@@ -161,7 +253,6 @@ public class SSNTestDriver {
         // automatically resolves project-related artifacts
         pool.initProjects();
 
-        Map<String, InterfaceSpecification> interfaceSpecificationMap = LQLUtils.lqlToMap(lql);
         SSNInterpreter interpreter = new SSNInterpreter();
 
         List<ActuationSheet> actuationSheets = new LinkedList<>();
@@ -170,13 +261,12 @@ public class SSNTestDriver {
             // prepare executable sheets
             List<Invocations> invocationsList = new ArrayList<>(parsedSheets.size());
             for (ParsedSheet parsedSheet : parsedSheets) {
-                Invocations invocations = interpreter.interpret(parsedSheet, interfaceSpecificationMap, variant);
+                Invocations invocations = interpreter.interpret(parsedSheet, Collections.singletonMap(parsedSheet.getInterfaceSpecification().getClassName(), parsedSheet.getInterfaceSpecification()), variant);
                 invocationsList.add(invocations);
             }
 
-            // FIXME for all CUTs .. here only one
-            String faName = interfaceSpecificationMap.keySet().stream().findFirst().get();
-            List<AdaptedImplementation> adaptedImplementations = adaptationStrategy.adapt(interfaceSpecificationMap.get(faName), variant, limitAdapters);
+            InterfaceSpecification interfaceSpecification = parsedSheets.get(0).getInterfaceSpecification();
+            List<AdaptedImplementation> adaptedImplementations = adaptationStrategy.adapt(interfaceSpecification, variant, limitAdapters);
 
             for (AdaptedImplementation adaptedImplementation : adaptedImplementations) {
                 executionListener.visitBeforeExecution(adaptedImplementation);
@@ -199,14 +289,14 @@ public class SSNTestDriver {
         return actuationSheets;
     }
 
-    public List<ActuationSheet> mutateAndRunSheets(List<ParsedSheet> parsedSheets, String lql, String cutClass, List<String> artifacts, int limitAdapters, InvocationVisitor executionListener) throws IOException {
+    public List<ActuationSheet> mutateAndRunSheets(List<ParsedSheet> parsedSheets, String cutClass, List<String> artifacts, int limitAdapters, InvocationVisitor executionListener) throws IOException {
         // artifacts
         String artifact = null;
         if (CollectionUtils.isNotEmpty(artifacts)) {
             artifact = artifacts.get(0);
         }
 
-        return mutateAndRunSheets(parsedSheets, lql, CutUtils.createExample(cutClass, artifact), limitAdapters, executionListener);
+        return mutateAndRunSheets(parsedSheets, CutUtils.createExample(cutClass, artifact), limitAdapters, executionListener);
     }
 
     public Map<ClassUnderTest, MutationDetails> createMutants(CandidatePool pool, ClassUnderTest classUnderTest, Pitest pitest, boolean generateReport, String reportSuffix) {

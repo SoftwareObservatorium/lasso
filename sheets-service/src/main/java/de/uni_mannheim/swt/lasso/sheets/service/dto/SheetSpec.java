@@ -26,20 +26,12 @@ package de.uni_mannheim.swt.lasso.sheets.service.dto;
  */
 public class SheetSpec {
 
-    private String name;
+    private String signature;
     private String interfaceSpecification;
     private String body;
 
     // FIXME add implementation details
     private String implementation;
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
 
     public String getInterfaceSpecification() {
         return interfaceSpecification;
@@ -63,5 +55,13 @@ public class SheetSpec {
 
     public void setImplementation(String implementation) {
         this.implementation = implementation;
+    }
+
+    public String getSignature() {
+        return signature;
+    }
+
+    public void setSignature(String signature) {
+        this.signature = signature;
     }
 }

@@ -41,13 +41,14 @@ public class TestSSNInterpreter {
                 "{\"sheet\": \"Sheet 1\", \"header\": \"Row 3\", \"cells\": {\"A3\": null, \"B3\": \"push\", \"C3\": \"A1\", \"D3\": \"A2\"}}\n" +
                 "{\"sheet\": \"Sheet 1\", \"header\": \"Row 3\", \"cells\": {\"A4\": null, \"B4\": \"size\", \"C4\": \"A1\"}}\n";
 
-        SSNParser ssnParser = new SSNParser();
-        ParsedSheet parsedSheet = ssnParser.parseJsonl(ssnJsonlStr);
-
         String lql = "Stack {\n" +
                 "push(java.lang.String)->java.lang.String\n" +
                 "size()->int\n" +
                 "}";
+
+        SSNParser ssnParser = new SSNParser();
+        ParsedSheet parsedSheet = ssnParser.parseJsonl(ssnJsonlStr, "test()", lql);
+
         Map<String, InterfaceSpecification> interfaceSpecificationMap = LQLUtils.lqlToMap(lql);
 
         SSNInterpreter interpreter = new SSNInterpreter();
@@ -80,16 +81,16 @@ public class TestSSNInterpreter {
     @Test
     public void testArrayList() throws IOException {
         String ssnJsonlStr = "{\"sheet\": \"Sheet 1\", \"header\": \"Row 1\", \"cells\": {\"A1\": null, \"B1\": \"create\", \"C1\": \"ArrayList\"}}";
-
-        SSNParser ssnParser = new SSNParser();
-        ParsedSheet parsedSheet = ssnParser.parseJsonl(ssnJsonlStr);
-
         String lql = "ArrayList{\n" +
                 "\tArrayList()\n" +
                 "\tArrayList(int)\n" +
                 "\tadd(java.lang.Object)->boolean\n" +
                 "\tcontains(java.lang.Object)->boolean\n" +
                 "}";
+
+        SSNParser ssnParser = new SSNParser();
+        ParsedSheet parsedSheet = ssnParser.parseJsonl(ssnJsonlStr, "test()", lql);
+
         Map<String, InterfaceSpecification> interfaceSpecificationMap = LQLUtils.lqlToMap(lql);
 
         SSNInterpreter interpreter = new SSNInterpreter();

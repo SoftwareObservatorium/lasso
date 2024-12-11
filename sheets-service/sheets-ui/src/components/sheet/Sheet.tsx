@@ -6,8 +6,8 @@ import Button from "@mui/material/Button";
 import { Box, Card, CardActions, CardContent, TextField, Typography } from "@mui/material";
 import React from "react";
 
-const Sheet = ({ sheetId, defaultSheetName, sheetData, changeHandler, isResult }: any) => {
-  const [sheetName, setSheetName] = useState(defaultSheetName)
+const Sheet = ({ sheetId, defaultSheetSignature, sheetData, changeHandler, isResult }: any) => {
+  const [sheetSignature, setSheetSignature] = useState(defaultSheetSignature)
   const [data, setData] = useState<Matrix<CellBase<any>>>(
     //    [
     //     [
@@ -36,12 +36,12 @@ const Sheet = ({ sheetId, defaultSheetName, sheetData, changeHandler, isResult }
 
   useEffect(() => {
     console.log(data);
-    changeHandler(sheetId, sheetName, data)
+    changeHandler(sheetId, sheetSignature, data)
 
-  }, [sheetName, data]);
+  }, [sheetSignature, data]);
 
-  const onChangeSheetName = (e: any) => {
-    setSheetName(e.target.value);
+  const onChangeSheetSignature = (e: any) => {
+    setSheetSignature(e.target.value);
   };
 
   // copied from react-spreadsheet
@@ -88,6 +88,8 @@ const Sheet = ({ sheetId, defaultSheetName, sheetData, changeHandler, isResult }
   //     sendSheet(data)
   //   }, [setData]);
 
+  const addInvocation = () => {}
+
   const card = (
     <React.Fragment>
       <CardContent>
@@ -95,7 +97,7 @@ const Sheet = ({ sheetId, defaultSheetName, sheetData, changeHandler, isResult }
           Stimulus Sheet
         </Typography>
         <Typography variant="h5" component="div">
-        <TextField onChange={onChangeSheetName} value={sheetName} id="outlined-basic" label="Sheet Name" variant="outlined" />
+        <TextField onChange={onChangeSheetSignature} value={sheetSignature} id="outlined-basic" label="Sheet Signature" variant="outlined" />
         </Typography>
         <Typography sx={{ color: 'text.secondary', mb: 1.5 }}>Body</Typography>
         <Typography variant="body2">
@@ -108,6 +110,8 @@ const Sheet = ({ sheetId, defaultSheetName, sheetData, changeHandler, isResult }
           <Button size="small" onClick={(event) => addColumn()}>Add Column</Button>
           <Button size="small" onClick={(event) => removeRow()}>Remove Row</Button>
           <Button size="small" onClick={(event) => removeColumn()}>Remove Column</Button>
+
+          <Button size="small" onClick={(event) => addInvocation()}>Add Invocation (Parameterized Sheet)</Button>
         </CardActions>
       )}
 

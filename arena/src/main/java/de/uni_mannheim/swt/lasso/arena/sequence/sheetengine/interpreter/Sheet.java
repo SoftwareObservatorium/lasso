@@ -19,6 +19,7 @@ public class Sheet<R extends Comparable, C extends Comparable, V> {
     private Table<R, C, V> table = TreeBasedTable.create();
 
     // FIXME add name?
+    // FIXME add signature -- name and input parameters
     public Sheet() {
     }
 

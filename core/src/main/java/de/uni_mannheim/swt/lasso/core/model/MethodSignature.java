@@ -35,8 +35,10 @@ public class MethodSignature {
     private String name;
     private boolean constructor;
 
+    private List<String> inputNames = new LinkedList<>();
     private List<String> inputs = new LinkedList<>();
 
+    private List<String> outputNames = new LinkedList<>();
     private List<String> outputs = new LinkedList<>();
 
     public boolean isConstructor() {
@@ -89,7 +91,9 @@ public class MethodSignature {
         return "Method{" +
                 "name='" + name + '\'' +
                 ", constructor=" + constructor +
+                ", inputNames=" + inputNames +
                 ", inputs=" + inputs +
+                ", outputNames=" + outputNames +
                 ", outputs=" + outputs +
                 '}';
     }
@@ -152,5 +156,21 @@ public class MethodSignature {
         }
 
         return outputs.toArray(String[]::new);
+    }
+
+    public List<String> getInputNames() {
+        return inputNames;
+    }
+
+    public void setInputNames(List<String> inputNames) {
+        this.inputNames = inputNames;
+    }
+
+    public List<String> getOutputNames() {
+        return outputNames;
+    }
+
+    public void setOutputNames(List<String> outputNames) {
+        this.outputNames = outputNames;
     }
 }

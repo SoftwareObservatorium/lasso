@@ -6,6 +6,7 @@ import de.uni_mannheim.swt.lasso.arena.repository.MavenRepository;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.*;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.event.CompositeInvocationVisitor;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.event.JaCoCoListener;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.dto.SheetDto;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize.GsonMapper;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize.ObjectMapperVisitor;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.ParsedSheet;
@@ -42,10 +43,9 @@ public class LocalSimpleTestDriver implements TestDriver {
         List<TestResult> testResults = new ArrayList<>(request.getClassesUnderTest().size());
 
         List<SheetSpec> sheetSpecs = request.getSheets();
-        String interfaceSpecification = sheetSpecs.get(0).getInterfaceSpecification();
 
         // parse stimulus sheets
-        List<ParsedSheet> parsedSheets = SSNTestDriver.parseSheets(sheetSpecs.stream().map(SheetSpec::getBody).collect(Collectors.toList()));
+        List<ParsedSheet> parsedSheets = SSNTestDriver.parseAll(sheetSpecs.stream().map(s -> new SheetDto(s.getSignature(), s.getBody(), s.getInterfaceSpecification())).collect(Collectors.toList()));
 
         // driver
         SSNTestDriver testDriver = new SSNTestDriver();
@@ -84,9 +84,9 @@ public class LocalSimpleTestDriver implements TestDriver {
 
             List<ActuationSheet> actuationSheets;
             if(mutation) {
-                actuationSheets = testDriver.mutateAndRunSheets(parsedSheets, interfaceSpecification, classUnderTestSpec.getClassName(), classUnderTestSpec.getArtifacts(), adapters, invocationVisitor);
+                actuationSheets = testDriver.mutateAndRunSheets(parsedSheets, classUnderTestSpec.getClassName(), classUnderTestSpec.getArtifacts(), adapters, invocationVisitor);
             } else {
-                actuationSheets = testDriver.runSheet(parsedSheets, interfaceSpecification, classUnderTestSpec.getClassName(), classUnderTestSpec.getArtifacts(), adapters, invocationVisitor);
+                actuationSheets = testDriver.runSheet(parsedSheets, classUnderTestSpec.getClassName(), classUnderTestSpec.getArtifacts(), adapters, invocationVisitor);
             }
 
             for(ActuationSheet actuationSheet : actuationSheets) {
@@ -105,17 +105,19 @@ public class LocalSimpleTestDriver implements TestDriver {
                     LOG.info("JSON actuationSheet\n{}", actuationSheetData.toJsonl());
                     LOG.info("JSON adaptedActuationSheet\n{}", adaptedActuationSheetData.toJsonl());
 
+                    ParsedSheet parsedSheet = actuationSheet.getExecutedInvocations().getInvocations().getParsedSheet();
+
                     SheetSpec actuationSheetResult = new SheetSpec();
-                    actuationSheetResult.setName(actuationSheet.getExecutedInvocations().getInvocations().getParsedSheet().getName());
-                    actuationSheetResult.setInterfaceSpecification(interfaceSpecification);
+                    actuationSheetResult.setSignature(parsedSheet.getSignature().toLQL());
+                    actuationSheetResult.setInterfaceSpecification(parsedSheet.getInterfaceSpecification().toLQL());
                     actuationSheetResult.setBody(actuationSheetData.toJsonl());
                     actuationSheetResult.setImplementation("ABSTRACTION");
 
                     actuationSheetResults.add(actuationSheetResult);
 
                     SheetSpec adaptedActuationSheetResult = new SheetSpec();
-                    adaptedActuationSheetResult.setName(actuationSheet.getExecutedInvocations().getInvocations().getParsedSheet().getName());
-                    adaptedActuationSheetResult.setInterfaceSpecification(interfaceSpecification);
+                    adaptedActuationSheetResult.setSignature(parsedSheet.getSignature().toLQL());
+                    adaptedActuationSheetResult.setInterfaceSpecification(parsedSheet.getInterfaceSpecification().toLQL());
                     adaptedActuationSheetResult.setBody(adaptedActuationSheetData.toJsonl());
 
                     if(mutation && !actuationSheet.getAdaptedImplementation().getAdaptee().getVariantId().equals("original")) {
@@ -152,7 +154,7 @@ public class LocalSimpleTestDriver implements TestDriver {
         // TODO create SRMs per metric (cf. slides)
         if(jacoco) {
             // option 1) either via listener or set to invocations .. but here on the level of a set of actuation sheets
-            // option 2) return an SRH: collection of SRMs as tables + send queries as part of answers so that the client can query the tabular data
+            // option 2) return an SRH: collection of SRMs as tables + send queries as part of answers so that the client can query the tabular data -- like a
         }
 
         SheetResponse sheetResponse = new SheetResponse();

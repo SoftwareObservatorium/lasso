@@ -8,6 +8,7 @@ import de.uni_mannheim.swt.lasso.arena.repository.NexusInstance;
 import de.uni_mannheim.swt.lasso.arena.search.InterfaceSpecification;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.event.CompositeInvocationVisitor;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.event.JaCoCoListener;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.dto.SheetDto;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize.GsonMapper;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize.ObjectMapperVisitor;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.CutUtils;
@@ -95,7 +96,7 @@ public class SSNTestDriverTest {
         Class cutClass = StackEmptyConstructorExample.class;
 
         SSNTestDriver testDriver = new SSNTestDriver();
-        ExecutedInvocations executedInvocations = testDriver.runSheets(SSNTestDriver.parseSheets(Arrays.asList(ssnJsonlStr)), lql, cutClass, 1, visitor).get(0).getExecutedInvocations();
+        ExecutedInvocations executedInvocations = testDriver.runSheets(SSNTestDriver.parseAll(Arrays.asList(new SheetDto("test()", ssnJsonlStr, lql))), cutClass, 1, visitor).get(0).getExecutedInvocations();
         LOG.debug("executed invocations\n{}", executedInvocations);
         visitor.getActuationSheet().debug();
         visitor.getAdaptedActuationSheet().debug();
@@ -152,7 +153,7 @@ public class SSNTestDriverTest {
         Class cutClass = StackNonEmptyConstructorExample.class;
 
         SSNTestDriver testDriver = new SSNTestDriver();
-        ExecutedInvocations executedInvocations = testDriver.runSheets(SSNTestDriver.parseSheets(Arrays.asList(ssnJsonlStr)), lql, cutClass, 1, visitor).get(0).getExecutedInvocations();
+        ExecutedInvocations executedInvocations = testDriver.runSheets(SSNTestDriver.parseAll(Arrays.asList(new SheetDto("test()", ssnJsonlStr, lql))), cutClass, 1, visitor).get(0).getExecutedInvocations();
         LOG.debug("executed invocations\n{}", executedInvocations);
         visitor.getActuationSheet().debug();
         visitor.getAdaptedActuationSheet().debug();
@@ -202,7 +203,7 @@ public class SSNTestDriverTest {
         Class cutClass = StackEmptyConstructorExample.class;
 
         SSNTestDriver testDriver = new SSNTestDriver();
-        ExecutedInvocations executedInvocations = testDriver.runSheets(SSNTestDriver.parseSheets(Arrays.asList(ssnJsonlStr)), lql, cutClass, 1, visitor).get(0).getExecutedInvocations();
+        ExecutedInvocations executedInvocations = testDriver.runSheets(SSNTestDriver.parseAll(Arrays.asList(new SheetDto("test()", ssnJsonlStr, lql))), cutClass, 1, visitor).get(0).getExecutedInvocations();
         LOG.debug("executed invocations\n{}", executedInvocations);
         visitor.getActuationSheet().debug();
         visitor.getAdaptedActuationSheet().debug();
@@ -245,7 +246,7 @@ public class SSNTestDriverTest {
         Class cutClass = StaticMethodExample.class;
 
         SSNTestDriver testDriver = new SSNTestDriver();
-        ExecutedInvocations executedInvocations = testDriver.runSheets(SSNTestDriver.parseSheets(Arrays.asList(ssnJsonlStr)), lql, cutClass, 1, visitor).get(0).getExecutedInvocations();
+        ExecutedInvocations executedInvocations = testDriver.runSheets(SSNTestDriver.parseAll(Arrays.asList(new SheetDto("test()", ssnJsonlStr, lql))), cutClass, 1, visitor).get(0).getExecutedInvocations();
         LOG.debug("executed invocations\n{}", executedInvocations);
         visitor.getActuationSheet().debug();
         visitor.getAdaptedActuationSheet().debug();
@@ -283,7 +284,7 @@ public class SSNTestDriverTest {
         Class cutClass = InvisibleStaticMethodExample.class;
 
         SSNTestDriver testDriver = new SSNTestDriver();
-        ExecutedInvocations executedInvocations = testDriver.runSheets(SSNTestDriver.parseSheets(Arrays.asList(ssnJsonlStr)), lql, cutClass, 1, visitor).get(0).getExecutedInvocations();
+        ExecutedInvocations executedInvocations = testDriver.runSheets(SSNTestDriver.parseAll(Arrays.asList(new SheetDto("test()", ssnJsonlStr, lql))), cutClass, 1, visitor).get(0).getExecutedInvocations();
         LOG.debug("executed invocations\n{}", executedInvocations);
         visitor.getActuationSheet().debug();
         visitor.getAdaptedActuationSheet().debug();
@@ -319,7 +320,7 @@ public class SSNTestDriverTest {
         Class cutClass = CompositeNodeExample.class;
 
         SSNTestDriver testDriver = new SSNTestDriver();
-        ExecutedInvocations executedInvocations = testDriver.runSheets(SSNTestDriver.parseSheets(Arrays.asList(ssnJsonlStr)), lql, cutClass, 1, visitor).get(0).getExecutedInvocations();
+        ExecutedInvocations executedInvocations = testDriver.runSheets(SSNTestDriver.parseAll(Arrays.asList(new SheetDto("test()", ssnJsonlStr, lql))), cutClass, 1, visitor).get(0).getExecutedInvocations();
         LOG.debug("executed invocations\n{}", executedInvocations);
         visitor.getActuationSheet().debug();
         visitor.getAdaptedActuationSheet().debug();
@@ -365,7 +366,7 @@ public class SSNTestDriverTest {
         Class cutClass = CompositeNodeExample.class;
 
         SSNTestDriver testDriver = new SSNTestDriver();
-        ExecutedInvocations executedInvocations = testDriver.runSheets(SSNTestDriver.parseSheets(Arrays.asList(ssnJsonlStr)), lql, cutClass, 1, visitor).get(0).getExecutedInvocations();
+        ExecutedInvocations executedInvocations = testDriver.runSheets(SSNTestDriver.parseAll(Arrays.asList(new SheetDto("test()", ssnJsonlStr, lql))), cutClass, 1, visitor).get(0).getExecutedInvocations();
         LOG.debug("executed invocations\n{}", executedInvocations);
         visitor.getActuationSheet().debug();
         visitor.getAdaptedActuationSheet().debug();
@@ -425,7 +426,7 @@ public class SSNTestDriverTest {
         SSNTestDriver testDriver = new SSNTestDriver();
         testDriver.setEnableJaCoCoCoverage(true);
 
-        ExecutedInvocations executedInvocations = testDriver.runSheets(SSNTestDriver.parseSheets(Arrays.asList(ssnJsonlStr)), lql, cutClass, 1, invocationVisitor).get(0).getExecutedInvocations();
+        ExecutedInvocations executedInvocations = testDriver.runSheets(SSNTestDriver.parseAll(Arrays.asList(new SheetDto("test()", ssnJsonlStr, lql))), cutClass, 1, invocationVisitor).get(0).getExecutedInvocations();
         LOG.debug("executed invocations\n{}", executedInvocations);
         visitor.getActuationSheet().debug();
         visitor.getAdaptedActuationSheet().debug();
@@ -469,7 +470,7 @@ public class SSNTestDriverTest {
 
         SSNTestDriver testDriver = new SSNTestDriver();
 
-        List<ActuationSheet> actuationSheets = testDriver.mutateAndRunSheets(SSNTestDriver.parseSheets(Arrays.asList(ssnJsonlStr)), lql, CutUtils.createExample(cutClass), 1, invocationVisitor);
+        List<ActuationSheet> actuationSheets = testDriver.mutateAndRunSheets(SSNTestDriver.parseAll(Arrays.asList(new SheetDto("test()", ssnJsonlStr, lql))), CutUtils.createExample(cutClass), 1, invocationVisitor);
 
         for(ActuationSheet actuationSheet : actuationSheets) {
             ExecutedInvocations executedInvocations = actuationSheet.getExecutedInvocations();
@@ -491,11 +492,6 @@ public class SSNTestDriverTest {
 
     @Test
     public void test_Base64_remote() throws IOException, ClassNotFoundException {
-//        Gson gson = new Gson();
-//        String input = gson.toJson("Hello World!".getBytes());
-//
-//        System.out.println(input); [72,101,108,108,111,32,87,111,114,108,100,33]
-
         @Language("jsonl")
         String ssnJsonlStr = """
                 {"sheet": "Sheet 1", "header": "Row 1", "cells": {"A1": {}, "B1": "create", "C1": "Base64"}}
@@ -518,7 +514,7 @@ public class SSNTestDriverTest {
         // commons-codec:commons-codec:1.15
         ClassUnderTest classUnderTest = CutUtils.createExample("org.apache.commons.codec.binary.Base64", "commons-codec:commons-codec:1.15");
 
-        ExecutedInvocations executedInvocations = testDriver.runSheets(SSNTestDriver.parseSheets(Arrays.asList(ssnJsonlStr)), lql, classUnderTest, 1, visitor).get(0).getExecutedInvocations();
+        ExecutedInvocations executedInvocations = testDriver.runSheets(SSNTestDriver.parseAll(Arrays.asList(new SheetDto("test()", ssnJsonlStr, lql))), classUnderTest, 1, visitor).get(0).getExecutedInvocations();
         LOG.debug("executed invocations\n{}", executedInvocations);
         visitor.getActuationSheet().debug();
         visitor.getAdaptedActuationSheet().debug();
@@ -569,7 +565,7 @@ public class SSNTestDriverTest {
         // commons-codec:commons-codec:1.15
         ClassUnderTest classUnderTest = CutUtils.createExample("org.apache.commons.codec.binary.Base64", "commons-codec:commons-codec:1.15");
 
-        ExecutedInvocations executedInvocations = testDriver.runSheets(SSNTestDriver.parseSheets(Arrays.asList(ssnJsonlStr)), lql, classUnderTest, 1, visitor).get(0).getExecutedInvocations();
+        ExecutedInvocations executedInvocations = testDriver.runSheets(SSNTestDriver.parseAll(Arrays.asList(new SheetDto("test()", ssnJsonlStr, lql))), classUnderTest, 1, visitor).get(0).getExecutedInvocations();
         LOG.debug("executed invocations\n{}", executedInvocations);
         visitor.getActuationSheet().debug();
         visitor.getAdaptedActuationSheet().debug();
