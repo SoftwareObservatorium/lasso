@@ -9,18 +9,23 @@ import SheetService from '../services/SheetService';
 
 
 const lqlCode =
-  `Stack {
-    push(java.lang.String)->java.lang.String
-    size()->int
+`BoundedQueue {
+    BoundedQueue(int)
+    enQueue(java.lang.Object)->void
+    deQueue()->java.lang.Object
+    isEmpty()->boolean
+    isFull()->boolean
 }`
 
 function loadDefaultSheet() {
   // FIXME load remotely
   const jsonl = `
-{"sheet": "Sheet 1", "header": "Row 1", "cells": {"A1": "<instance>", "B1": "create", "C1": "Stack"}}
-{"sheet": "Sheet 1", "header": "Row 2", "cells": {"A2": "<instance>", "B2": "$eval", "C2": "Arrays.toString(new char[]{'a', 'b'})"}}
-{"sheet": "Sheet 1", "header": "Row 3", "cells": {"A3": "<instance>", "B3": "push", "C3": "A1", "D3": "A2"}}
-{"sheet": "Sheet 1", "header": "Row 4", "cells": {"A4": 1, "B4": "size", "C4": "A1"}}
+{"sheet": "Sheet 1", "header": "Row 1", "cells": {"A1": {}, "B1": "create", "C1": "BoundedQueue", "D1": 10}}
+{"sheet": "Sheet 1", "header": "Row 2", "cells": {"A2": {}, "B2": "enQueue", "C2": "A1", "D2": "'Hello World!'"}}
+{"sheet": "Sheet 1", "header": "Row 3", "cells": {"A3": {}, "B3": "isEmpty", "C3": "A1"}}
+{"sheet": "Sheet 1", "header": "Row 4", "cells": {"A4": {}, "B4": "isFull", "C4": "A1"}}
+{"sheet": "Sheet 1", "header": "Row 5", "cells": {"A5": "D2", "B5": "deQueue", "C5": "A1"}}
+{"sheet": "Sheet 1", "header": "Row 6", "cells": {"A6": {}, "B6": "isEmpty", "C6": "A1"}}
 `
 
   const sheet: StimulusSheet = new StimulusSheet()
@@ -195,13 +200,14 @@ function SheetEditorPage() {
     setStimulusSheets([...stimulusSheets, stimulusSheet]);
   }
 
-  const stimulusSheetChangeHandler = (sheetId: number, sheetSignature: string, sheetData: Matrix<CellBase<any>>) => {
+  const stimulusSheetChangeHandler = (sheetId: number, sheetSignature: string, sheetData: Matrix<CellBase<any>>, sheetInvocations: string[]) => {
     console.log("changed " + sheetId)
 
     const nStimulusSheets = [...stimulusSheets];
     const stimulusSheet: StimulusSheet = new StimulusSheet()
     stimulusSheet.signature = sheetSignature
     stimulusSheet.data = sheetData
+    stimulusSheet.invocations = sheetInvocations
     nStimulusSheets[sheetId] = stimulusSheet
 
     setStimulusSheets(nStimulusSheets);
@@ -230,6 +236,7 @@ function SheetEditorPage() {
         sheet.interfaceSpecification = interfaceSpecification
         const bodyJsonl = toSheetJSONL(stimulusSheet.data)
         sheet.body = bodyJsonl
+        sheet.invocations = stimulusSheet.invocations
     
         request.sheets.push(sheet)
       });
@@ -426,6 +433,16 @@ function SheetEditorPage() {
                 <Box component="section" sx={{ p: 2, border: '1px dashed grey' }}>
                   <Alert severity="success">Adapted Actuation Sheet (based on the Candidate's Class Interface)</Alert>
                   {testResult.adaptedActuationSheets.map((sheet) => (
+                    <>
+                    <h4>Implementation {sheet.implementation}</h4>
+                                        <Sheet isResult={true} defaultSheetSignature={sheet.signature} sheetData={() => parseAdaptedActuationSheet(sheet)} changeHandler={() => console.log("not implemented")} />
+                    </>
+                  ))
+                  }
+                </Box>
+                <Box component="section" sx={{ p: 2, border: '1px dashed grey' }}>
+                  <Alert severity="success">Metric Sheet</Alert>
+                  {testResult.metricSheets.map((sheet) => (
                     <>
                     <h4>Implementation {sheet.implementation}</h4>
                                         <Sheet isResult={true} defaultSheetSignature={sheet.signature} sheetData={() => parseAdaptedActuationSheet(sheet)} changeHandler={() => console.log("not implemented")} />

@@ -25,9 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  *
@@ -51,7 +49,11 @@ public class LocalSimpleTestDriver implements TestDriver {
         List<SheetSpec> sheetSpecs = request.getSheets();
 
         // sheets
-        List<SheetDto> sheetDtos = sheetSpecs.stream().map(s -> new SheetDto(s.getSignature(), s.getBody(), s.getInterfaceSpecification())).toList();
+        List<SheetDto> sheetDtos = sheetSpecs.stream().map(s -> {
+            SheetDto sheet = new SheetDto(s.getSignature(), s.getBody(), s.getInterfaceSpecification());
+            sheet.setInvocations(s.getInvocations());
+            return sheet;
+        }).toList();
 
         // cuts
         List<ClassUnderTest> classesUnderTest = request.getClassesUnderTest().stream().map(cut -> {
@@ -63,8 +65,19 @@ public class LocalSimpleTestDriver implements TestDriver {
             return CutUtils.createExample(cut.getClassName(), artifact);
         }).toList();
 
-        // FIXME for now, generate invocations -- get from request
-        List<SheetInvocationDto> sheetInvocations = sheetDtos.stream().map(s -> new SheetInvocationDto(StringUtils.substringBefore(s.getSignature(), "("), "")).toList();
+        // read invocations
+        List<SheetInvocationDto> sheetInvocations = sheetDtos.stream().flatMap(s -> {
+            String sheetName = StringUtils.substringBefore(s.getSignature(), "(");
+
+            List<String> invocations = s.getInvocations();
+            if(CollectionUtils.isEmpty(invocations)) {
+                // default invocation
+                return Arrays.asList(new SheetInvocationDto(sheetName, "")).stream();
+            }
+
+            //
+            return invocations.stream().map(i -> new SheetInvocationDto(sheetName, i));
+        }).toList();
         // SM
         StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, ClassUnderTest, TestInvocation> stimulusMatrix = SSNTestDriver.parseStimulusMatrix(
                 sheetDtos, classesUnderTest, sheetInvocations);
@@ -85,10 +98,11 @@ public class LocalSimpleTestDriver implements TestDriver {
 
         // visitor
         InvocationVisitor invocationVisitor;
+        JaCoCoListener jaCoCoListener = new JaCoCoListener();
         if(jacoco) {
             ObjectMapperVisitor visitor = new ObjectMapperVisitor(new GsonMapper());
             invocationVisitor = new CompositeInvocationVisitor(
-                    Arrays.asList(visitor, new JaCoCoListener())); // add jacoco listener
+                    Arrays.asList(visitor, jaCoCoListener)); // add jacoco listener
 
             // set driver
             testDriver.setEnableJaCoCoCoverage(true);
@@ -111,6 +125,7 @@ public class LocalSimpleTestDriver implements TestDriver {
         // for each cell
         List<SheetSpec> actuationSheetResults = new ArrayList<>(sheetSpecs.size());
         List<SheetSpec> adaptedActuationSheetResults = new ArrayList<>(sheetSpecs.size());
+        List<SheetSpec> metricSheetResults = new LinkedList<>();
         for(Table.Cell<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> cell : stimulusResponseMatrix.getTable().cellSet()) {
 
             try {
@@ -135,7 +150,12 @@ public class LocalSimpleTestDriver implements TestDriver {
                 ParsedSheet parsedSheet = actuationSheet.getExecutedInvocations().getInvocations().getParsedSheet();
 
                 SheetSpec actuationSheetResult = new SheetSpec();
-                actuationSheetResult.setSignature(parsedSheet.getSignature().toLQL());
+
+                // FIXME set more fields
+                TestInvocation testInvocation = stimulusMatrix.get(cell.getRowKey(), cell.getColumnKey().getAdaptee());
+                String sig = cell.getRowKey().getName() + ":" + parsedSheet.getSignature().getName() + "(" + testInvocation.getInvocationExpression() + ")";
+
+                actuationSheetResult.setSignature(sig);
                 actuationSheetResult.setInterfaceSpecification(parsedSheet.getInterfaceSpecification().toLQL());
                 actuationSheetResult.setBody(actuationSheetData.toJsonl());
                 actuationSheetResult.setImplementation("ABSTRACTION");
@@ -143,7 +163,7 @@ public class LocalSimpleTestDriver implements TestDriver {
                 actuationSheetResults.add(actuationSheetResult);
 
                 SheetSpec adaptedActuationSheetResult = new SheetSpec();
-                adaptedActuationSheetResult.setSignature(parsedSheet.getSignature().toLQL());
+                adaptedActuationSheetResult.setSignature(sig);
                 adaptedActuationSheetResult.setInterfaceSpecification(parsedSheet.getInterfaceSpecification().toLQL());
                 adaptedActuationSheetResult.setBody(adaptedActuationSheetData.toJsonl());
 
@@ -161,6 +181,23 @@ public class LocalSimpleTestDriver implements TestDriver {
                 }
 
                 adaptedActuationSheetResults.add(adaptedActuationSheetResult);
+
+                // jacoco reports
+                if(jacoco) {
+                    StimulusResponseMatrix<String, AdaptedImplementation, Sheet> jacocoSrm = jaCoCoListener.getStimulusResponseMatrix();
+                    Map<String, Sheet> metricSheets = jacocoSrm.getTable().column(cell.getColumnKey());
+
+                    for(String metricId : metricSheets.keySet()) {
+                        Sheet metricSheet = metricSheets.get(metricId);
+
+                        SheetSpec metricSheetResult = new SheetSpec();
+                        metricSheetResult.setSignature(metricId);
+                        metricSheetResult.setInterfaceSpecification(parsedSheet.getInterfaceSpecification().toLQL());
+                        metricSheetResult.setBody(metricSheet.toJsonl());
+                        metricSheetResult.setImplementation(adaptedActuationSheetResult.getImplementation());
+                        metricSheetResults.add(metricSheetResult);
+                    }
+                }
             } catch (Throwable e) {
                 LOG.warn("execution failed", e);
 
@@ -174,6 +211,7 @@ public class LocalSimpleTestDriver implements TestDriver {
         testResult.setStatus("SUCCESS"); // FIXME
         testResult.setActuationSheets(actuationSheetResults);
         testResult.setAdaptedActuationSheets(adaptedActuationSheetResults);
+        testResult.setMetricSheets(metricSheetResults);
 
         testResults.add(testResult);
 

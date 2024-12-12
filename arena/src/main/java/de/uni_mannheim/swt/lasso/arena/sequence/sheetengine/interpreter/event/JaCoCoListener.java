@@ -3,11 +3,16 @@ package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.event;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
 import de.uni_mannheim.swt.lasso.arena.classloader.coverage.jacoco.JaCoCoContainer;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.InvocationVisitor;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.StimulusResponseMatrix;
+
 import org.jacoco.core.analysis.CoverageBuilder;
 import org.jacoco.core.analysis.IClassCoverage;
 import org.jacoco.core.analysis.ICounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Optional;
 
 /**
  *
@@ -17,6 +22,9 @@ public class JaCoCoListener extends InvocationVisitor {
 
     private static final Logger LOG = LoggerFactory
             .getLogger(JaCoCoListener.class);
+
+    // XXX should be really the test suite: List<Test>
+    private StimulusResponseMatrix<String, AdaptedImplementation, Sheet> stimulusResponseMatrix = new StimulusResponseMatrix<>();
 
     @Override
     public void visitBeforeExecution(AdaptedImplementation adaptedImplementation) {
@@ -44,21 +52,20 @@ public class JaCoCoListener extends InvocationVisitor {
         try {
             CoverageBuilder coverageBuilder = jaCoCoContainer.stop();
 
-            //
-            // Let's dump some metrics and line coverage information:
-            for (final IClassCoverage cc : coverageBuilder.getClasses()) {
-                System.out.printf("Coverage of class %s%n", cc.getName());
+            // FIXME
+            Optional<IClassCoverage> cutClassOp = coverageBuilder.getClasses().stream().findFirst();
+            if(cutClassOp.isPresent()) {
+                IClassCoverage cutClass = cutClassOp.get();
+                stimulusResponseMatrix.put("jacoco_complexity", adaptedImplementation, createMetricSheet(cutClass.getComplexityCounter()));
+                stimulusResponseMatrix.put("jacoco_branch", adaptedImplementation, createMetricSheet(cutClass.getBranchCounter()));
+                stimulusResponseMatrix.put("jacoco_instruction", adaptedImplementation, createMetricSheet(cutClass.getInstructionCounter()));
+                stimulusResponseMatrix.put("jacoco_line", adaptedImplementation, createMetricSheet(cutClass.getLineCounter()));
+                stimulusResponseMatrix.put("jacoco_method", adaptedImplementation, createMetricSheet(cutClass.getMethodCounter()));
 
-                printCounter("instructions", cc.getInstructionCounter());
-                printCounter("branches", cc.getBranchCounter());
-                printCounter("lines", cc.getLineCounter());
-                printCounter("methods", cc.getMethodCounter());
-                printCounter("complexity", cc.getComplexityCounter());
-
-                for (int i = cc.getFirstLine(); i <= cc.getLastLine(); i++) {
-                    System.out.printf("Line %s: %s%n", Integer.valueOf(i),
-                            getColor(cc.getLine(i).getStatus()));
-                }
+//            for (int i = cutClass.getFirstLine(); i <= cutClass.getLastLine(); i++) {
+//                System.out.printf("Line %s: %s%n", Integer.valueOf(i),
+//                        getColor(cutClass.getLine(i).getStatus()));
+//            }
             }
 
         } catch (Throwable e) {
@@ -66,21 +73,29 @@ public class JaCoCoListener extends InvocationVisitor {
         }
     }
 
-    private String getColor(final int status) {
-        switch (status) {
-            case ICounter.NOT_COVERED:
-                return "red";
-            case ICounter.PARTLY_COVERED:
-                return "yellow";
-            case ICounter.FULLY_COVERED:
-                return "green";
-        }
-        return "";
+//    // copied from jacoco examples
+//    private String getColor(final int status) {
+//        switch (status) {
+//            case ICounter.NOT_COVERED:
+//                return "red";
+//            case ICounter.PARTLY_COVERED:
+//                return "yellow";
+//            case ICounter.FULLY_COVERED:
+//                return "green";
+//        }
+//        return "";
+//    }
+
+    private Sheet<Integer, Integer, Double> createMetricSheet(ICounter counter) {
+        Sheet<Integer, Integer, Double> metricSheet = new Sheet<>();
+        metricSheet.put(0,0, (double) counter.getMissedCount());
+        metricSheet.put(0,1, (double) counter.getTotalCount());
+        metricSheet.put(0,2, (double) counter.getCoveredRatio());
+
+        return metricSheet;
     }
 
-    private void printCounter(final String unit, final ICounter counter) {
-        final Integer missed = Integer.valueOf(counter.getMissedCount());
-        final Integer total = Integer.valueOf(counter.getTotalCount());
-        System.out.printf("%s of %s %s missed%n", missed, total, unit);
+    public StimulusResponseMatrix<String, AdaptedImplementation, Sheet> getStimulusResponseMatrix() {
+        return stimulusResponseMatrix;
     }
 }

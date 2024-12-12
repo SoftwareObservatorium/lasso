@@ -1,10 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import Spreadsheet, { CellBase, Matrix } from "react-spreadsheet";
 import "./Sheet.css";
-import ButtonGroup from "@mui/material/ButtonGroup";
+import DoneIcon from '@mui/icons-material/Done';
+import ApiIcon from '@mui/icons-material/Api';
+import DeleteIcon from '@mui/icons-material/Delete';
 import Button from "@mui/material/Button";
-import { Box, Card, CardActions, CardContent, TextField, Typography } from "@mui/material";
+import { Avatar, Box, Card, CardActions, CardContent, Divider, IconButton, InputBase, List, ListItem, ListItemAvatar, ListItemText, Paper, TextField, Typography } from "@mui/material";
 import React from "react";
+
+import Grid from '@mui/material/Grid';
 
 const Sheet = ({ sheetId, defaultSheetSignature, sheetData, changeHandler, isResult }: any) => {
   const [sheetSignature, setSheetSignature] = useState(defaultSheetSignature)
@@ -34,11 +38,14 @@ const Sheet = ({ sheetId, defaultSheetSignature, sheetData, changeHandler, isRes
     sheetData
   );
 
+  const [sheetInvocations, setSheetInvocations] = React.useState<string[]>([]);
+  const [sheetInvocation, setSheetInvocation] = React.useState<string>();
+
   useEffect(() => {
     console.log(data);
-    changeHandler(sheetId, sheetSignature, data)
+    changeHandler(sheetId, sheetSignature, data, sheetInvocations)
 
-  }, [sheetSignature, data]);
+  }, [sheetSignature, data, sheetInvocations]);
 
   const onChangeSheetSignature = (e: any) => {
     setSheetSignature(e.target.value);
@@ -88,13 +95,29 @@ const Sheet = ({ sheetId, defaultSheetSignature, sheetData, changeHandler, isRes
   //     sendSheet(data)
   //   }, [setData]);
 
-  const addInvocation = () => {}
+  // add sheet invocation
+  const addInvocation = () => {
+    console.log("invocation "  + sheetInvocation)
+
+    let my = sheetInvocation!;
+
+    setSheetInvocations([...sheetInvocations, my]);
+  }
+
+  const handleInvocationChange = (event: any) => {
+    setSheetInvocation(event.target.value)
+  }
+
+  const removeInvocation = (invocation: string) => {
+    let my = sheetInvocations.filter(obj => obj !== invocation);
+    setSheetInvocations(my);
+  }
 
   const card = (
     <React.Fragment>
       <CardContent>
         <Typography gutterBottom sx={{ color: 'text.secondary', fontSize: 14 }}>
-          Stimulus Sheet
+          Sheet
         </Typography>
         <Typography variant="h5" component="div">
         <TextField onChange={onChangeSheetSignature} value={sheetSignature} id="outlined-basic" label="Sheet Signature" variant="outlined" />
@@ -103,6 +126,53 @@ const Sheet = ({ sheetId, defaultSheetSignature, sheetData, changeHandler, isRes
         <Typography variant="body2">
           <Spreadsheet data={data} onChange={setData} />
         </Typography>
+
+        {!isResult && (
+          <Grid container spacing={2} sx={{ justifyContent: 'center' }}>
+                  <Grid item xs={12} md={6}>
+                    <Typography gutterBottom sx={{ color: 'text.secondary', fontSize: 14 }}>
+                    Add Invocations (Parameterization)
+                    </Typography>
+                    <Paper
+                      component="form"
+                      sx={{ p: '2px 4px', display: 'flex', alignItems: 'center', width: 400 }}
+                    >
+                      <InputBase
+                        sx={{ ml: 1, flex: 1 }}
+                        placeholder="Add Invocation (comma separated list)"
+                        value={sheetInvocation}
+                        onChange={(event) => handleInvocationChange(event)}
+                        inputProps={{ 'aria-label': 'Add Invocation' }}
+                      />
+                            <Divider sx={{ height: 28, m: 0.5 }} orientation="vertical" />
+                      <IconButton type="button" sx={{ p: '10px' }} aria-label="add" onClick={() => addInvocation()}>
+                        <DoneIcon />
+                      </IconButton>
+                    </Paper>
+                      <List dense={true}>
+                      {sheetInvocations.map(invocation => {
+                          return (
+                            <ListItem
+                            secondaryAction={
+                              <IconButton edge="end" aria-label="delete" onClick={() => removeInvocation(invocation)}>
+                                <DeleteIcon />
+                              </IconButton>
+                            }
+                          >
+                          <ListItemAvatar>
+                            <Avatar>
+                              <ApiIcon />
+                            </Avatar>
+                          </ListItemAvatar>
+                          <ListItemText
+                            primary={invocation}
+                          />
+                        </ListItem>
+                          );
+                      })}
+                    </List>
+                    </Grid></Grid>
+        )}
       </CardContent>
       {!isResult && (
         <CardActions>
@@ -110,8 +180,6 @@ const Sheet = ({ sheetId, defaultSheetSignature, sheetData, changeHandler, isRes
           <Button size="small" onClick={(event) => addColumn()}>Add Column</Button>
           <Button size="small" onClick={(event) => removeRow()}>Remove Row</Button>
           <Button size="small" onClick={(event) => removeColumn()}>Remove Column</Button>
-
-          <Button size="small" onClick={(event) => addInvocation()}>Add Invocation (Parameterized Sheet)</Button>
         </CardActions>
       )}
 

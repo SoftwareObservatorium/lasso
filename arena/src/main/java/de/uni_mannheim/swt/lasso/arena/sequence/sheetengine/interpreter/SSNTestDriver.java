@@ -80,6 +80,8 @@ public class SSNTestDriver {
 
         List<ParsedSheet> parsedSheets = new ArrayList<>(sheets.size());
         for (SheetDto sheet : sheets) {
+            LOG.debug("JSONL body\n {}", sheet.getBody());
+
             ParsedSheet parsedSheet = ssnParser.parseJsonl(sheet.getBody(), sheet.getSignature(), sheet.getInterfaceSpecification());
             parsedSheets.add(parsedSheet);
         }
@@ -245,61 +247,78 @@ public class SSNTestDriver {
         return actuationSheets;
     }
 
+    /**
+     *
+     * @param stimulusMatrix is modified, since mutant implementations are added!
+     * @param limitAdapters
+     * @param executionListener
+     * @return
+     * @throws IOException
+     */
     public StimulusResponseMatrix<Test, AdaptedImplementation, ExecutedInvocations> mutateAndRunSheets(StimulusResponseMatrix<Test, ClassUnderTest, TestInvocation> stimulusMatrix, int limitAdapters, InvocationVisitor executionListener) throws IOException {
         // classes under test
         Set<ClassUnderTest> classesUnderTest = stimulusMatrix.getTable().columnKeySet();
         CandidatePool pool = new CandidatePool(getMavenRepository(), new ArrayList<>(classesUnderTest));
         pool.initProjects();
 
-        // create mutants
+        // create mutants -- simply expand Stimulus Matrix
         for(ClassUnderTest classUnderTest : classesUnderTest) {
             // Pitest
             Pitest pitest = new Pitest(classUnderTest);
             Map<ClassUnderTest, MutationDetails> mutants = createMutants(pool, classUnderTest, pitest, true, "original");
 
+            // add to stimulus matrix as well -- to keep it consistent with the resulting SRM
+            for(ClassUnderTest mutant : mutants.keySet()) {
+                Map<Test, TestInvocation> map = stimulusMatrix.getTable().column(classUnderTest);
+                map.entrySet().forEach(e -> stimulusMatrix.put(e.getKey(), mutant, e.getValue()));
+            }
+
             // automatically resolves project-related artifacts
             pool.initProjects();
         }
 
-        SSNInterpreter interpreter = new SSNInterpreter();
+        // run
+        return runSheets(stimulusMatrix, limitAdapters, executionListener);
 
-        // SRM
-        StimulusResponseMatrix<Test, AdaptedImplementation, ExecutedInvocations> stimulusResponseMatrix = new StimulusResponseMatrix<>();
-
-        for(ClassUnderTest classUnderTest : classesUnderTest) {
-            for (ClassUnderTest variant : pool.getClassesUnderTest()) {
-                Map<Test, TestInvocation> testInvocationMap = stimulusMatrix.getTable().column(classUnderTest);
-                // take some random test to get interface
-                Test randomTest = testInvocationMap.keySet().iterator().next();
-
-                // get interface
-                ParsedSheet randomSheet = randomTest.getParsedSheet();
-                InterfaceSpecification interfaceSpecification = randomSheet.getInterfaceSpecification();
-
-                List<AdaptedImplementation> adaptedImplementations = adaptationStrategy.adapt(interfaceSpecification, variant, limitAdapters);
-
-                for(Map.Entry<Test, TestInvocation> testInvocation : testInvocationMap.entrySet()) {
-                    // prepare executable sheet
-                    Test test = testInvocation.getKey();
-                    ParsedSheet parsedSheet = test.getParsedSheet();
-                    Invocations invocations = interpreter.interpret(parsedSheet, variant, testInvocation.getValue());
-
-                    for (AdaptedImplementation adaptedImplementation : adaptedImplementations) {
-                        executionListener.visitBeforeExecution(adaptedImplementation);
-
-                        // run
-                        ExecutedInvocations executedInvocations = interpreter.run(invocations, adaptedImplementation, executionListener);
-
-                        executionListener.visitAfterExecution(adaptedImplementation);
-
-                        // add to SRM
-                        stimulusResponseMatrix.put(test, adaptedImplementation, executedInvocations);
-                    }
-                }
-            }
-        }
-
-        return stimulusResponseMatrix;
+//        SSNInterpreter interpreter = new SSNInterpreter();
+//
+//        // SRM
+//        StimulusResponseMatrix<Test, AdaptedImplementation, ExecutedInvocations> stimulusResponseMatrix = new StimulusResponseMatrix<>();
+//
+//        for(ClassUnderTest classUnderTest : classesUnderTest) {
+//            for (ClassUnderTest variant : pool.getClassesUnderTest()) {
+//                Map<Test, TestInvocation> testInvocationMap = stimulusMatrix.getTable().column(classUnderTest);
+//                // take some random test to get interface
+//                Test randomTest = testInvocationMap.keySet().iterator().next();
+//
+//                // get interface
+//                ParsedSheet randomSheet = randomTest.getParsedSheet();
+//                InterfaceSpecification interfaceSpecification = randomSheet.getInterfaceSpecification();
+//
+//                List<AdaptedImplementation> adaptedImplementations = adaptationStrategy.adapt(interfaceSpecification, variant, limitAdapters);
+//
+//                for(Map.Entry<Test, TestInvocation> testInvocation : testInvocationMap.entrySet()) {
+//                    // prepare executable sheet
+//                    Test test = testInvocation.getKey();
+//                    ParsedSheet parsedSheet = test.getParsedSheet();
+//                    Invocations invocations = interpreter.interpret(parsedSheet, variant, testInvocation.getValue());
+//
+//                    for (AdaptedImplementation adaptedImplementation : adaptedImplementations) {
+//                        executionListener.visitBeforeExecution(adaptedImplementation);
+//
+//                        // run
+//                        ExecutedInvocations executedInvocations = interpreter.run(invocations, adaptedImplementation, executionListener);
+//
+//                        executionListener.visitAfterExecution(adaptedImplementation);
+//
+//                        // add to SRM
+//                        stimulusResponseMatrix.put(test, adaptedImplementation, executedInvocations);
+//                    }
+//                }
+//            }
+//        }
+//
+//        return stimulusResponseMatrix;
     }
 
 

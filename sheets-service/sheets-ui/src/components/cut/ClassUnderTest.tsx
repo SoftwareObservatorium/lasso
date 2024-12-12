@@ -4,7 +4,7 @@ import { Button, ButtonGroup, Divider, TextField } from '@mui/material';
 
 const ClassUnderTest = ({ detectInterfaceHandler, cutHandler }: any) => {
 
-  const [className, setClassName] = useState("java.util.Stack");
+  const [className, setClassName] = useState("demo_examples.BoundedQueue");
   const [artifacts, setArtifacts] = useState("");
 
   const toArtifacts = () => {

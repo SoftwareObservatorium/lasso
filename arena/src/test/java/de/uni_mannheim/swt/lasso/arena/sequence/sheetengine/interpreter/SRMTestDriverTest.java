@@ -145,6 +145,74 @@ public class SRMTestDriverTest {
             assertEquals("1", invocations.getInvocation(3).getExpectedOutput().getExpression());
 
             assertEquals(4, executedInvocations.getSequence().size());
+
+            ActuationSheet actuationSheet = new ActuationSheet();
+            actuationSheet.setExecutedInvocations(cell.getValue());
+            actuationSheet.setAdaptedImplementation(cell.getColumnKey());
+            actuationSheet.toSheetData(new GsonMapper()).get(1).debug();
+        }
+    }
+
+    @Test
+    public void test_Stack_empty_constructor_PARAMETERIZED_input_output() throws IOException, ClassNotFoundException {
+        @Language("jsonl")
+        String ssnJsonlStr = """
+                {"sheet": "Sheet 1", "header": "Row 1", "cells": {"A1": {}, "B1": "create", "C1": "Stack"}}
+                {"sheet": "Sheet 1", "header": "Row 2", "cells": {"A2": {}, "B2": "create", "C2": "java.lang.String", "D2": "?p1"}}
+                {"sheet": "Sheet 1", "header": "Row 3", "cells": {"A3": {}, "B3": "push", "C3": "A1", "D3": "A2"}}
+                {"sheet": "Sheet 1", "header": "Row 4", "cells": {"A4": "?p2", ",B4": "size", "C4": "A1"}}
+                """;
+
+        String lql = """
+                Stack {
+                    push(java.lang.String)->java.lang.String
+                    size()->int
+                }
+                """;
+        ObjectMapperVisitor visitor = createVisitor();
+
+        Class cutClass = StackEmptyConstructorExample.class;
+
+        SSNTestDriver testDriver = new SSNTestDriver();
+
+        // SM
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, ClassUnderTest, TestInvocation> stimulusMatrix = SSNTestDriver.parseStimulusMatrix(
+                Arrays.asList(new SheetDto("test(p1=java.lang.String,p2=int)", ssnJsonlStr, lql)), Arrays.asList(CutUtils.createExample(cutClass)), Arrays.asList(new SheetInvocationDto("test", "\"Hello World!\",1"), new SheetInvocationDto("test", "\"I'm a robot\",1")));
+
+        // SRM
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> stimulusResponseMatrix = testDriver.runSheets(stimulusMatrix, 1, visitor);
+
+        assertEquals(2, stimulusResponseMatrix.getTable().size());
+
+        for(Table.Cell<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> cell : stimulusResponseMatrix.getTable().cellSet()) {
+            ExecutedInvocations executedInvocations = cell.getValue();
+
+            LOG.debug("executed invocations\n{}", executedInvocations);
+
+            Invocations invocations = executedInvocations.getInvocations();
+
+            assertEquals(4, invocations.getSequence().size());
+            assertEquals(invocations.getEval().resolveClass("Stack"), invocations.getInvocation(0).getTargetClass());
+            assertEquals(0, invocations.getInvocation(0).getParameters().size());
+            assertEquals(invocations.getEval().resolveClass("java.lang.String"), invocations.getInvocation(1).getTargetClass());
+            assertEquals(1, invocations.getInvocation(1).getParameters().size());
+            assertEquals(invocations.getEval().resolveClass("Stack"), invocations.getInvocation(2).getTargetClass());
+            assertEquals(1, invocations.getInvocation(2).getParameters().size());
+            assertEquals(invocations.getEval().resolveClass("Stack"), invocations.getInvocation(3).getTargetClass());
+            assertEquals(0, invocations.getInvocation(3).getParameters().size());
+            // test oracle values (first column)
+            assertTrue(invocations.getInvocation(0).getExpectedOutput().isUndefined());
+            assertTrue(invocations.getInvocation(1).getExpectedOutput().isUndefined());
+            assertTrue(invocations.getInvocation(2).getExpectedOutput().isUndefined());
+            assertFalse(invocations.getInvocation(3).getExpectedOutput().isUndefined());
+            //assertEquals("1", invocations.getInvocation(3).getExpectedOutput().getExpression());
+
+            assertEquals(4, executedInvocations.getSequence().size());
+
+            ActuationSheet actuationSheet = new ActuationSheet();
+            actuationSheet.setExecutedInvocations(cell.getValue());
+            actuationSheet.setAdaptedImplementation(cell.getColumnKey());
+            actuationSheet.toSheetData(new GsonMapper()).get(1).debug();
         }
     }
 

@@ -8,6 +8,7 @@ export class SheetSpec {
     signature!: string
     interfaceSpecification!: string
     body!: string
+    invocations!: string[];
     implementation!: string
 }
 
@@ -23,6 +24,7 @@ export class TestResult {
 
     actuationSheets!: SheetSpec[]
     adaptedActuationSheets!: SheetSpec[]
+    metricSheets!: SheetSpec[]
 }
 
 export class SheetResponse {
@@ -51,4 +53,5 @@ export class User {
 export class StimulusSheet {
     signature!: string;
     data!: any[][];
+    invocations!: string[];
 }

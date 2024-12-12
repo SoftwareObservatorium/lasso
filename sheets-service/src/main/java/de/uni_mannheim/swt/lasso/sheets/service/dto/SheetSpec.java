@@ -19,6 +19,8 @@
  */
 package de.uni_mannheim.swt.lasso.sheets.service.dto;
 
+import java.util.List;
+
 /**
  *
  * @author Marcus Kessel
@@ -32,6 +34,8 @@ public class SheetSpec {
 
     // FIXME add implementation details
     private String implementation;
+
+    private List<String> invocations;
 
     public String getInterfaceSpecification() {
         return interfaceSpecification;
@@ -63,5 +67,13 @@ public class SheetSpec {
 
     public void setSignature(String signature) {
         this.signature = signature;
+    }
+
+    public List<String> getInvocations() {
+        return invocations;
+    }
+
+    public void setInvocations(List<String> invocations) {
+        this.invocations = invocations;
     }
 }

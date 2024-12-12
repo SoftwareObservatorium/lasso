@@ -35,6 +35,7 @@ public class TestResult {
 
     private List<SheetSpec> actuationSheets;
     private List<SheetSpec> adaptedActuationSheets;
+    private List<SheetSpec> metricSheets;
 
     public String getExecutionId() {
         return executionId;
@@ -74,5 +75,13 @@ public class TestResult {
 
     public void setClassUnderTestSpec(ClassUnderTestSpec classUnderTestSpec) {
         this.classUnderTestSpec = classUnderTestSpec;
+    }
+
+    public List<SheetSpec> getMetricSheets() {
+        return metricSheets;
+    }
+
+    public void setMetricSheets(List<SheetSpec> metricSheets) {
+        this.metricSheets = metricSheets;
     }
 }

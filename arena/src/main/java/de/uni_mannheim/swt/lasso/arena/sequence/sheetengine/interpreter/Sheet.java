@@ -6,6 +6,7 @@ import com.google.gson.Gson;
 import com.google.gson.stream.JsonWriter;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.SheetResolver;
 import org.apache.commons.io.output.StringBuilderWriter;
+import org.apache.commons.lang3.math.NumberUtils;
 
 import java.io.IOException;
 
@@ -75,7 +76,15 @@ public class Sheet<R extends Comparable, C extends Comparable, V> {
                 String cLbl = SheetResolver.toColumnLabel((Integer) col);
                 String rLbl =SheetResolver.toRowLabel((Integer) row);
 
-                writer.name(cLbl + rLbl).value((String) value);
+                if(value instanceof String || value == null) {
+                    writer.name(cLbl + rLbl).value((String) value);
+                }
+
+                if(value instanceof Double) {
+                    writer.name(cLbl + rLbl).value((double) value);
+                }
+
+                // FIXME other types?
             }
 
             writer.endObject().endObject();

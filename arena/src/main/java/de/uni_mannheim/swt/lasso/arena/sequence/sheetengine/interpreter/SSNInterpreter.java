@@ -545,7 +545,12 @@ public class SSNInterpreter {
             Object inputValue = inputValues[i];
             Class targetClass = resolveTargetClass(inputValue);
 
-            return new Parameter(targetClass, testInvocation.getInvocationExpression(), inputValue);
+            // we need to slice code expression
+            // FIXME improve in case "," is part of strings ... we need a javaparser here
+            String[] slices = StringUtils.split(testInvocation.getInvocationExpression(), ",");
+            String codeExpr = slices[i];
+
+            return new Parameter(targetClass, codeExpr, inputValue);
         }
 
         // value expression to be evaluated
