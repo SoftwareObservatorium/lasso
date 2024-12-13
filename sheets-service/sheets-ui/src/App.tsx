@@ -14,7 +14,7 @@ import AuthService from './services/AuthService';
 import PrivateRoute from './components/navigation/PrivateRoute';
 import DocumentationPage from './pages/DocumentationPage';
 import AboutPage from './pages/AboutPage';
-import Exp from './pages/Exp';
+import SrmPage from './pages/SrmPage';
 
 function App() {
   const [currentUser, setCurrentUser] = useState<User>()
@@ -26,6 +26,14 @@ function App() {
       setCurrentUser(user)
     }
   }, []);
+
+  // // pre-load duckdb
+  // useEffect(() => {
+  //   const config: DuckDBConfig = {
+  //       path: "./tdse_srm.parquet"
+  //   }
+  //   initializeDuckDb({ config, debug: true });
+  // }, []);
 
   const logOut = () => {
     AuthService.logout();
@@ -50,7 +58,9 @@ function App() {
           <Route path="/home" element={<HomePage/>} />
           <Route path="/documentation" element={<DocumentationPage />} />
           <Route path="/about" element={<AboutPage/>} />
-          <Route path="/exp" element={<Exp/>} />
+          
+          <Route path="/srm" element={<SrmPage/>} />
+
           <Route path="/login" element={<LoginPage/>} />
           <Route path="/register" element={<RegisterPage/>} />
           <Route path="/profile" element={wrapPrivateRoute(<ProfilePage />, currentUser, 'profile')} />

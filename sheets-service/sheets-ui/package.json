@@ -4,11 +4,13 @@
   "private": true,
   "homepage": "/sheets-ui",
   "dependencies": {
+    "@duckdb/duckdb-wasm": "^1.29.0",
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@monaco-editor/react": "^4.6.0",
     "@mui/icons-material": "^6.0.2",
     "@mui/material": "^6.0.2",
+    "@mui/x-data-grid": "^7.23.2",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
