@@ -74,7 +74,7 @@ const SrmPage = () => {
 
     // react-data-grid https://mui.com/x/react-data-grid/getting-started/
     const columns: GridColDef[] = Object.keys(result[0]).map(col => { return {field: col, headerName: col, width: 150} })
-    columns.push({field: "id", headerName: "ID", width: 150})
+    //columns.push({field: "id", headerName: "ID", width: 150})
     setColumns(columns)
     const rows: GridRowsProp = result
     setRows(rows)
