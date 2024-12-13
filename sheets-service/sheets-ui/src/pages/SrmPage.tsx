@@ -1,4 +1,4 @@
-import { Button, CardActions, CardContent, Divider, TextField, Typography } from '@mui/material';
+import { Button, ButtonGroup, CardActions, CardContent, Divider, TextField, Typography } from '@mui/material';
 import React, { useState } from 'react';
 
 import * as duckdb from '@duckdb/duckdb-wasm';
@@ -85,7 +85,19 @@ const SrmPage = () => {
   }
 
   const doLoad = () => {
-    loadParquet(srmPath, srmSqlQuery);
+    loadParquet(srmPath, 'Select * from tdse_srm.parquet');
+  }
+
+  const doSrmQuery = (observationType: string | undefined) => {
+    let sqlQuery;
+    if(observationType) {
+      sqlQuery = `PIVOT (SELECT CONCAT(REGEXP_REPLACE(SHEETID, '_[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}',''),'@',X, ',', Y) as statement, CONCAT(SYSTEMID,'_',ADAPTERID) as SYSTEMID, value, type from tdse_srm.parquet where type = '${observationType}') ON SYSTEMID USING first(VALUE) ORDER BY STATEMENT`
+    } else {
+      sqlQuery = `PIVOT (SELECT CONCAT(REGEXP_REPLACE(SHEETID, '_[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}',''),'@',X, ',', Y) as statement, CONCAT(SYSTEMID,'_',ADAPTERID) as SYSTEMID, value, type from tdse_srm.parquet) ON SYSTEMID USING first(VALUE) ORDER BY STATEMENT`
+    }
+
+    setSrmSqlQuery(sqlQuery)
+    loadParquet(srmPath, sqlQuery);
   }
 
   const handleSrmPathChange = (event: any) => {
@@ -114,7 +126,13 @@ const SrmPage = () => {
         </Typography>
       </CardContent>
       <CardActions>
-          <Button size="small" onClick={(event) => doLoad()}>Load SRM parquet</Button>
+          <ButtonGroup variant="contained" aria-label="Basic button group">
+            <Button onClick={(event) => doLoad()}>Load Raw SRM parquet</Button>
+            <Button onClick={(event) => doSrmQuery(undefined)}>View All</Button>
+            <Button onClick={(event) => doSrmQuery('value')}>View Output</Button>
+            <Button onClick={(event) => doSrmQuery('input_value')}>View Inputs</Button>
+            <Button onClick={(event) => doSrmQuery('op')}>View Operations</Button>
+          </ButtonGroup>
       </CardActions>
 
       <Divider />
