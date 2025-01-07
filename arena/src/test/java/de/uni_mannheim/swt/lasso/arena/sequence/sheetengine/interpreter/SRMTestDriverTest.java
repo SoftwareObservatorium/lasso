@@ -160,7 +160,7 @@ public class SRMTestDriverTest {
                 {"sheet": "Sheet 1", "header": "Row 1", "cells": {"A1": {}, "B1": "create", "C1": "Stack"}}
                 {"sheet": "Sheet 1", "header": "Row 2", "cells": {"A2": {}, "B2": "create", "C2": "java.lang.String", "D2": "?p1"}}
                 {"sheet": "Sheet 1", "header": "Row 3", "cells": {"A3": {}, "B3": "push", "C3": "A1", "D3": "A2"}}
-                {"sheet": "Sheet 1", "header": "Row 4", "cells": {"A4": "?p2", ",B4": "size", "C4": "A1"}}
+                {"sheet": "Sheet 1", "header": "Row 4", "cells": {"A4": "?p2", "B4": "size", "C4": "A1"}}
                 """;
 
         String lql = """

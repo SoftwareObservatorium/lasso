@@ -44,10 +44,12 @@ public class SSNParserTest {
 
         assertEquals(4, parsedSheet.getRows().get(0).getCells().size());
         assertEquals(4, parsedSheet.getRows().get(1).getCells().size());
-        assertEquals(2, parsedSheet.getRows().get(2).getCells().size());
+        assertEquals(3, parsedSheet.getRows().get(2).getCells().size());
 
         // must be 1!
         assertEquals(1, parsedSheet.getRows().get(2).getInputs().size());
+
+        assertEquals(true, parsedSheet.getRows().get(2).getOutput().getNodeValue().isObject());
     }
 
     @Test

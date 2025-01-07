@@ -33,8 +33,7 @@ public class ParsedRow {
     }
 
     public List<ParsedCell> getInputs() {
-        // FIXME should be based on coordinates of cell (fails if cells are missing in front of the row)
-        return cells.subList(2, cells.size());
+         return cells.subList(2, cells.size());
     }
 
     public ParsedSheet getParsedSheet() {

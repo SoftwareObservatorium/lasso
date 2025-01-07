@@ -10,9 +10,7 @@ import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.LQL
 import org.apache.commons.lang3.Validate;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Parser based on Sequence Sheet Notation (SSN) using JSONL
@@ -74,8 +72,9 @@ public class SSNParser {
 
             List<ParsedRow> parsedRows = new ArrayList<>(rowNodes.size());
             parsedSheet.setRows(parsedRows);
+            int r = 0;
             for(JsonNode rowNode : rowNodes) {
-                ParsedRow parsedRow = processRow(parsedSheet, rowNode);
+                ParsedRow parsedRow = processRow(parsedSheet, rowNode, r++);
                 parsedRows.add(parsedRow);
             }
         }
@@ -89,7 +88,7 @@ public class SSNParser {
         return parsedSheet;
     }
 
-    ParsedRow processRow(ParsedSheet parsedSheet, JsonNode node) throws IOException {
+    ParsedRow processRow(ParsedSheet parsedSheet, JsonNode node, int rowId) throws IOException {
         ParsedRow parsedRow = new ParsedRow(parsedSheet);
         List<ParsedCell> parsedCells = new ArrayList<>();
         parsedRow.setCells(parsedCells);
@@ -97,9 +96,31 @@ public class SSNParser {
         JsonNode cells = node.get("cells");
         // assume JSON Object
         if(cells.isObject()) {
+            List<Integer> colIds = new LinkedList<>();
+
             cells.fields().forEachRemaining(e -> {
+                // row/column
+                int[] reference = SheetResolver.resolveCellReference(e.getKey());
+                // add to row
                 parsedCells.add(new ParsedCell(parsedRow, e.getKey(), e.getValue()));
+                //parsedCells.add(new ParsedCell(parsedRow, e.getKey(), e.getValue()));
+
+                colIds.add(reference[1]);
             });
+
+            // fill up row with missing cells
+            int max = colIds.stream().mapToInt(i -> i).max().getAsInt();
+            for(int i = 0; i < max; i++) {
+                if(!colIds.contains(i)) {
+                    parsedCells.add(i, new ParsedCell(parsedRow, SheetResolver.toColumnLabel(i)+SheetResolver.toRowLabel(rowId), mapper.createObjectNode()));
+                }
+            }
+
+            // validate
+            Validate.notNull(parsedRow.getOutput(), "No output cell defined");
+            Validate.notNull(parsedRow.getOperation(), "No operation cell defined");
+            Validate.notEmpty(parsedRow.getInputs(), "No input cells defined");
+
             return parsedRow;
         }
 
