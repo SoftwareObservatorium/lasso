@@ -55,3 +55,25 @@ export class StimulusSheet {
     data!: any[][];
     invocations!: string[];
 }
+
+// experimental
+export class FunctionalAbstractionRaw {
+    interfaceSignature!: string;
+}
+
+export class CodeModuleRaw {
+    className!: string
+    artifacts!: string[]
+}
+
+export class StimulusSheetRaw {
+    signature!: string;
+    body!: string
+    invocations!: string[];
+}
+
+export class StimulusMatrixRaw {
+    abstraction!: FunctionalAbstractionRaw;
+    codeModules!: CodeModuleRaw[];
+    tests!: StimulusSheetRaw[];
+}

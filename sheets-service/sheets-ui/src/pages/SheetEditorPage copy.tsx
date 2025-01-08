@@ -3,7 +3,7 @@ import LQLEditor from '../components/editor/LQLEditor';
 import { Alert, Backdrop, Box, Button, ButtonGroup, CircularProgress, Container, Divider, TextField, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { CellBase, Matrix } from 'react-spreadsheet';
 import ClassUnderTest from '../components/cut/ClassUnderTest';
-import { ClassUnderTestSpec, SheetRequest, SheetResponse, SheetSpec, StimulusMatrixRaw, StimulusSheet, TestResult } from '../model/models';
+import { ClassUnderTestSpec, SheetRequest, SheetResponse, SheetSpec, StimulusSheet, TestResult } from '../model/models';
 import SheetService from '../services/SheetService';
 import ActuationSheet from '../components/sheet/ActuationSheet';
 import Sheet from '../components/sheet/StimulusSheet';
@@ -123,38 +123,6 @@ function rowIndexToLabel(row: number) {
 
 
 function SheetEditorPage() {
-    // example data
-    const [stimulusMatrix, setStimulusMatrix] = useState<StimulusMatrixRaw>({
-        abstraction: {
-            interfaceSignature: `BoundedQueue {
-    BoundedQueue(int)
-    enQueue(java.lang.Object)->void
-    deQueue()->java.lang.Object
-    isEmpty()->boolean
-    isFull()->boolean
-}`},
-        codeModules: [
-            {
-                className: "demo_examples.BoundedQueue",
-                artifacts: [""]
-            }
-        ],
-        tests: [
-            {
-                signature: "",
-                body: `
-{"cells": {"A1": {}, "B1": "create", "C1": "BoundedQueue", "D1": 10}}
-{"cells": {"A2": {}, "B2": "enQueue", "C2": "A1", "D2": "'Hello World!'"}}
-{"cells": {"A3": {}, "B3": "isEmpty", "C3": "A1"}}
-{"cells": {"A4": {}, "B4": "isFull", "C4": "A1"}}
-{"cells": {"A5": "D2", "B5": "deQueue", "C5": "A1"}}
-{"cells": {"A6": {}, "B6": "isEmpty", "C6": "A1"}}
-`,
-                invocations: []
-            }
-        ]
-    });
-
   // load
   const [stimulusSheets, setStimulusSheets] = useState<StimulusSheet[]>(() => [loadDefaultSheet()])
 

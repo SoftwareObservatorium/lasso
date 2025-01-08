@@ -20,7 +20,7 @@ public class InvocationVisitor {
      * @param adaptedImplementation
      */
     public void visitBeforeExecution(AdaptedImplementation adaptedImplementation) {
-
+        LOG.info("visitBeforeExecution {}", adaptedImplementation.getAdapterId());
     }
     /**
      * Called AFTER the execution of a suite/set of sequences.

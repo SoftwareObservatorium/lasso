@@ -21,6 +21,7 @@ import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.dt
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.dto.SheetInvocationDto;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.CutUtils;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.HierarchyMemberResolver;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.LQLUtils;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.ParsedSheet;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.SSNParser;
 
@@ -74,7 +75,6 @@ public class SSNTestDriver {
         this.mavenRepository = mavenRepository;
     }
 
-    @Deprecated
     public static List<ParsedSheet> parseAll(List<SheetDto> sheets) throws IOException {
         SSNParser ssnParser = new SSNParser();
 
@@ -92,6 +92,16 @@ public class SSNTestDriver {
     public static StimulusResponseMatrix<Test, ClassUnderTest, TestInvocation> parseStimulusMatrix(List<SheetDto> sheets, List<ClassUnderTest> classesUnderTest, List<SheetInvocationDto> sheetInvocations) throws IOException {
         // parse sheets
         List<ParsedSheet> parsedSheets = parseAll(sheets);
+
+        String interfaceLql = sheets.get(0).getInterfaceSpecification();
+
+        // parse interface specification
+        // interface
+        Map<String, InterfaceSpecification> interfaceSpecificationMap = LQLUtils.lqlToMap(interfaceLql);
+        // FIXME for all CUTs .. here only one
+        String faName = interfaceSpecificationMap.keySet().stream().findFirst().get();
+        // set globally for all (important to set same reference!)
+        parsedSheets.forEach(s -> s.setInterfaceSpecification(interfaceSpecificationMap.get(faName)));
 
         StimulusResponseMatrix<Test, ClassUnderTest, TestInvocation> stimulusMatrix = new StimulusResponseMatrix<>();
 

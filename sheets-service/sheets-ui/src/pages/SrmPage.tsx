@@ -2,7 +2,7 @@ import { Button, ButtonGroup, CardActions, CardContent, Divider, TextField, Typo
 import React, { useState } from 'react';
 
 import * as duckdb from '@duckdb/duckdb-wasm';
-import { DataGrid, GridColDef, GridRowsProp } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridRowsProp, GridToolbar } from '@mui/x-data-grid';
 
 const SrmPage = () => {
   // inputs
@@ -156,8 +156,8 @@ const SrmPage = () => {
 
       <Divider/>
 
-      <div style={{ height: '500px', width: '90%' }}>
-        <DataGrid rows={rows} columns={columns} getRowId={(row: any) => /* FIXME unique ID required */ Math.floor(Math.random() * 100000000)} />
+      <div style={{ height: '500px', width: '100%' }}>
+        <DataGrid slots={{ toolbar: GridToolbar }} rows={rows} columns={columns} getRowId={(row: any) => /* FIXME unique ID required */ Math.floor(Math.random() * 100000000)} />
       </div>
 
     </React.Fragment>

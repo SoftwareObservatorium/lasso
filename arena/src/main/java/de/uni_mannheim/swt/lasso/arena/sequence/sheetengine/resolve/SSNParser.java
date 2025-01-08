@@ -79,11 +79,11 @@ public class SSNParser {
             }
         }
 
-        // interface
-        Map<String, InterfaceSpecification> interfaceSpecificationMap = LQLUtils.lqlToMap(interfaceLql);
-        // FIXME for all CUTs .. here only one
-        String faName = interfaceSpecificationMap.keySet().stream().findFirst().get();
-        parsedSheet.setInterfaceSpecification(interfaceSpecificationMap.get(faName));
+//        // interface
+//        Map<String, InterfaceSpecification> interfaceSpecificationMap = LQLUtils.lqlToMap(interfaceLql);
+//        // FIXME for all CUTs .. here only one
+//        String faName = interfaceSpecificationMap.keySet().stream().findFirst().get();
+//        parsedSheet.setInterfaceSpecification(interfaceSpecificationMap.get(faName));
 
         return parsedSheet;
     }

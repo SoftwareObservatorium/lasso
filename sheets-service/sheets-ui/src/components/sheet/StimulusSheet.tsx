@@ -42,7 +42,7 @@ const Sheet = ({ sheetId, defaultSheetSignature, sheetData, changeHandler, isRes
   const [sheetInvocation, setSheetInvocation] = React.useState<string>();
 
   useEffect(() => {
-    console.log(data);
+    //console.log(data);
     changeHandler(sheetId, sheetSignature, data, sheetInvocations)
 
   }, [sheetSignature, data, sheetInvocations]);
@@ -113,8 +113,17 @@ const Sheet = ({ sheetId, defaultSheetSignature, sheetData, changeHandler, isRes
     setSheetInvocations(my);
   }
 
-  const card = (
-    <React.Fragment>
+  const onChangeData = (newData: Matrix<CellBase>) => {
+    console.log(newData);
+
+    //changeHandler(sheetId, sheetSignature, newData, sheetInvocations);
+
+    setData(newData)
+  }
+
+  return (
+    <Box sx={{ minWidth: 275 }}>
+      <Card variant="outlined">
       <CardContent>
         <Typography gutterBottom sx={{ color: 'text.secondary', fontSize: 14 }}>
           Sheet
@@ -124,7 +133,7 @@ const Sheet = ({ sheetId, defaultSheetSignature, sheetData, changeHandler, isRes
         </Typography>
         <Typography sx={{ color: 'text.secondary', mb: 1.5 }}>Body</Typography>
         <Typography variant="body2">
-          <Spreadsheet data={data} onChange={setData} />
+          <Spreadsheet data={data} onChange={onChangeData} />
         </Typography>
 
         {!isResult && (
@@ -182,13 +191,7 @@ const Sheet = ({ sheetId, defaultSheetSignature, sheetData, changeHandler, isRes
           <Button size="small" onClick={(event) => removeColumn()}>Remove Column</Button>
         </CardActions>
       )}
-
-    </React.Fragment>
-  );
-
-  return (
-    <Box sx={{ minWidth: 275 }}>
-      <Card variant="outlined">{card}</Card>
+      </Card>
     </Box>
   );
 

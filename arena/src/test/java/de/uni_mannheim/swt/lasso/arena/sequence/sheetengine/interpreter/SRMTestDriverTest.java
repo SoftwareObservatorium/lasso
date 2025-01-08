@@ -252,7 +252,7 @@ public class SRMTestDriverTest {
                 Arrays.asList(new SheetDto("test()", ssnJsonlStr, lql)), Arrays.asList(CutUtils.createExample(cutClass)), Arrays.asList(new SheetInvocationDto("test", "")));
 
         // SRM
-        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> stimulusResponseMatrix = testDriver.mutateAndRunSheets(stimulusMatrix, 1, visitor);
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> stimulusResponseMatrix = testDriver.mutateAndRunSheets(stimulusMatrix, 1, invocationVisitor);
 
         assertEquals(29, stimulusResponseMatrix.getTable().size()); // original + 28 mutants
 
@@ -272,6 +272,64 @@ public class SRMTestDriverTest {
             }
 
             //assertEquals(29, actuationSheets.stream().map(a -> a.getAdaptedImplementation().getAdaptee()).collect(Collectors.toSet()).size()); // original + 28 mutants
+        }
+    }
+
+    @Test
+    public void test_BoundedQueue_multiple_tests() throws IOException, ClassNotFoundException {
+        @Language("jsonl")
+        String ssnJsonlStr1 = """
+                {"sheet": "Sheet 1", "header": "Row 1", "cells": {"A1": {}, "B1": "create", "C1": "BoundedQueue", "D1": 10}}
+                {"sheet": "Sheet 1", "header": "Row 3", "cells": {"A2": {}, "B2": "enQueue", "C2": "A1", "D2": "'Hello World!'"}}
+                {"sheet": "Sheet 1", "header": "Row 3", "cells": {"A3": false, "B3": "isEmpty", "C3": "A1"}}
+                {"sheet": "Sheet 1", "header": "Row 4", "cells": {"A4": false, "B4": "isFull", "C4": "A1"}}
+                {"sheet": "Sheet 1", "header": "Row 5", "cells": {"A5": "D2", "B5": "deQueue", "C5": "A1"}}
+                {"sheet": "Sheet 1", "header": "Row 6", "cells": {"A6": true, "B6": "isEmpty", "C6": "A1"}}
+                """;
+        String ssnJsonlStr2 = """
+                {"sheet": "Sheet 1", "header": "Row 1", "cells": {"A1": {}, "B1": "create", "C1": "BoundedQueue", "D1": 5}}
+                {"sheet": "Sheet 1", "header": "Row 3", "cells": {"A2": {}, "B2": "enQueue", "C2": "A1", "D2": "'aaaaa'"}}
+                {"sheet": "Sheet 1", "header": "Row 3", "cells": {"A3": false, "B3": "isEmpty", "C3": "A1"}}
+                {"sheet": "Sheet 1", "header": "Row 4", "cells": {"A4": false, "B4": "isFull", "C4": "A1"}}
+                {"sheet": "Sheet 1", "header": "Row 5", "cells": {"A5": "D2", "B5": "deQueue", "C5": "A1"}}
+                {"sheet": "Sheet 1", "header": "Row 6", "cells": {"A6": true, "B6": "isEmpty", "C6": "A1"}}
+                """;
+
+        String lql = """
+                BoundedQueue {
+                    BoundedQueue(int)
+                    enQueue(java.lang.Object)->void
+                    deQueue()->java.lang.Object
+                    isEmpty()->boolean
+                    isFull()->boolean
+                }
+                """;
+        //ObjectMapperVisitor visitor = createVisitor();
+
+        ObjectMapperVisitor visitor = new ObjectMapperVisitor(new GsonMapper());
+        InvocationVisitor invocationVisitor = new CompositeInvocationVisitor(
+                Arrays.asList(visitor));
+
+        Class cutClass = BoundedQueue.class;
+
+        SSNTestDriver testDriver = new SSNTestDriver();
+
+        // SM
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, ClassUnderTest, TestInvocation> stimulusMatrix = SSNTestDriver.parseStimulusMatrix(
+                Arrays.asList(new SheetDto("test1()", ssnJsonlStr1, lql), new SheetDto("test2()", ssnJsonlStr2, lql)), Arrays.asList(CutUtils.createExample(cutClass)), Arrays.asList(new SheetInvocationDto("test1", ""), new SheetInvocationDto("test2", "")));
+
+        // SRM
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> stimulusResponseMatrix = testDriver.runSheets(stimulusMatrix, 1, invocationVisitor);
+
+        //assertEquals(29, stimulusResponseMatrix.getTable().size());
+
+        for(Table.Cell<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> cell : stimulusResponseMatrix.getTable().cellSet()) {
+            ExecutedInvocations executedInvocations = cell.getValue();
+
+            LOG.debug("executed invocations for '{}' \n{}", cell.getColumnKey().getAdaptee().getVariantId(), executedInvocations);
+            visitor.getActuationSheet().debug();
+            visitor.getAdaptedActuationSheet().debug();
+            Invocations invocations = executedInvocations.getInvocations();
         }
     }
 

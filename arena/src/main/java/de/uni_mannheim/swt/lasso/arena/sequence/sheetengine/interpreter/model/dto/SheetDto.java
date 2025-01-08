@@ -1,7 +1,5 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.dto;
 
-import org.apache.commons.collections.CollectionUtils;
-
 import java.util.List;
 
 /**
