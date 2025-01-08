@@ -173,6 +173,7 @@ public class InvocationInterceptor implements MethodInterceptor {
         Enhancer enhancer = new Enhancer();
         enhancer.setSuperclass(clazz);
         enhancer.setCallback(this);
+        //enhancer.setClassLoader();
 
         if(ArrayUtils.isNotEmpty(argumentTypes)) {
             return enhancer.create(argumentTypes, arguments);

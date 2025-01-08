@@ -47,7 +47,7 @@ public class InstanceInvocation extends MemberInvocation {
             InvocationInterceptor invocationInterceptor = new InvocationInterceptor(executedInvocations, adaptedImplementation, invocations.getParsedSheet().getInterfaceSpecification());
             Object proxyInstance = invocationInterceptor.create(executedInvocation, constructor, inputValues.toArray());
             executedInvocation.setInterceptor(invocationInterceptor);
-            LOG.debug("created proxy {}", proxyInstance.getClass().getCanonicalName());
+            LOG.debug("created proxy {}", proxyInstance.getClass());
         } else {
             try {
                 if(!constructor.isAccessible()) {

@@ -81,7 +81,12 @@ public class Sheet<R extends Comparable, C extends Comparable, V> {
                 }
 
                 if(value instanceof Double) {
-                    writer.name(cLbl + rLbl).value((double) value);
+                    Double numVal = (Double) value;
+                    if(numVal.isNaN()) {
+                        writer.name(cLbl + rLbl).value(-1d);
+                    } else {
+                        writer.name(cLbl + rLbl).value((double) value);
+                    }
                 }
 
                 // FIXME other types?

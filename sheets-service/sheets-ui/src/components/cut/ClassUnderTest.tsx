@@ -2,10 +2,10 @@ import React, { useRef, useState } from 'react';
 import './ClassUnderTest.css';
 import { Button, ButtonGroup, Divider, TextField } from '@mui/material';
 
-const ClassUnderTest = ({ detectInterfaceHandler, cutHandler }: any) => {
+const ClassUnderTest = ({ detectInterfaceHandler, cutHandler, classUnderTest }: any) => {
 
-  const [className, setClassName] = useState("demo_examples.BoundedQueue");
-  const [artifacts, setArtifacts] = useState("");
+  const [className, setClassName] = useState(classUnderTest.className);
+  const [artifacts, setArtifacts] = useState(classUnderTest.artifacts[0]);
 
   const toArtifacts = () => {
     // FIXME comma-separated

@@ -7,34 +7,21 @@ import { ClassUnderTestSpec, SheetRequest, SheetResponse, SheetSpec, StimulusMat
 import SheetService from '../services/SheetService';
 import ActuationSheet from '../components/sheet/ActuationSheet';
 import Sheet from '../components/sheet/StimulusSheet';
+import { Examples } from '../model/examples';
+import { useSearchParams } from 'react-router-dom';
 
-const lqlCode =
-`BoundedQueue {
-    BoundedQueue(int)
-    enQueue(java.lang.Object)->void
-    deQueue()->java.lang.Object
-    isEmpty()->boolean
-    isFull()->boolean
-}`
+function loadDefaultSheets(stimulusMatrix: StimulusMatrixRaw) {
+  console.log("Load default sheet");
 
-function loadDefaultSheet() {
-  console.log("Load default sheet")
+  const sheets: StimulusSheet[] = stimulusMatrix.tests.map(sheetRaw => {
+    const sheet: StimulusSheet = new StimulusSheet();
+    sheet.signature = sheetRaw.signature;
+    sheet.data = loadSheetJsonl(sheetRaw.body);
+    sheet.invocations = sheetRaw.invocations;
+    return sheet;
+  })
 
-  // FIXME load remotely
-  const jsonl = `
-{"sheet": "Sheet 1", "header": "Row 1", "cells": {"A1": {}, "B1": "create", "C1": "BoundedQueue", "D1": 10}}
-{"sheet": "Sheet 1", "header": "Row 2", "cells": {"A2": {}, "B2": "enQueue", "C2": "A1", "D2": "'Hello World!'"}}
-{"sheet": "Sheet 1", "header": "Row 3", "cells": {"A3": {}, "B3": "isEmpty", "C3": "A1"}}
-{"sheet": "Sheet 1", "header": "Row 4", "cells": {"A4": {}, "B4": "isFull", "C4": "A1"}}
-{"sheet": "Sheet 1", "header": "Row 5", "cells": {"A5": "D2", "B5": "deQueue", "C5": "A1"}}
-{"sheet": "Sheet 1", "header": "Row 6", "cells": {"A6": {}, "B6": "isEmpty", "C6": "A1"}}
-`
-
-  const sheet: StimulusSheet = new StimulusSheet()
-  sheet.signature = "test1()"
-  sheet.data = loadSheetJsonl(jsonl)
-
-  return sheet
+  return sheets;
 }
 
 function loadSheetJsonl(jsonl: any) {
@@ -123,42 +110,18 @@ function rowIndexToLabel(row: number) {
 
 
 function SheetEditorPage() {
-    // example data
-    const [stimulusMatrix, setStimulusMatrix] = useState<StimulusMatrixRaw>({
-        abstraction: {
-            interfaceSignature: `BoundedQueue {
-    BoundedQueue(int)
-    enQueue(java.lang.Object)->void
-    deQueue()->java.lang.Object
-    isEmpty()->boolean
-    isFull()->boolean
-}`},
-        codeModules: [
-            {
-                className: "demo_examples.BoundedQueue",
-                artifacts: [""]
-            }
-        ],
-        tests: [
-            {
-                signature: "",
-                body: `
-{"cells": {"A1": {}, "B1": "create", "C1": "BoundedQueue", "D1": 10}}
-{"cells": {"A2": {}, "B2": "enQueue", "C2": "A1", "D2": "'Hello World!'"}}
-{"cells": {"A3": {}, "B3": "isEmpty", "C3": "A1"}}
-{"cells": {"A4": {}, "B4": "isFull", "C4": "A1"}}
-{"cells": {"A5": "D2", "B5": "deQueue", "C5": "A1"}}
-{"cells": {"A6": {}, "B6": "isEmpty", "C6": "A1"}}
-`,
-                invocations: []
-            }
-        ]
-    });
+  const [searchParams, setSearchParams] = useSearchParams();
+  const exampleId: string | null = searchParams.get('example');
+  console.log("example id: " + exampleId);
+
+
+  // TODO make example configurable
+  const [stimulusMatrix, setStimulusMatrix] = useState<StimulusMatrixRaw>(Examples.MAP[exampleId as keyof typeof Examples.MAP].scenario);
 
   // load
-  const [stimulusSheets, setStimulusSheets] = useState<StimulusSheet[]>(() => [loadDefaultSheet()])
+  const [stimulusSheets, setStimulusSheets] = useState<StimulusSheet[]>(() => loadDefaultSheets(stimulusMatrix))
 
-  const [classUnderTestSpec, setClassUnderTestSpec] = useState<ClassUnderTestSpec>(new ClassUnderTestSpec());
+  const [classUnderTestSpec, setClassUnderTestSpec] = useState<ClassUnderTestSpec>(stimulusMatrix.codeModules[0]);
   const [interfaceSpecification, setInterfaceSpecification] = useState<string>("");
 
   const [loading, setLoading] = useState(false);
@@ -171,6 +134,19 @@ function SheetEditorPage() {
 
   const lqlEditorRef = useRef<any>(null)
 
+  // useEffect(() => {
+  //   const exampleId: string | null = searchParams.get('example');
+  //   console.log("example id: " + exampleId);
+
+  //   if(exampleId) {
+  //     const scenario = Examples.MAP[exampleId as keyof typeof Examples.MAP].scenario;
+  //     setStimulusMatrix(scenario);
+
+  //     setStimulusSheets(loadDefaultSheets(scenario));
+  //     setClassUnderTestSpec(scenario.codeModules[0]);
+  //   }
+  // }, []);
+
   const handleCodeAnalyzer = (
     event: React.MouseEvent<HTMLElement>,
     analyzers: string[],
@@ -179,12 +155,13 @@ function SheetEditorPage() {
   };
 
   const addStimulusSheet = () => {
-    const stimulusSheet: StimulusSheet = new StimulusSheet()
-    stimulusSheet.signature = `test${stimulusSheets.length + 1}()`
+    const stimulusSheet: StimulusSheet = new StimulusSheet();
+    stimulusSheet.signature = `test${stimulusSheets.length + 1}()`;
+    stimulusSheet.invocations = [];
 
     // create same dimensions based on existing
-    const sampleSheet = stimulusSheets[0]
-    stimulusSheet.data = [...sampleSheet.data]
+    const sampleSheet = stimulusSheets[0];
+    stimulusSheet.data = [...sampleSheet.data];
 
     setStimulusSheets([...stimulusSheets, stimulusSheet]);
   }
@@ -204,69 +181,69 @@ function SheetEditorPage() {
 
   // execute sheet
   const executeAllHandler = () => {
-      //console.log("executed sheet '" + sheetSignature + "' data: " + sheetData)
-      console.log("lql handler " + interfaceSpecification)
-      console.log("cut handler " + JSON.stringify(classUnderTestSpec))
-  
-      const request = new SheetRequest()
-      request.classesUnderTest = [classUnderTestSpec]
-      request.sheets = []
-      request.analyzers = codeAnalyzers
+    //console.log("executed sheet '" + sheetSignature + "' data: " + sheetData)
+    console.log("lql handler " + interfaceSpecification)
+    console.log("cut handler " + JSON.stringify(classUnderTestSpec))
 
-      console.log("total number of analyzers " + codeAnalyzers.length)
+    const request = new SheetRequest()
+    request.classesUnderTest = [classUnderTestSpec]
+    request.sheets = []
+    request.analyzers = codeAnalyzers
 
-      console.log("total number of sheets " + stimulusSheets.length)
+    console.log("total number of analyzers " + codeAnalyzers.length)
 
-      stimulusSheets.forEach( (stimulusSheet) => {
-        console.log("sheet " + stimulusSheet.signature)
+    console.log("total number of sheets " + stimulusSheets.length)
 
-        const sheet = new SheetSpec()
-        sheet.signature = stimulusSheet.signature
-        sheet.interfaceSpecification = interfaceSpecification
-        const bodyJsonl = toSheetJSONL(stimulusSheet.data)
-        sheet.body = bodyJsonl
-        sheet.invocations = stimulusSheet.invocations
-    
-        request.sheets.push(sheet)
-      });
-  
-      console.log(JSON.stringify(request))
-  
-      setMessage("");
-      setLoading(true);
-  
-      const valid: boolean = true
-  
-      if (valid) {
-        SheetService.executeSheet(request).then(
-          (response) => {
-            // FIXME show results
-            console.log(`response ${JSON.stringify(response.data)}`)
-            //console.log(`response ${JSON.stringify(response.data.testResults)}`)
-  
-            // ugly hack to re-render actuation sheets
-            setSheetResponseUpdate(sheetResponseUpdate + 1)
+    stimulusSheets.forEach((stimulusSheet) => {
+      console.log("sheet " + stimulusSheet.signature)
 
-            setSheetResponse(response.data)
-  
-            setLoading(false);
-          },
-          (error) => {
-            const resMessage =
-              (error.response &&
-                error.response.data &&
-                error.response.data.message) ||
-              error.message ||
-              error.toString();
-  
-            setLoading(false);
-            setMessage(resMessage);
-          }
-        );
-      } else {
-        setLoading(false);
-      }
+      const sheet = new SheetSpec()
+      sheet.signature = stimulusSheet.signature
+      sheet.interfaceSpecification = interfaceSpecification
+      const bodyJsonl = toSheetJSONL(stimulusSheet.data)
+      sheet.body = bodyJsonl
+      sheet.invocations = stimulusSheet.invocations
+
+      request.sheets.push(sheet)
+    });
+
+    console.log(JSON.stringify(request))
+
+    setMessage("");
+    setLoading(true);
+
+    const valid: boolean = true
+
+    if (valid) {
+      SheetService.executeSheet(request).then(
+        (response) => {
+          // FIXME show results
+          console.log(`response ${JSON.stringify(response.data)}`)
+          //console.log(`response ${JSON.stringify(response.data.testResults)}`)
+
+          // ugly hack to re-render actuation sheets
+          setSheetResponseUpdate(sheetResponseUpdate + 1)
+
+          setSheetResponse(response.data)
+
+          setLoading(false);
+        },
+        (error) => {
+          const resMessage =
+            (error.response &&
+              error.response.data &&
+              error.response.data.message) ||
+            error.message ||
+            error.toString();
+
+          setLoading(false);
+          setMessage(resMessage);
+        }
+      );
+    } else {
+      setLoading(false);
     }
+  }
 
   // toLQL handler
   const detectInterfaceHandler = (className: string, artifacts: string[]) => {
@@ -346,13 +323,13 @@ function SheetEditorPage() {
       <h2>Sheet Editor</h2>
 
       <Box component="section" sx={{ p: 2, border: '1px dashed grey' }}>
-      <Divider>Interface Specification (LQL)</Divider>
-        <LQLEditor editorHandler={lqlEditorHandler} lqlHandler={lqlHandler} defaultLqlCode={lqlCode} />
+        <Divider>Interface Specification (LQL)</Divider>
+        <LQLEditor editorHandler={lqlEditorHandler} lqlHandler={lqlHandler} defaultLqlCode={stimulusMatrix.abstraction.interfaceSignature} />
       </Box>
 
       <Box component="section" sx={{ p: 2, border: '1px dashed grey' }}>
-      <Divider>Class Under Test</Divider>
-        <ClassUnderTest detectInterfaceHandler={detectInterfaceHandler} cutHandler={cutHandler} />
+        <Divider>Class Under Test</Divider>
+        <ClassUnderTest detectInterfaceHandler={detectInterfaceHandler} cutHandler={cutHandler} classUnderTest={classUnderTestSpec} />
       </Box>
 
       <Box component="section" sx={{ p: 2, border: '1px dashed grey' }}>
@@ -366,9 +343,9 @@ function SheetEditorPage() {
         )}
 
         <Divider>Stimulus Sheets</Divider>
-        
-        {stimulusSheets.map( (stimulusSheet, index) => (
-          <Sheet sheetId={index} defaultSheetSignature={stimulusSheet.signature} sheetData={stimulusSheet.data} changeHandler={stimulusSheetChangeHandler} />
+
+        {stimulusSheets.map((stimulusSheet, index) => (
+          <Sheet sheetId={index} model={stimulusSheet} changeHandler={stimulusSheetChangeHandler} />
         ))}
 
         <Divider>Actions</Divider>
@@ -400,37 +377,37 @@ function SheetEditorPage() {
         </Box>
       )}
 
-    {sheetResponse?.testResults.map(testResult => (
-      <>
-                  <Box component="section" sx={{ p: 2, border: '1px dashed grey' }}>
-                  <Alert severity="success">Actuation Sheet (based on Interface Specification)</Alert>
-                  {testResult.actuationSheets.map((sheet) => (
-                    <ActuationSheet sheetSignature={sheet.signature} sheetData={parseActuationSheet(sheet)} />
-                  ))
-                  }
-                </Box>
-                <Box component="section" sx={{ p: 2, border: '1px dashed grey' }}>
-                  <Alert severity="success">Adapted Actuation Sheet (based on the Candidate's Class Interface)</Alert>
-                  {testResult.adaptedActuationSheets.map((sheet) => (
-                    <>
-                    <h4>Implementation {sheet.implementation}</h4>
-                      <ActuationSheet sheetSignature={sheet.signature} sheetData={parseAdaptedActuationSheet(sheet)} />
-                    </>
-                  ))
-                  }
-                </Box>
-                <Box component="section" sx={{ p: 2, border: '1px dashed grey' }}>
-                  <Alert severity="success">Metric Sheet</Alert>
-                  {testResult.metricSheets.map((sheet) => (
-                    <>
-                    <h4>Implementation {sheet.implementation}</h4>
-                      <ActuationSheet sheetSignature={sheet.signature} sheetData={parseAdaptedActuationSheet(sheet)} />
-                    </>
-                  ))
-                  }
-                </Box>
-                </>
-    ))}
+      {sheetResponse?.testResults.map(testResult => (
+        <>
+          <Box component="section" sx={{ p: 2, border: '1px dashed grey' }}>
+            <Alert severity="success">Actuation Sheet (based on Interface Specification)</Alert>
+            {testResult.actuationSheets.map((sheet) => (
+              <ActuationSheet sheetSignature={sheet.signature} sheetData={parseActuationSheet(sheet)} />
+            ))
+            }
+          </Box>
+          <Box component="section" sx={{ p: 2, border: '1px dashed grey' }}>
+            <Alert severity="success">Adapted Actuation Sheet (based on the Candidate's Class Interface)</Alert>
+            {testResult.adaptedActuationSheets.map((sheet) => (
+              <>
+                <h4>Implementation {sheet.implementation}</h4>
+                <ActuationSheet sheetSignature={sheet.signature} sheetData={parseAdaptedActuationSheet(sheet)} />
+              </>
+            ))
+            }
+          </Box>
+          <Box component="section" sx={{ p: 2, border: '1px dashed grey' }}>
+            <Alert severity="success">Metric Sheet</Alert>
+            {testResult.metricSheets.map((sheet) => (
+              <>
+                <h4>Implementation {sheet.implementation}</h4>
+                <ActuationSheet sheetSignature={sheet.signature} sheetData={parseAdaptedActuationSheet(sheet)} />
+              </>
+            ))
+            }
+          </Box>
+        </>
+      ))}
 
     </Container>
   );

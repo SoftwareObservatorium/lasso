@@ -5,6 +5,9 @@ import de.uni_mannheim.swt.lasso.arena.ClassUnderTest;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
 
 import de.uni_mannheim.swt.lasso.arena.classloader.coverage.pitest.PitestContainer;
+import de.uni_mannheim.swt.lasso.arena.repository.DependencyResolver;
+import de.uni_mannheim.swt.lasso.arena.repository.MavenRepository;
+import de.uni_mannheim.swt.lasso.arena.repository.NexusInstance;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.event.CompositeInvocationVisitor;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.TestInvocation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.StimulusResponseMatrix;
@@ -20,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
@@ -331,6 +335,96 @@ public class SRMTestDriverTest {
             visitor.getAdaptedActuationSheet().debug();
             Invocations invocations = executedInvocations.getInvocations();
         }
+    }
+
+    @Test
+    public void test_Base64_remote() throws IOException, ClassNotFoundException {
+        @Language("jsonl")
+        String ssnJsonlStr = """
+                {"sheet": "Sheet 1", "header": "Row 1", "cells": {"A1": {}, "B1": "create", "C1": "Base64"}}
+                {"sheet": "Sheet 1", "header": "Row 2", "cells": {"A2": {}, "B2": "encode", "C2": "A1", "D2": "\\"Hello World!\\".getBytes()"}}
+                """;
+
+        String lql = """
+                Base64{
+                    encode(byte[])->byte[]
+                }
+                """;
+        ObjectMapperVisitor visitor = createVisitor();
+
+        SSNTestDriver testDriver = new SSNTestDriver();
+        String mavenRepoUrl = NexusInstance.LASSOHP12_URL;
+        File localRepo = new File("/tmp/my_repo/local-repo");
+        DependencyResolver resolver = new DependencyResolver(mavenRepoUrl, localRepo.getAbsolutePath());
+        testDriver.setMavenRepository(new MavenRepository(resolver));
+
+        // commons-codec:commons-codec:1.15
+        ClassUnderTest classUnderTest = CutUtils.createExample("org.apache.commons.codec.binary.Base64", "commons-codec:commons-codec:1.15");
+
+        // SM
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, ClassUnderTest, TestInvocation> stimulusMatrix = SSNTestDriver.parseStimulusMatrix(
+                Arrays.asList(new SheetDto("test1()", ssnJsonlStr, lql)), Arrays.asList(classUnderTest), Arrays.asList(new SheetInvocationDto("test1", "")));
+
+        // SRM
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> stimulusResponseMatrix = testDriver.runSheets(stimulusMatrix, 1, visitor);
+
+        //assertEquals(29, stimulusResponseMatrix.getTable().size());
+
+        for(Table.Cell<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> cell : stimulusResponseMatrix.getTable().cellSet()) {
+            ExecutedInvocations executedInvocations = cell.getValue();
+
+            LOG.debug("executed invocations for '{}' \n{}", cell.getColumnKey().getAdaptee().getVariantId(), executedInvocations);
+            visitor.getActuationSheet().debug();
+            visitor.getAdaptedActuationSheet().debug();
+            Invocations invocations = executedInvocations.getInvocations();
+        }
+
+    }
+
+    @Test
+    public void test_Base64_MutationCoverage() throws IOException, ClassNotFoundException {
+        @Language("jsonl")
+        String ssnJsonlStr = """
+                {"sheet": "Sheet 1", "header": "Row 1", "cells": {"A1": {}, "B1": "create", "C1": "Base64"}}
+                {"sheet": "Sheet 1", "header": "Row 2", "cells": {"A2": {}, "B2": "encode", "C2": "A1", "D2": "\\"Hello World!\\".getBytes()"}}
+                """;
+
+        String lql = """
+                Base64{
+                    encode(byte[])->byte[]
+                }
+                """;
+        ObjectMapperVisitor visitor = new ObjectMapperVisitor(new GsonMapper());
+        InvocationVisitor invocationVisitor = new CompositeInvocationVisitor(
+                Arrays.asList(visitor));
+
+        SSNTestDriver testDriver = new SSNTestDriver();
+        String mavenRepoUrl = NexusInstance.LASSOHP12_URL;
+        File localRepo = new File("/tmp/my_repo/local-repo");
+        DependencyResolver resolver = new DependencyResolver(mavenRepoUrl, localRepo.getAbsolutePath());
+        testDriver.setMavenRepository(new MavenRepository(resolver));
+
+        // commons-codec:commons-codec:1.15
+        ClassUnderTest classUnderTest = CutUtils.createExample("org.apache.commons.codec.binary.Base64", "commons-codec:commons-codec:1.15");
+
+        // SM
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, ClassUnderTest, TestInvocation> stimulusMatrix = SSNTestDriver.parseStimulusMatrix(
+                Arrays.asList(new SheetDto("test1()", ssnJsonlStr, lql)), Arrays.asList(classUnderTest), Arrays.asList(new SheetInvocationDto("test1", "")));
+
+        // SRM
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> stimulusResponseMatrix = testDriver.mutateAndRunSheets(stimulusMatrix, 1, invocationVisitor);
+
+        //assertEquals(29, stimulusResponseMatrix.getTable().size());
+
+        for(Table.Cell<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> cell : stimulusResponseMatrix.getTable().cellSet()) {
+            ExecutedInvocations executedInvocations = cell.getValue();
+
+            LOG.debug("executed invocations for '{}' \n{}", cell.getColumnKey().getAdaptee().getVariantId(), executedInvocations);
+            visitor.getActuationSheet().debug();
+            visitor.getAdaptedActuationSheet().debug();
+            Invocations invocations = executedInvocations.getInvocations();
+        }
+
     }
 
     private ObjectMapperVisitor createVisitor() {

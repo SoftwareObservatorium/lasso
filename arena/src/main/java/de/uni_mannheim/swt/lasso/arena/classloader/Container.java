@@ -99,7 +99,7 @@ public abstract class Container extends ClassRealm {
      */
     @Override
     protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-        LOG.debug("loading class '{}'", name);
+        LOG.debug("loading class '{}' for classloader id '{}'", name, getId());
 
         // do not load
         if (!isSupportedClass(name)) {

@@ -15,7 +15,6 @@ import PrivateRoute from './components/navigation/PrivateRoute';
 import DocumentationPage from './pages/DocumentationPage';
 import AboutPage from './pages/AboutPage';
 import SrmPage from './pages/SrmPage';
-import TestPage from './pages/TestPage';
 
 function App() {
   const [currentUser, setCurrentUser] = useState<User>()
@@ -53,8 +52,6 @@ function App() {
           <Route path="/about" element={<AboutPage/>} />
           
           <Route path="/srm" element={<SrmPage/>} />
-
-          <Route path="/test" element={<TestPage/>} />
 
           <Route path="/login" element={<LoginPage/>} />
           <Route path="/register" element={<RegisterPage/>} />

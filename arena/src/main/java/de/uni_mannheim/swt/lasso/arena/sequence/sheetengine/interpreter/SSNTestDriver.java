@@ -185,9 +185,11 @@ public class SSNTestDriver {
                 // prepare executable sheet
                 Test test = testInvocation.getKey();
                 ParsedSheet parsedSheet = test.getParsedSheet();
-                Invocations invocations = interpreter.interpret(parsedSheet, classUnderTest, testInvocation.getValue());
 
                 for (AdaptedImplementation adaptedImplementation : adaptedImplementations) {
+                    // prepare invocations
+                    Invocations invocations = interpreter.interpret(parsedSheet, classUnderTest, testInvocation.getValue());
+
                     executionListener.visitBeforeExecution(adaptedImplementation);
 
                     // run

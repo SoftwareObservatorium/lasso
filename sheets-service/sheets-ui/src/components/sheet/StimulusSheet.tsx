@@ -10,35 +10,13 @@ import React from "react";
 
 import Grid from '@mui/material/Grid';
 
-const Sheet = ({ sheetId, defaultSheetSignature, sheetData, changeHandler, isResult }: any) => {
-  const [sheetSignature, setSheetSignature] = useState(defaultSheetSignature)
-  const [data, setData] = useState<Matrix<CellBase<any>>>(
-    //    [
-    //     [
-    //       {
-    //         value: "redOnly + text-color",
-    //         readOnly: true,
-    //         className: "text-danger"
-    //       },
-    //       { value: "text-color", className: "text-danger" },
-    //       { value: "readOnly", readOnly: true },
-    //       { value: "readOnly + css", readOnly: true, className: "header-row" },
-    //       { value: "css", className: "header-row" },
-    //       { value: "no options" }
-    //     ],
-    //     [
-    //       { value: "Strawberry" },
-    //       { value: "Cookies" },
-    //       { value: "Vanilla" },
-    //       { value: "Chocolate" },
-    //       { value: "Citrus" },
-    //       { value: "Green Apple" }
-    //     ]
-    //   ]
-    sheetData
+const Sheet = ({ sheetId, model, changeHandler }: any) => {
+  const [sheetSignature, setSheetSignature] = useState(model.signature)
+  const [data, setData] = useState<Matrix<CellBase>>(
+    model.data
   );
 
-  const [sheetInvocations, setSheetInvocations] = React.useState<string[]>([]);
+  const [sheetInvocations, setSheetInvocations] = React.useState<string[]>(model.invocations);
   const [sheetInvocation, setSheetInvocation] = React.useState<string>();
 
   useEffect(() => {
@@ -136,8 +114,7 @@ const Sheet = ({ sheetId, defaultSheetSignature, sheetData, changeHandler, isRes
           <Spreadsheet data={data} onChange={onChangeData} />
         </Typography>
 
-        {!isResult && (
-          <Grid container spacing={2} sx={{ justifyContent: 'center' }}>
+        <Grid container spacing={2} sx={{ justifyContent: 'center' }}>
                   <Grid item xs={12} md={6}>
                     <Typography gutterBottom sx={{ color: 'text.secondary', fontSize: 14 }}>
                     Add Invocations (Parameterization)
@@ -181,16 +158,13 @@ const Sheet = ({ sheetId, defaultSheetSignature, sheetData, changeHandler, isRes
                       })}
                     </List>
                     </Grid></Grid>
-        )}
       </CardContent>
-      {!isResult && (
-        <CardActions>
+      <CardActions>
           <Button size="small" onClick={(event) => addRow()}>Add Row</Button>
           <Button size="small" onClick={(event) => addColumn()}>Add Column</Button>
           <Button size="small" onClick={(event) => removeRow()}>Remove Row</Button>
           <Button size="small" onClick={(event) => removeColumn()}>Remove Column</Button>
         </CardActions>
-      )}
       </Card>
     </Box>
   );
