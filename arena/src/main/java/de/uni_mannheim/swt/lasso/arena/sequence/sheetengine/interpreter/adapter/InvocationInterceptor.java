@@ -65,6 +65,11 @@ public class InvocationInterceptor implements MethodInterceptor {
         // create adaptee instance
         ExecutionResult result = createAdapteeInstance(executedInvocation, inputs);
 
+        if(result.getExceptionThrown() != null) {
+            System.err.println("No instance");
+            result.getExceptionThrown().printStackTrace();
+        }
+
         // set adapter instance
         adapteeInstance = result.getValue();
 
@@ -88,6 +93,8 @@ public class InvocationInterceptor implements MethodInterceptor {
         ExecutedInvocation executedInvocation = executedInvocations.getLastExecutedInvocation();
 
         AdaptedMethod adaptedMethod = executedInvocation.resolveAdaptedMethod(adaptedImplementation);
+
+        System.err.println("ADAPTER METHOD" + adaptedMethod.getMethod());
 
         // inputs change proxy to adaptee object
         Object[] cleanInputs;
@@ -140,10 +147,15 @@ public class InvocationInterceptor implements MethodInterceptor {
 
         ExecutionResult result = runner.run(invoke);
 
+        System.err.println("QUAAAAAAAAAAAAAAAAARK " + result.getExceptionThrown() + " / " + adapteeInstance);
+        if(result.getExceptionThrown() != null) {
+            result.getExceptionThrown().printStackTrace();
+        }
+
         // FIXME include or exclude adaptation logic in duration?
         //executedInvocation.setExecutionTime(result.getDurationNanos());
 
-        LOG.debug("cut method call '{}', '{}'", result.getValue(), result.getValue().getClass());
+        LOG.debug("cut method call '{}'", result.getValue());
 
         Object value = result.getValue();
 
@@ -173,7 +185,7 @@ public class InvocationInterceptor implements MethodInterceptor {
         Enhancer enhancer = new Enhancer();
         enhancer.setSuperclass(clazz);
         enhancer.setCallback(this);
-        //enhancer.setClassLoader();
+        enhancer.setClassLoader(clazz.getClassLoader());
 
         if(ArrayUtils.isNotEmpty(argumentTypes)) {
             return enhancer.create(argumentTypes, arguments);

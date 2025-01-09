@@ -394,6 +394,7 @@ public class SRMTestDriverTest {
                     encode(byte[])->byte[]
                 }
                 """;
+
         ObjectMapperVisitor visitor = new ObjectMapperVisitor(new GsonMapper());
         InvocationVisitor invocationVisitor = new CompositeInvocationVisitor(
                 Arrays.asList(visitor));

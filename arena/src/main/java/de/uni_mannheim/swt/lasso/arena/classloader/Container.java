@@ -141,6 +141,8 @@ public abstract class Container extends ClassRealm {
 
                 classes.put(name, clazz);
 
+                LOG.debug("Loaded clazz with classloader " + clazz.getClassLoader());
+
                 return clazz;
             } catch (Throwable e) {
                 e.printStackTrace();
@@ -149,9 +151,46 @@ public abstract class Container extends ClassRealm {
             }
         }
 
+        // FIXME first try to load from here
+        try {
+            byte[] bytes = loadClassBytes(name);
+
+            LOG.debug("result " + bytes);
+
+            if(bytes != null) {
+                Class<?> clazz = defineClass(name, bytes, 0, bytes.length);
+
+                if (clazz == null) {
+                    return null;
+                }
+
+                if (clazz.getPackage() == null) {
+                    int lastDotIndex = name.lastIndexOf('.');
+                    String packageName = (lastDotIndex >= 0) ? name.substring(0, lastDotIndex) : "";
+                    definePackage(packageName, null, null, null, null, null, null, null);
+                }
+
+                if (resolve) {
+                    resolveClass(clazz);
+                }
+
+                LOG.debug("Loaded class from container '{}'", clazz.getName());
+
+                classes.put(name, clazz);
+
+                LOG.debug("Loaded clazz with classloader " + clazz.getClassLoader());
+
+                return clazz;
+            }
+        } catch (Throwable e) {
+
+        }
+
         Class<?> clazz = super.loadClass(name, resolve);
 
         classes.put(name, clazz);
+
+        LOG.debug("Loaded clazz with classloader " + clazz.getClassLoader());
 
         return clazz;
     }

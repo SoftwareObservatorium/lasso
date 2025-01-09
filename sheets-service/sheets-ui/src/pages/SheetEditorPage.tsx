@@ -111,8 +111,11 @@ function rowIndexToLabel(row: number) {
 
 function SheetEditorPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const exampleId: string | null = searchParams.get('example');
+  let exampleId: string | null = searchParams.get('example');
   console.log("example id: " + exampleId);
+  if(!exampleId) {
+    exampleId = "BOUNDED_QUEUE";
+  }
 
 
   // TODO make example configurable
