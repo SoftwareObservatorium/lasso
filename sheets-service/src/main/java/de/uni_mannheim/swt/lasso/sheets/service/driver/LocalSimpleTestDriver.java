@@ -8,10 +8,10 @@ import de.uni_mannheim.swt.lasso.arena.repository.MavenRepository;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.*;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.event.CompositeInvocationVisitor;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.event.JaCoCoListener;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.StimulusResponseMatrix;
+import de.uni_mannheim.swt.lasso.core.dto.srm.StimulusResponseMatrix;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.TestInvocation;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.dto.SheetDto;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.dto.SheetInvocationDto;
+import de.uni_mannheim.swt.lasso.core.dto.srm.Sheet;
+import de.uni_mannheim.swt.lasso.core.dto.srm.SheetInvocation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize.GsonMapper;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize.ObjectMapperVisitor;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.CutUtils;
@@ -49,8 +49,8 @@ public class LocalSimpleTestDriver implements TestDriver {
         List<SheetSpec> sheetSpecs = request.getSheets();
 
         // sheets
-        List<SheetDto> sheetDtos = sheetSpecs.stream().map(s -> {
-            SheetDto sheet = new SheetDto(s.getSignature(), s.getBody(), s.getInterfaceSpecification());
+        List<Sheet> sheetDtos = sheetSpecs.stream().map(s -> {
+            Sheet sheet = new Sheet(s.getSignature(), s.getBody(), s.getInterfaceSpecification());
             sheet.setInvocations(s.getInvocations());
             return sheet;
         }).toList();
@@ -66,17 +66,17 @@ public class LocalSimpleTestDriver implements TestDriver {
         }).toList();
 
         // read invocations
-        List<SheetInvocationDto> sheetInvocations = sheetDtos.stream().flatMap(s -> {
+        List<SheetInvocation> sheetInvocations = sheetDtos.stream().flatMap(s -> {
             String sheetName = StringUtils.substringBefore(s.getSignature(), "(");
 
             List<String> invocations = s.getInvocations();
             if(CollectionUtils.isEmpty(invocations)) {
                 // default invocation
-                return Arrays.asList(new SheetInvocationDto(sheetName, "")).stream();
+                return Arrays.asList(new SheetInvocation(sheetName, "")).stream();
             }
 
             //
-            return invocations.stream().map(i -> new SheetInvocationDto(sheetName, i));
+            return invocations.stream().map(i -> new SheetInvocation(sheetName, i));
         }).toList();
         // SM
         StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, ClassUnderTest, TestInvocation> stimulusMatrix = SSNTestDriver.parseStimulusMatrix(
@@ -136,10 +136,10 @@ public class LocalSimpleTestDriver implements TestDriver {
                 actuationSheet.setAdaptedImplementation(cell.getColumnKey());
                 actuationSheet.setExecutedInvocations(executedInvocations);
 
-                List<Sheet<Integer, Integer, String>> sheets = actuationSheet.toSheetData(gsonMapper);
+                List<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String>> sheets = actuationSheet.toSheetData(gsonMapper);
 
-                Sheet<Integer, Integer, String> actuationSheetData = sheets.get(0);
-                Sheet<Integer, Integer, String> adaptedActuationSheetData = sheets.get(1);
+                de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> actuationSheetData = sheets.get(0);
+                de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> adaptedActuationSheetData = sheets.get(1);
 
                 actuationSheetData.debug();
                 adaptedActuationSheetData.debug();
@@ -184,11 +184,11 @@ public class LocalSimpleTestDriver implements TestDriver {
 
                 // jacoco reports
                 if(jacoco) {
-                    StimulusResponseMatrix<String, AdaptedImplementation, Sheet> jacocoSrm = jaCoCoListener.getStimulusResponseMatrix();
-                    Map<String, Sheet> metricSheets = jacocoSrm.getTable().column(cell.getColumnKey());
+                    StimulusResponseMatrix<String, AdaptedImplementation, de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet> jacocoSrm = jaCoCoListener.getStimulusResponseMatrix();
+                    Map<String, de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet> metricSheets = jacocoSrm.getTable().column(cell.getColumnKey());
 
                     for(String metricId : metricSheets.keySet()) {
-                        Sheet metricSheet = metricSheets.get(metricId);
+                        de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet metricSheet = metricSheets.get(metricId);
 
                         SheetSpec metricSheetResult = new SheetSpec();
                         metricSheetResult.setSignature(metricId);

@@ -5,7 +5,6 @@ import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.eval.Bsh
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.eval.EvalException;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.util.Arrays;
 
 /**

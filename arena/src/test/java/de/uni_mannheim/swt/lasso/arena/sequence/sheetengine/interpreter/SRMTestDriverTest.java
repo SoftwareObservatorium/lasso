@@ -10,9 +10,9 @@ import de.uni_mannheim.swt.lasso.arena.repository.MavenRepository;
 import de.uni_mannheim.swt.lasso.arena.repository.NexusInstance;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.event.CompositeInvocationVisitor;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.TestInvocation;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.StimulusResponseMatrix;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.dto.SheetDto;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.dto.SheetInvocationDto;
+import de.uni_mannheim.swt.lasso.core.dto.srm.StimulusResponseMatrix;
+import de.uni_mannheim.swt.lasso.core.dto.srm.Sheet;
+import de.uni_mannheim.swt.lasso.core.dto.srm.SheetInvocation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize.GsonMapper;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize.ObjectMapperVisitor;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.CutUtils;
@@ -61,7 +61,7 @@ public class SRMTestDriverTest {
 
         // SM
         StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, ClassUnderTest, TestInvocation> stimulusMatrix = SSNTestDriver.parseStimulusMatrix(
-                Arrays.asList(new SheetDto("test()", ssnJsonlStr, lql)), Arrays.asList(CutUtils.createExample(cutClass)), Arrays.asList(new SheetInvocationDto("test", "")));
+                Arrays.asList(new Sheet("test()", ssnJsonlStr, lql)), Arrays.asList(CutUtils.createExample(cutClass)), Arrays.asList(new SheetInvocation("test", "")));
 
         // SRM
         StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> stimulusResponseMatrix = testDriver.runSheets(stimulusMatrix, 1, visitor);
@@ -118,7 +118,7 @@ public class SRMTestDriverTest {
 
         // SM
         StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, ClassUnderTest, TestInvocation> stimulusMatrix = SSNTestDriver.parseStimulusMatrix(
-                Arrays.asList(new SheetDto("test(p1=java.lang.String)", ssnJsonlStr, lql)), Arrays.asList(CutUtils.createExample(cutClass)), Arrays.asList(new SheetInvocationDto("test", "\"Hello World!\""), new SheetInvocationDto("test", "\"I'm a robot\"")));
+                Arrays.asList(new Sheet("test(p1=java.lang.String)", ssnJsonlStr, lql)), Arrays.asList(CutUtils.createExample(cutClass)), Arrays.asList(new SheetInvocation("test", "\"Hello World!\""), new SheetInvocation("test", "\"I'm a robot\"")));
 
         // SRM
         StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> stimulusResponseMatrix = testDriver.runSheets(stimulusMatrix, 1, visitor);
@@ -181,7 +181,7 @@ public class SRMTestDriverTest {
 
         // SM
         StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, ClassUnderTest, TestInvocation> stimulusMatrix = SSNTestDriver.parseStimulusMatrix(
-                Arrays.asList(new SheetDto("test(p1=java.lang.String,p2=int)", ssnJsonlStr, lql)), Arrays.asList(CutUtils.createExample(cutClass)), Arrays.asList(new SheetInvocationDto("test", "\"Hello World!\",1"), new SheetInvocationDto("test", "\"I'm a robot\",1")));
+                Arrays.asList(new Sheet("test(p1=java.lang.String,p2=int)", ssnJsonlStr, lql)), Arrays.asList(CutUtils.createExample(cutClass)), Arrays.asList(new SheetInvocation("test", "\"Hello World!\",1"), new SheetInvocation("test", "\"I'm a robot\",1")));
 
         // SRM
         StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> stimulusResponseMatrix = testDriver.runSheets(stimulusMatrix, 1, visitor);
@@ -253,7 +253,7 @@ public class SRMTestDriverTest {
 
         // SM
         StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, ClassUnderTest, TestInvocation> stimulusMatrix = SSNTestDriver.parseStimulusMatrix(
-                Arrays.asList(new SheetDto("test()", ssnJsonlStr, lql)), Arrays.asList(CutUtils.createExample(cutClass)), Arrays.asList(new SheetInvocationDto("test", "")));
+                Arrays.asList(new Sheet("test()", ssnJsonlStr, lql)), Arrays.asList(CutUtils.createExample(cutClass)), Arrays.asList(new SheetInvocation("test", "")));
 
         // SRM
         StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> stimulusResponseMatrix = testDriver.mutateAndRunSheets(stimulusMatrix, 1, invocationVisitor);
@@ -320,7 +320,7 @@ public class SRMTestDriverTest {
 
         // SM
         StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, ClassUnderTest, TestInvocation> stimulusMatrix = SSNTestDriver.parseStimulusMatrix(
-                Arrays.asList(new SheetDto("test1()", ssnJsonlStr1, lql), new SheetDto("test2()", ssnJsonlStr2, lql)), Arrays.asList(CutUtils.createExample(cutClass)), Arrays.asList(new SheetInvocationDto("test1", ""), new SheetInvocationDto("test2", "")));
+                Arrays.asList(new Sheet("test1()", ssnJsonlStr1, lql), new Sheet("test2()", ssnJsonlStr2, lql)), Arrays.asList(CutUtils.createExample(cutClass)), Arrays.asList(new SheetInvocation("test1", ""), new SheetInvocation("test2", "")));
 
         // SRM
         StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> stimulusResponseMatrix = testDriver.runSheets(stimulusMatrix, 1, invocationVisitor);
@@ -363,7 +363,7 @@ public class SRMTestDriverTest {
 
         // SM
         StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, ClassUnderTest, TestInvocation> stimulusMatrix = SSNTestDriver.parseStimulusMatrix(
-                Arrays.asList(new SheetDto("test1()", ssnJsonlStr, lql)), Arrays.asList(classUnderTest), Arrays.asList(new SheetInvocationDto("test1", "")));
+                Arrays.asList(new Sheet("test1()", ssnJsonlStr, lql)), Arrays.asList(classUnderTest), Arrays.asList(new SheetInvocation("test1", "")));
 
         // SRM
         StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> stimulusResponseMatrix = testDriver.runSheets(stimulusMatrix, 1, visitor);
@@ -410,7 +410,7 @@ public class SRMTestDriverTest {
 
         // SM
         StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, ClassUnderTest, TestInvocation> stimulusMatrix = SSNTestDriver.parseStimulusMatrix(
-                Arrays.asList(new SheetDto("test1()", ssnJsonlStr, lql)), Arrays.asList(classUnderTest), Arrays.asList(new SheetInvocationDto("test1", "")));
+                Arrays.asList(new Sheet("test1()", ssnJsonlStr, lql)), Arrays.asList(classUnderTest), Arrays.asList(new SheetInvocation("test1", "")));
 
         // SRM
         StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> stimulusResponseMatrix = testDriver.mutateAndRunSheets(stimulusMatrix, 1, invocationVisitor);

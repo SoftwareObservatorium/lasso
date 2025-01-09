@@ -15,9 +15,9 @@ public class Runner {
     private static final Logger LOG = LoggerFactory
             .getLogger(Runner.class);
 
-    public static int CALL_TIMEOUT_MILLIS = 5000;
+    public static long CALL_TIMEOUT_MILLIS = 10 * 1000L;
 
-    private int timeoutInMillis = CALL_TIMEOUT_MILLIS;
+    private long timeoutInMillis = CALL_TIMEOUT_MILLIS;
 
     private StopWatch stopWatch = new StopWatch();
 
@@ -99,7 +99,7 @@ public class Runner {
         return stopWatch;
     }
 
-    public int getTimeoutInMillis() {
+    public long getTimeoutInMillis() {
         return timeoutInMillis;
     }
 }

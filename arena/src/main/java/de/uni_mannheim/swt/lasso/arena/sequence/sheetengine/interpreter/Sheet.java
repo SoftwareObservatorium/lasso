@@ -53,9 +53,10 @@ public class Sheet<R extends Comparable, C extends Comparable, V> {
         StringBuilder sb = new StringBuilder();
         for (Table.Cell<R, C, V> cell: table.cellSet()){
             sb.append(cell.getRowKey()+" "+cell.getColumnKey()+" "+cell.getValue());
+            sb.append("\n");
         }
 
-        return sb.toString();
+        return sb.toString().trim();
     }
 
     public String toJsonl() throws IOException {

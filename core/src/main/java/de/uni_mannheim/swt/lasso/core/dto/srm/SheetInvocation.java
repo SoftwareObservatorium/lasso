@@ -1,15 +1,15 @@
-package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.dto;
+package de.uni_mannheim.swt.lasso.core.dto.srm;
 
 /**
  *
  * @author Marcus Kessel
  */
-public class SheetInvocationDto {
+public class SheetInvocation {
 
     private String name;
     private String invocation;
 
-    public SheetInvocationDto(String name, String invocation) {
+    public SheetInvocation(String name, String invocation) {
         this.name = name;
         this.invocation = invocation;
     }

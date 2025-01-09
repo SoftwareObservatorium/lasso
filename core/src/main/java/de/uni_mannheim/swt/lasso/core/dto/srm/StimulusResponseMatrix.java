@@ -1,4 +1,4 @@
-package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model;
+package de.uni_mannheim.swt.lasso.core.dto.srm;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;

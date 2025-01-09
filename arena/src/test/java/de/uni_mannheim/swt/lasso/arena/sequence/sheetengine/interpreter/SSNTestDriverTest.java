@@ -1,17 +1,21 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter;
 
+import com.google.common.collect.Table;
 import de.uni_mannheim.swt.lasso.arena.ClassUnderTest;
-import de.uni_mannheim.swt.lasso.arena.classloader.coverage.pitest.PitestContainer;
+import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
 import de.uni_mannheim.swt.lasso.arena.repository.DependencyResolver;
 import de.uni_mannheim.swt.lasso.arena.repository.MavenRepository;
 import de.uni_mannheim.swt.lasso.arena.repository.NexusInstance;
 import de.uni_mannheim.swt.lasso.arena.search.InterfaceSpecification;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.event.CompositeInvocationVisitor;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.event.JaCoCoListener;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.dto.SheetDto;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.TestInvocation;
+import de.uni_mannheim.swt.lasso.core.dto.srm.Sheet;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize.GsonMapper;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize.ObjectMapperVisitor;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.CutUtils;
+import de.uni_mannheim.swt.lasso.core.dto.srm.SheetInvocation;
+import de.uni_mannheim.swt.lasso.core.dto.srm.StimulusResponseMatrix;
 import examples_new.*;
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
@@ -21,8 +25,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -96,30 +98,40 @@ public class SSNTestDriverTest {
         Class cutClass = StackEmptyConstructorExample.class;
 
         SSNTestDriver testDriver = new SSNTestDriver();
-        ExecutedInvocations executedInvocations = testDriver.runSheets(SSNTestDriver.parseAll(Arrays.asList(new SheetDto("test()", ssnJsonlStr, lql))), cutClass, 1, visitor).get(0).getExecutedInvocations();
-        LOG.debug("executed invocations\n{}", executedInvocations);
-        visitor.getActuationSheet().debug();
-        visitor.getAdaptedActuationSheet().debug();
-        Invocations invocations = executedInvocations.getInvocations();
 
-        assertEquals(4, invocations.getSequence().size());
-        assertEquals(invocations.getEval().resolveClass("Stack"), invocations.getInvocation(0).getTargetClass());
-        assertEquals(0, invocations.getInvocation(0).getParameters().size());
-        assertEquals(invocations.getEval().resolveClass("java.lang.String"), invocations.getInvocation(1).getTargetClass());
-        assertEquals(1, invocations.getInvocation(1).getParameters().size());
-        assertEquals(invocations.getEval().resolveClass("Stack"), invocations.getInvocation(2).getTargetClass());
-        assertEquals(1, invocations.getInvocation(2).getParameters().size());
-        assertEquals(invocations.getEval().resolveClass("Stack"), invocations.getInvocation(3).getTargetClass());
-        assertEquals(0, invocations.getInvocation(3).getParameters().size());
-        // test oracle values (first column)
-        assertTrue(invocations.getInvocation(0).getExpectedOutput().isUndefined());
-        assertTrue(invocations.getInvocation(1).getExpectedOutput().isUndefined());
-        assertTrue(invocations.getInvocation(2).getExpectedOutput().isUndefined());
-        assertFalse(invocations.getInvocation(3).getExpectedOutput().isUndefined());
-        assertEquals("1", invocations.getInvocation(3).getExpectedOutput().getExpression());
+        // SM
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, ClassUnderTest, TestInvocation> stimulusMatrix = SSNTestDriver.parseStimulusMatrix(
+                Arrays.asList(new Sheet("test1()", ssnJsonlStr, lql)), Arrays.asList(CutUtils.createExample(cutClass)), Arrays.asList(new SheetInvocation("test1", "")));
 
-        assertEquals(4, executedInvocations.getSequence().size());
+        // SRM
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> stimulusResponseMatrix = testDriver.runSheets(stimulusMatrix, 1, visitor);
 
+        for(Table.Cell<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> cell : stimulusResponseMatrix.getTable().cellSet()) {
+            ExecutedInvocations executedInvocations = cell.getValue();
+
+            LOG.debug("executed invocations for '{}' \n{}", cell.getColumnKey().getAdaptee().getVariantId(), executedInvocations);
+            visitor.getActuationSheet().debug();
+            visitor.getAdaptedActuationSheet().debug();
+            Invocations invocations = executedInvocations.getInvocations();
+
+            assertEquals(4, invocations.getSequence().size());
+            assertEquals(invocations.getEval().resolveClass("Stack"), invocations.getInvocation(0).getTargetClass());
+            assertEquals(0, invocations.getInvocation(0).getParameters().size());
+            assertEquals(invocations.getEval().resolveClass("java.lang.String"), invocations.getInvocation(1).getTargetClass());
+            assertEquals(1, invocations.getInvocation(1).getParameters().size());
+            assertEquals(invocations.getEval().resolveClass("Stack"), invocations.getInvocation(2).getTargetClass());
+            assertEquals(1, invocations.getInvocation(2).getParameters().size());
+            assertEquals(invocations.getEval().resolveClass("Stack"), invocations.getInvocation(3).getTargetClass());
+            assertEquals(0, invocations.getInvocation(3).getParameters().size());
+            // test oracle values (first column)
+            assertTrue(invocations.getInvocation(0).getExpectedOutput().isUndefined());
+            assertTrue(invocations.getInvocation(1).getExpectedOutput().isUndefined());
+            assertTrue(invocations.getInvocation(2).getExpectedOutput().isUndefined());
+            assertFalse(invocations.getInvocation(3).getExpectedOutput().isUndefined());
+            assertEquals("1", invocations.getInvocation(3).getExpectedOutput().getExpression());
+
+            assertEquals(4, executedInvocations.getSequence().size());
+        }
     }
 
     /**
@@ -153,23 +165,34 @@ public class SSNTestDriverTest {
         Class cutClass = StackNonEmptyConstructorExample.class;
 
         SSNTestDriver testDriver = new SSNTestDriver();
-        ExecutedInvocations executedInvocations = testDriver.runSheets(SSNTestDriver.parseAll(Arrays.asList(new SheetDto("test()", ssnJsonlStr, lql))), cutClass, 1, visitor).get(0).getExecutedInvocations();
-        LOG.debug("executed invocations\n{}", executedInvocations);
-        visitor.getActuationSheet().debug();
-        visitor.getAdaptedActuationSheet().debug();
-        Invocations invocations = executedInvocations.getInvocations();
 
-        assertEquals(4, invocations.getSequence().size());
-        assertEquals(invocations.getEval().resolveClass("Stack"), invocations.getInvocation(0).getTargetClass());
-        assertEquals(1, invocations.getInvocation(0).getParameters().size());
-        assertEquals(invocations.getEval().resolveClass("java.lang.String"), invocations.getInvocation(1).getTargetClass());
-        assertEquals(1, invocations.getInvocation(1).getParameters().size());
-        assertEquals(invocations.getEval().resolveClass("Stack"), invocations.getInvocation(2).getTargetClass());
-        assertEquals(1, invocations.getInvocation(2).getParameters().size());
-        assertEquals(invocations.getEval().resolveClass("Stack"), invocations.getInvocation(3).getTargetClass());
-        assertEquals(0, invocations.getInvocation(3).getParameters().size());
+        // SM
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, ClassUnderTest, TestInvocation> stimulusMatrix = SSNTestDriver.parseStimulusMatrix(
+                Arrays.asList(new Sheet("test1()", ssnJsonlStr, lql)), Arrays.asList(CutUtils.createExample(cutClass)), Arrays.asList(new SheetInvocation("test1", "")));
 
-        assertEquals(4, executedInvocations.getSequence().size());
+        // SRM
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> stimulusResponseMatrix = testDriver.runSheets(stimulusMatrix, 1, visitor);
+
+        for(Table.Cell<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> cell : stimulusResponseMatrix.getTable().cellSet()) {
+            ExecutedInvocations executedInvocations = cell.getValue();
+
+            LOG.debug("executed invocations for '{}' \n{}", cell.getColumnKey().getAdaptee().getVariantId(), executedInvocations);
+            visitor.getActuationSheet().debug();
+            visitor.getAdaptedActuationSheet().debug();
+            Invocations invocations = executedInvocations.getInvocations();
+
+            assertEquals(4, invocations.getSequence().size());
+            assertEquals(invocations.getEval().resolveClass("Stack"), invocations.getInvocation(0).getTargetClass());
+            assertEquals(1, invocations.getInvocation(0).getParameters().size());
+            assertEquals(invocations.getEval().resolveClass("java.lang.String"), invocations.getInvocation(1).getTargetClass());
+            assertEquals(1, invocations.getInvocation(1).getParameters().size());
+            assertEquals(invocations.getEval().resolveClass("Stack"), invocations.getInvocation(2).getTargetClass());
+            assertEquals(1, invocations.getInvocation(2).getParameters().size());
+            assertEquals(invocations.getEval().resolveClass("Stack"), invocations.getInvocation(3).getTargetClass());
+            assertEquals(0, invocations.getInvocation(3).getParameters().size());
+
+            assertEquals(4, executedInvocations.getSequence().size());
+        }
     }
 
     /**
@@ -203,23 +226,33 @@ public class SSNTestDriverTest {
         Class cutClass = StackEmptyConstructorExample.class;
 
         SSNTestDriver testDriver = new SSNTestDriver();
-        ExecutedInvocations executedInvocations = testDriver.runSheets(SSNTestDriver.parseAll(Arrays.asList(new SheetDto("test()", ssnJsonlStr, lql))), cutClass, 1, visitor).get(0).getExecutedInvocations();
-        LOG.debug("executed invocations\n{}", executedInvocations);
-        visitor.getActuationSheet().debug();
-        visitor.getAdaptedActuationSheet().debug();
-        Invocations invocations = executedInvocations.getInvocations();
+        // SM
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, ClassUnderTest, TestInvocation> stimulusMatrix = SSNTestDriver.parseStimulusMatrix(
+                Arrays.asList(new Sheet("test1()", ssnJsonlStr, lql)), Arrays.asList(CutUtils.createExample(cutClass)), Arrays.asList(new SheetInvocation("test1", "")));
 
-        assertEquals(4, invocations.getSequence().size());
-        assertEquals(invocations.getEval().resolveClass("Stack"), invocations.getInvocation(0).getTargetClass());
-        assertEquals(0, invocations.getInvocation(0).getParameters().size());
-        assertEquals(invocations.getEval().resolveClass("java.lang.String"), invocations.getInvocation(1).getTargetClass());
-        assertEquals(0, invocations.getInvocation(1).getParameters().size());
-        assertEquals(invocations.getEval().resolveClass("Stack"), invocations.getInvocation(2).getTargetClass());
-        assertEquals(1, invocations.getInvocation(2).getParameters().size());
-        assertEquals(invocations.getEval().resolveClass("Stack"), invocations.getInvocation(3).getTargetClass());
-        assertEquals(0, invocations.getInvocation(3).getParameters().size());
+        // SRM
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> stimulusResponseMatrix = testDriver.runSheets(stimulusMatrix, 1, visitor);
 
-        assertEquals(4, executedInvocations.getSequence().size());
+        for(Table.Cell<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> cell : stimulusResponseMatrix.getTable().cellSet()) {
+            ExecutedInvocations executedInvocations = cell.getValue();
+
+            LOG.debug("executed invocations for '{}' \n{}", cell.getColumnKey().getAdaptee().getVariantId(), executedInvocations);
+            visitor.getActuationSheet().debug();
+            visitor.getAdaptedActuationSheet().debug();
+            Invocations invocations = executedInvocations.getInvocations();
+
+            assertEquals(4, invocations.getSequence().size());
+            assertEquals(invocations.getEval().resolveClass("Stack"), invocations.getInvocation(0).getTargetClass());
+            assertEquals(0, invocations.getInvocation(0).getParameters().size());
+            assertEquals(invocations.getEval().resolveClass("java.lang.String"), invocations.getInvocation(1).getTargetClass());
+            assertEquals(0, invocations.getInvocation(1).getParameters().size());
+            assertEquals(invocations.getEval().resolveClass("Stack"), invocations.getInvocation(2).getTargetClass());
+            assertEquals(1, invocations.getInvocation(2).getParameters().size());
+            assertEquals(invocations.getEval().resolveClass("Stack"), invocations.getInvocation(3).getTargetClass());
+            assertEquals(0, invocations.getInvocation(3).getParameters().size());
+
+            assertEquals(4, executedInvocations.getSequence().size());
+        }
     }
 
     /**
@@ -246,18 +279,28 @@ public class SSNTestDriverTest {
         Class cutClass = StaticMethodExample.class;
 
         SSNTestDriver testDriver = new SSNTestDriver();
-        ExecutedInvocations executedInvocations = testDriver.runSheets(SSNTestDriver.parseAll(Arrays.asList(new SheetDto("test()", ssnJsonlStr, lql))), cutClass, 1, visitor).get(0).getExecutedInvocations();
-        LOG.debug("executed invocations\n{}", executedInvocations);
-        visitor.getActuationSheet().debug();
-        visitor.getAdaptedActuationSheet().debug();
-        Invocations invocations = executedInvocations.getInvocations();
+        // SM
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, ClassUnderTest, TestInvocation> stimulusMatrix = SSNTestDriver.parseStimulusMatrix(
+                Arrays.asList(new Sheet("test1()", ssnJsonlStr, lql)), Arrays.asList(CutUtils.createExample(cutClass)), Arrays.asList(new SheetInvocation("test1", "")));
 
-        assertEquals(2, invocations.getSequence().size());
-        assertEquals(invocations.getEval().resolveClass("Singleton"), invocations.getInvocation(0).getTargetClass());
-        assertEquals(0, invocations.getInvocation(0).getParameters().size());
-        assertEquals(invocations.getEval().resolveClass("Singleton"), invocations.getInvocation(1).getTargetClass());
+        // SRM
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> stimulusResponseMatrix = testDriver.runSheets(stimulusMatrix, 1, visitor);
 
-        assertEquals(2, executedInvocations.getSequence().size());
+        for(Table.Cell<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> cell : stimulusResponseMatrix.getTable().cellSet()) {
+            ExecutedInvocations executedInvocations = cell.getValue();
+
+            LOG.debug("executed invocations for '{}' \n{}", cell.getColumnKey().getAdaptee().getVariantId(), executedInvocations);
+            visitor.getActuationSheet().debug();
+            visitor.getAdaptedActuationSheet().debug();
+            Invocations invocations = executedInvocations.getInvocations();
+
+            assertEquals(2, invocations.getSequence().size());
+            assertEquals(invocations.getEval().resolveClass("Singleton"), invocations.getInvocation(0).getTargetClass());
+            assertEquals(0, invocations.getInvocation(0).getParameters().size());
+            assertEquals(invocations.getEval().resolveClass("Singleton"), invocations.getInvocation(1).getTargetClass());
+
+            assertEquals(2, executedInvocations.getSequence().size());
+        }
     }
 
     /**
@@ -284,18 +327,28 @@ public class SSNTestDriverTest {
         Class cutClass = InvisibleStaticMethodExample.class;
 
         SSNTestDriver testDriver = new SSNTestDriver();
-        ExecutedInvocations executedInvocations = testDriver.runSheets(SSNTestDriver.parseAll(Arrays.asList(new SheetDto("test()", ssnJsonlStr, lql))), cutClass, 1, visitor).get(0).getExecutedInvocations();
-        LOG.debug("executed invocations\n{}", executedInvocations);
-        visitor.getActuationSheet().debug();
-        visitor.getAdaptedActuationSheet().debug();
-        Invocations invocations = executedInvocations.getInvocations();
+        // SM
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, ClassUnderTest, TestInvocation> stimulusMatrix = SSNTestDriver.parseStimulusMatrix(
+                Arrays.asList(new Sheet("test1()", ssnJsonlStr, lql)), Arrays.asList(CutUtils.createExample(cutClass)), Arrays.asList(new SheetInvocation("test1", "")));
 
-        assertEquals(2, invocations.getSequence().size());
-        assertEquals(invocations.getEval().resolveClass("Singleton"), invocations.getInvocation(0).getTargetClass());
-        assertEquals(0, invocations.getInvocation(0).getParameters().size());
-        assertEquals(invocations.getEval().resolveClass("Singleton"), invocations.getInvocation(1).getTargetClass());
+        // SRM
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> stimulusResponseMatrix = testDriver.runSheets(stimulusMatrix, 1, visitor);
 
-        assertEquals(2, executedInvocations.getSequence().size());
+        for(Table.Cell<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> cell : stimulusResponseMatrix.getTable().cellSet()) {
+            ExecutedInvocations executedInvocations = cell.getValue();
+
+            LOG.debug("executed invocations for '{}' \n{}", cell.getColumnKey().getAdaptee().getVariantId(), executedInvocations);
+            visitor.getActuationSheet().debug();
+            visitor.getAdaptedActuationSheet().debug();
+            Invocations invocations = executedInvocations.getInvocations();
+
+            assertEquals(2, invocations.getSequence().size());
+            assertEquals(invocations.getEval().resolveClass("Singleton"), invocations.getInvocation(0).getTargetClass());
+            assertEquals(0, invocations.getInvocation(0).getParameters().size());
+            assertEquals(invocations.getEval().resolveClass("Singleton"), invocations.getInvocation(1).getTargetClass());
+
+            assertEquals(2, executedInvocations.getSequence().size());
+        }
     }
 
     @Test
@@ -320,29 +373,39 @@ public class SSNTestDriverTest {
         Class cutClass = CompositeNodeExample.class;
 
         SSNTestDriver testDriver = new SSNTestDriver();
-        ExecutedInvocations executedInvocations = testDriver.runSheets(SSNTestDriver.parseAll(Arrays.asList(new SheetDto("test()", ssnJsonlStr, lql))), cutClass, 1, visitor).get(0).getExecutedInvocations();
-        LOG.debug("executed invocations\n{}", executedInvocations);
-        visitor.getActuationSheet().debug();
-        visitor.getAdaptedActuationSheet().debug();
-        Invocations invocations = executedInvocations.getInvocations();
+        // SM
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, ClassUnderTest, TestInvocation> stimulusMatrix = SSNTestDriver.parseStimulusMatrix(
+                Arrays.asList(new Sheet("test1()", ssnJsonlStr, lql)), Arrays.asList(CutUtils.createExample(cutClass)), Arrays.asList(new SheetInvocation("test1", "")));
 
-        assertEquals(4, invocations.getSequence().size());
-        assertEquals(invocations.getEval().resolveClass("Node"), invocations.getInvocation(0).getTargetClass());
-        assertEquals(1, invocations.getInvocation(0).getParameters().size());
-        assertEquals(invocations.getEval().resolveClass("Node"), invocations.getInvocation(1).getTargetClass());
-        assertEquals(1, invocations.getInvocation(1).getParameters().size());
-        assertEquals(invocations.getEval().resolveClass("Node"), invocations.getInvocation(2).getTargetClass());
-        assertEquals(1, invocations.getInvocation(2).getParameters().size());
-        assertEquals(invocations.getEval().resolveClass("Node"), invocations.getInvocation(3).getTargetClass());
-        assertEquals(0, invocations.getInvocation(3).getParameters().size());
-        // test oracle values (first column)
-        assertTrue(invocations.getInvocation(0).getExpectedOutput().isUndefined());
-        assertTrue(invocations.getInvocation(1).getExpectedOutput().isUndefined());
-        assertTrue(invocations.getInvocation(2).getExpectedOutput().isUndefined());
-        assertFalse(invocations.getInvocation(3).getExpectedOutput().isUndefined());
-        assertEquals("A2", invocations.getInvocation(3).getExpectedOutput().getExpression());
+        // SRM
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> stimulusResponseMatrix = testDriver.runSheets(stimulusMatrix, 1, visitor);
 
-        assertEquals(4, executedInvocations.getSequence().size());
+        for(Table.Cell<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> cell : stimulusResponseMatrix.getTable().cellSet()) {
+            ExecutedInvocations executedInvocations = cell.getValue();
+
+            LOG.debug("executed invocations for '{}' \n{}", cell.getColumnKey().getAdaptee().getVariantId(), executedInvocations);
+            visitor.getActuationSheet().debug();
+            visitor.getAdaptedActuationSheet().debug();
+            Invocations invocations = executedInvocations.getInvocations();
+
+            assertEquals(4, invocations.getSequence().size());
+            assertEquals(invocations.getEval().resolveClass("Node"), invocations.getInvocation(0).getTargetClass());
+            assertEquals(1, invocations.getInvocation(0).getParameters().size());
+            assertEquals(invocations.getEval().resolveClass("Node"), invocations.getInvocation(1).getTargetClass());
+            assertEquals(1, invocations.getInvocation(1).getParameters().size());
+            assertEquals(invocations.getEval().resolveClass("Node"), invocations.getInvocation(2).getTargetClass());
+            assertEquals(1, invocations.getInvocation(2).getParameters().size());
+            assertEquals(invocations.getEval().resolveClass("Node"), invocations.getInvocation(3).getTargetClass());
+            assertEquals(0, invocations.getInvocation(3).getParameters().size());
+            // test oracle values (first column)
+            assertTrue(invocations.getInvocation(0).getExpectedOutput().isUndefined());
+            assertTrue(invocations.getInvocation(1).getExpectedOutput().isUndefined());
+            assertTrue(invocations.getInvocation(2).getExpectedOutput().isUndefined());
+            assertFalse(invocations.getInvocation(3).getExpectedOutput().isUndefined());
+            assertEquals("A2", invocations.getInvocation(3).getExpectedOutput().getExpression());
+
+            assertEquals(4, executedInvocations.getSequence().size());
+        }
     }
 
     @Test
@@ -366,26 +429,36 @@ public class SSNTestDriverTest {
         Class cutClass = CompositeNodeExample.class;
 
         SSNTestDriver testDriver = new SSNTestDriver();
-        ExecutedInvocations executedInvocations = testDriver.runSheets(SSNTestDriver.parseAll(Arrays.asList(new SheetDto("test()", ssnJsonlStr, lql))), cutClass, 1, visitor).get(0).getExecutedInvocations();
-        LOG.debug("executed invocations\n{}", executedInvocations);
-        visitor.getActuationSheet().debug();
-        visitor.getAdaptedActuationSheet().debug();
-        Invocations invocations = executedInvocations.getInvocations();
+        // SM
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, ClassUnderTest, TestInvocation> stimulusMatrix = SSNTestDriver.parseStimulusMatrix(
+                Arrays.asList(new Sheet("test1()", ssnJsonlStr, lql)), Arrays.asList(CutUtils.createExample(cutClass)), Arrays.asList(new SheetInvocation("test1", "")));
 
-        assertEquals(3, invocations.getSequence().size());
-        assertEquals(invocations.getEval().resolveClass("Node"), invocations.getInvocation(0).getTargetClass());
-        assertEquals(1, invocations.getInvocation(0).getParameters().size());
-        assertEquals(invocations.getEval().resolveClass("Node"), invocations.getInvocation(1).getTargetClass());
-        assertEquals(1, invocations.getInvocation(1).getParameters().size());
-        assertEquals(invocations.getEval().resolveClass("Node"), invocations.getInvocation(2).getTargetClass());
-        assertEquals(0, invocations.getInvocation(2).getParameters().size());
-        // test oracle values (first column)
-        assertTrue(invocations.getInvocation(0).getExpectedOutput().isUndefined());
-        assertTrue(invocations.getInvocation(1).getExpectedOutput().isUndefined());
-        assertFalse(invocations.getInvocation(2).getExpectedOutput().isUndefined());
-        assertEquals("A1", invocations.getInvocation(2).getExpectedOutput().getExpression());
+        // SRM
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> stimulusResponseMatrix = testDriver.runSheets(stimulusMatrix, 1, visitor);
 
-        assertEquals(3, executedInvocations.getSequence().size());
+        for(Table.Cell<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> cell : stimulusResponseMatrix.getTable().cellSet()) {
+            ExecutedInvocations executedInvocations = cell.getValue();
+
+            LOG.debug("executed invocations for '{}' \n{}", cell.getColumnKey().getAdaptee().getVariantId(), executedInvocations);
+            visitor.getActuationSheet().debug();
+            visitor.getAdaptedActuationSheet().debug();
+            Invocations invocations = executedInvocations.getInvocations();
+
+            assertEquals(3, invocations.getSequence().size());
+            assertEquals(invocations.getEval().resolveClass("Node"), invocations.getInvocation(0).getTargetClass());
+            assertEquals(1, invocations.getInvocation(0).getParameters().size());
+            assertEquals(invocations.getEval().resolveClass("Node"), invocations.getInvocation(1).getTargetClass());
+            assertEquals(1, invocations.getInvocation(1).getParameters().size());
+            assertEquals(invocations.getEval().resolveClass("Node"), invocations.getInvocation(2).getTargetClass());
+            assertEquals(0, invocations.getInvocation(2).getParameters().size());
+            // test oracle values (first column)
+            assertTrue(invocations.getInvocation(0).getExpectedOutput().isUndefined());
+            assertTrue(invocations.getInvocation(1).getExpectedOutput().isUndefined());
+            assertFalse(invocations.getInvocation(2).getExpectedOutput().isUndefined());
+            assertEquals("A1", invocations.getInvocation(2).getExpectedOutput().getExpression());
+
+            assertEquals(3, executedInvocations.getSequence().size());
+        }
     }
 
     /**
@@ -426,114 +499,21 @@ public class SSNTestDriverTest {
         SSNTestDriver testDriver = new SSNTestDriver();
         testDriver.setEnableJaCoCoCoverage(true);
 
-        ExecutedInvocations executedInvocations = testDriver.runSheets(SSNTestDriver.parseAll(Arrays.asList(new SheetDto("test()", ssnJsonlStr, lql))), cutClass, 1, invocationVisitor).get(0).getExecutedInvocations();
-        LOG.debug("executed invocations\n{}", executedInvocations);
-        visitor.getActuationSheet().debug();
-        visitor.getAdaptedActuationSheet().debug();
-        Invocations invocations = executedInvocations.getInvocations();
-    }
+        // SM
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, ClassUnderTest, TestInvocation> stimulusMatrix = SSNTestDriver.parseStimulusMatrix(
+                Arrays.asList(new Sheet("test1()", ssnJsonlStr, lql)), Arrays.asList(CutUtils.createExample(cutClass)), Arrays.asList(new SheetInvocation("test1", "")));
 
-    /**
-     * Mutation Coverage with PIT
-     *
-     * @throws IOException
-     * @throws ClassNotFoundException
-     */
-    @Test
-    public void test_BoundedQueue_Mutation_Coverage() throws IOException, ClassNotFoundException {
-        @Language("jsonl")
-        String ssnJsonlStr = """
-                {"sheet": "Sheet 1", "header": "Row 1", "cells": {"A1": {}, "B1": "create", "C1": "BoundedQueue", "D1": 10}}
-                {"sheet": "Sheet 1", "header": "Row 3", "cells": {"A2": {}, "B2": "enQueue", "C2": "A1", "D2": "'Hello World!'"}}
-                {"sheet": "Sheet 1", "header": "Row 3", "cells": {"A3": false, "B3": "isEmpty", "C3": "A1"}}
-                {"sheet": "Sheet 1", "header": "Row 4", "cells": {"A4": false, "B4": "isFull", "C4": "A1"}}
-                {"sheet": "Sheet 1", "header": "Row 5", "cells": {"A5": "D2", "B5": "deQueue", "C5": "A1"}}
-                {"sheet": "Sheet 1", "header": "Row 6", "cells": {"A6": true, "B6": "isEmpty", "C6": "A1"}}
-                """;
+        // SRM
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> stimulusResponseMatrix = testDriver.runSheets(stimulusMatrix, 1, invocationVisitor);
 
-        String lql = """
-                BoundedQueue {
-                    BoundedQueue(int)
-                    enQueue(java.lang.Object)->void
-                    deQueue()->java.lang.Object
-                    isEmpty()->boolean
-                    isFull()->boolean
-                }
-                """;
-        //ObjectMapperVisitor visitor = createVisitor();
+        for(Table.Cell<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> cell : stimulusResponseMatrix.getTable().cellSet()) {
+            ExecutedInvocations executedInvocations = cell.getValue();
 
-        ObjectMapperVisitor visitor = new ObjectMapperVisitor(new GsonMapper());
-        InvocationVisitor invocationVisitor = new CompositeInvocationVisitor(
-                Arrays.asList(visitor));
-
-        Class cutClass = BoundedQueue.class;
-
-        SSNTestDriver testDriver = new SSNTestDriver();
-
-        List<ActuationSheet> actuationSheets = testDriver.mutateAndRunSheets(SSNTestDriver.parseAll(Arrays.asList(new SheetDto("test()", ssnJsonlStr, lql))), CutUtils.createExample(cutClass), 1, invocationVisitor);
-
-        for(ActuationSheet actuationSheet : actuationSheets) {
-            ExecutedInvocations executedInvocations = actuationSheet.getExecutedInvocations();
-            LOG.debug("executed invocations for '{}' \n{}", actuationSheet.getAdaptedImplementation().getAdaptee().getVariantId(), executedInvocations);
+            LOG.debug("executed invocations for '{}' \n{}", cell.getColumnKey().getAdaptee().getVariantId(), executedInvocations);
             visitor.getActuationSheet().debug();
             visitor.getAdaptedActuationSheet().debug();
             Invocations invocations = executedInvocations.getInvocations();
-
-            if(actuationSheet.getAdaptedImplementation().getAdaptee().getVariantId().equals("original")) {
-                // original impl.
-            } else {
-                PitestContainer pitestContainer = (PitestContainer) actuationSheet.getAdaptedImplementation().getAdaptee().getProject().getContainer();
-                LOG.debug("Mutant {}", pitestContainer.getMutant().getDetails());
-            }
         }
-
-        assertEquals(29, actuationSheets.stream().map(a -> a.getAdaptedImplementation().getAdaptee()).collect(Collectors.toSet()).size()); // original + 28 mutants
-    }
-
-    @Test
-    public void test_Base64_remote() throws IOException, ClassNotFoundException {
-        @Language("jsonl")
-        String ssnJsonlStr = """
-                {"sheet": "Sheet 1", "header": "Row 1", "cells": {"A1": {}, "B1": "create", "C1": "Base64"}}
-                {"sheet": "Sheet 1", "header": "Row 2", "cells": {"A2": {}, "B2": "encode", "C2": "A1", "D2": "\\"Hello World!\\".getBytes()"}}
-                """;
-
-        String lql = """
-                Base64{
-                    encode(byte[])->byte[]
-                }
-                """;
-        ObjectMapperVisitor visitor = createVisitor();
-
-        SSNTestDriver testDriver = new SSNTestDriver();
-        String mavenRepoUrl = NexusInstance.LASSOHP12_URL;
-        File localRepo = new File("/tmp/my_repo/local-repo");
-        DependencyResolver resolver = new DependencyResolver(mavenRepoUrl, localRepo.getAbsolutePath());
-        testDriver.setMavenRepository(new MavenRepository(resolver));
-
-        // commons-codec:commons-codec:1.15
-        ClassUnderTest classUnderTest = CutUtils.createExample("org.apache.commons.codec.binary.Base64", "commons-codec:commons-codec:1.15");
-
-        ExecutedInvocations executedInvocations = testDriver.runSheets(SSNTestDriver.parseAll(Arrays.asList(new SheetDto("test()", ssnJsonlStr, lql))), classUnderTest, 1, visitor).get(0).getExecutedInvocations();
-        LOG.debug("executed invocations\n{}", executedInvocations);
-        visitor.getActuationSheet().debug();
-        visitor.getAdaptedActuationSheet().debug();
-        Invocations invocations = executedInvocations.getInvocations();
-
-        assertEquals(2, invocations.getSequence().size());
-
-        System.out.println(new String((byte[]) executedInvocations.getExecutedInvocation(1).getOutput().getValue()));
-
-        assertEquals(invocations.getEval().resolveClass("Base64"), invocations.getInvocation(0).getTargetClass());
-        assertEquals(0, invocations.getInvocation(0).getParameters().size());
-        assertEquals(invocations.getEval().resolveClass("Base64"), invocations.getInvocation(1).getTargetClass());
-        assertEquals(1, invocations.getInvocation(1).getParameters().size());
-        // test oracle values (first column)
-        assertTrue(invocations.getInvocation(0).getExpectedOutput().isUndefined());
-        assertTrue(invocations.getInvocation(1).getExpectedOutput().isUndefined());
-
-       assertEquals("SGVsbG8gV29ybGQh", new String((byte[]) executedInvocations.getExecutedInvocation(1).getOutput().getValue()));
-
     }
 
     @Test
@@ -565,26 +545,35 @@ public class SSNTestDriverTest {
         // commons-codec:commons-codec:1.15
         ClassUnderTest classUnderTest = CutUtils.createExample("org.apache.commons.codec.binary.Base64", "commons-codec:commons-codec:1.15");
 
-        ExecutedInvocations executedInvocations = testDriver.runSheets(SSNTestDriver.parseAll(Arrays.asList(new SheetDto("test()", ssnJsonlStr, lql))), classUnderTest, 1, visitor).get(0).getExecutedInvocations();
-        LOG.debug("executed invocations\n{}", executedInvocations);
-        visitor.getActuationSheet().debug();
-        visitor.getAdaptedActuationSheet().debug();
-        Invocations invocations = executedInvocations.getInvocations();
+        // SM
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, ClassUnderTest, TestInvocation> stimulusMatrix = SSNTestDriver.parseStimulusMatrix(
+                Arrays.asList(new Sheet("test1()", ssnJsonlStr, lql)), Arrays.asList(classUnderTest), Arrays.asList(new SheetInvocation("test1", "")));
 
-        assertEquals(2, invocations.getSequence().size());
+        // SRM
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> stimulusResponseMatrix = testDriver.runSheets(stimulusMatrix, 1, visitor);
 
-        System.out.println(new String((byte[]) executedInvocations.getExecutedInvocation(1).getOutput().getValue()));
+        for(Table.Cell<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> cell : stimulusResponseMatrix.getTable().cellSet()) {
+            ExecutedInvocations executedInvocations = cell.getValue();
 
-        assertEquals(invocations.getEval().resolveClass("Base64"), invocations.getInvocation(0).getTargetClass());
-        assertEquals(0, invocations.getInvocation(0).getParameters().size());
-        assertEquals(invocations.getEval().resolveClass("Base64"), invocations.getInvocation(1).getTargetClass());
-        assertEquals(1, invocations.getInvocation(1).getParameters().size());
-        // test oracle values (first column)
-        assertTrue(invocations.getInvocation(0).getExpectedOutput().isUndefined());
-        assertTrue(invocations.getInvocation(1).getExpectedOutput().isUndefined());
+            LOG.debug("executed invocations for '{}' \n{}", cell.getColumnKey().getAdaptee().getVariantId(), executedInvocations);
+            visitor.getActuationSheet().debug();
+            visitor.getAdaptedActuationSheet().debug();
+            Invocations invocations = executedInvocations.getInvocations();
 
-        assertEquals("SGVsbG8gV29ybGQh", new String((byte[]) executedInvocations.getExecutedInvocation(1).getOutput().getValue()));
+            assertEquals(2, invocations.getSequence().size());
 
+            System.out.println(new String((byte[]) executedInvocations.getExecutedInvocation(1).getOutput().getValue()));
+
+            assertEquals(invocations.getEval().resolveClass("Base64"), invocations.getInvocation(0).getTargetClass());
+            assertEquals(0, invocations.getInvocation(0).getParameters().size());
+            assertEquals(invocations.getEval().resolveClass("Base64"), invocations.getInvocation(1).getTargetClass());
+            assertEquals(1, invocations.getInvocation(1).getParameters().size());
+            // test oracle values (first column)
+            assertTrue(invocations.getInvocation(0).getExpectedOutput().isUndefined());
+            assertTrue(invocations.getInvocation(1).getExpectedOutput().isUndefined());
+
+            assertEquals("SGVsbG8gV29ybGQh", new String((byte[]) executedInvocations.getExecutedInvocation(1).getOutput().getValue()));
+        }
     }
 
     private ObjectMapperVisitor createVisitor() {

@@ -3,9 +3,8 @@ package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.uni_mannheim.swt.lasso.arena.search.InterfaceSpecification;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.SheetSignature;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.dto.SheetDto;
+import de.uni_mannheim.swt.lasso.core.dto.srm.Sheet;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.LQLUtils;
 import org.apache.commons.lang3.Validate;
 
@@ -37,7 +36,7 @@ public class SSNParser {
         return mapper;
     }
 
-    public ParsedSheet parseJsonl(SheetDto sheetDto) throws IOException {
+    public ParsedSheet parseJsonl(Sheet sheetDto) throws IOException {
         return parseJsonl(sheetDto.getSignature(), sheetDto.getBody(), sheetDto.getInterfaceSpecification());
     }
 

@@ -1,4 +1,4 @@
-package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.dto;
+package de.uni_mannheim.swt.lasso.core.dto.srm;
 
 import java.util.List;
 
@@ -6,7 +6,7 @@ import java.util.List;
  *
  * @author Marcus Kessel
  */
-public class SheetDto {
+public class Sheet {
 
     private String signature;
     private String body;
@@ -15,7 +15,7 @@ public class SheetDto {
     // invocations of the sheet in case it is parameterized
     private List<String> invocations;
 
-    public SheetDto(String signature, String body, String interfaceSpecification) {
+    public Sheet(String signature, String body, String interfaceSpecification) {
         this.signature = signature;
         this.body = body;
         this.interfaceSpecification = interfaceSpecification;

@@ -4,7 +4,7 @@ import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
 import de.uni_mannheim.swt.lasso.arena.classloader.coverage.jacoco.JaCoCoContainer;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.InvocationVisitor;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.StimulusResponseMatrix;
+import de.uni_mannheim.swt.lasso.core.dto.srm.StimulusResponseMatrix;
 
 import org.jacoco.core.analysis.CoverageBuilder;
 import org.jacoco.core.analysis.IClassCoverage;
