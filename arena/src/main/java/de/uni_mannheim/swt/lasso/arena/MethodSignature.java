@@ -42,6 +42,8 @@ public class MethodSignature {
 
     private String className;
 
+    private boolean isstatic;
+
     public MethodSignature(InterfaceSpecification parent) {
         this.parent = parent;
     }
@@ -55,7 +57,11 @@ public class MethodSignature {
     }
 
     public boolean isStatic() {
-        return false;
+        return isstatic;
+    }
+
+    public void setIsStatic(boolean isstatic) {
+        this.isstatic = isstatic;
     }
 
     public String toReturnString() {

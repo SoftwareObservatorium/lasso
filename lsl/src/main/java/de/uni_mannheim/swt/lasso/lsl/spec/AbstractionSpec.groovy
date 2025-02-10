@@ -45,6 +45,17 @@ class AbstractionSpec extends LassoSpec {
      * LQL interface
      */
     String lql
+
+    /**
+     * sheets
+     */
+    List tests
+
+    /**
+     * sheets
+     */
+    List<String> dependencies
+
     /**
      * If non-empty, instructs the engine to retrieve Systems by their IDs.
      */
@@ -65,6 +76,15 @@ class AbstractionSpec extends LassoSpec {
      */
     void apply(def queryModel) {
         callRehydrate(closure, queryModel, this, null)
+    }
+
+    /**
+     * Internal closure to call
+     *
+     * @param queryModel
+     */
+    void apply(def queryModel, args) {
+        callRehydrate(closure, queryModel, this, args)
     }
 
     /**

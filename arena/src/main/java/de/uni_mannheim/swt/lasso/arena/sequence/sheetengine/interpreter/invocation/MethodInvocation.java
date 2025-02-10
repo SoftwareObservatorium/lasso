@@ -6,6 +6,7 @@ import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.run.Exec
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.run.Invoke;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.run.Runner;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +60,13 @@ public class MethodInvocation extends MemberInvocation {
             }
 
             ExecutionResult result = runner.run(invoke);
-            executedInvocation.setOutput(Obj.fromValue(result.getValue(), executedInvocation.getInvocation().getIndex()));
+
+            if(result.getExceptionThrown() != null) {
+                executedInvocation.setOutput(Obj.fromException(ExceptionUtils.getRootCause(result.getExceptionThrown()), executedInvocation.getInvocation().getIndex()));
+            } else {
+                executedInvocation.setOutput(Obj.fromValue(result.getValue(), executedInvocation.getInvocation().getIndex()));
+            }
+
             executedInvocation.setExecutionTime(result.getDurationNanos());
 
             LOG.debug("method call '{}'", executedInvocation.getOutput().getValue());

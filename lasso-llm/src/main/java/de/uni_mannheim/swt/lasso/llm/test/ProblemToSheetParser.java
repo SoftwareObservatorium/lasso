@@ -19,25 +19,31 @@
  */
 package de.uni_mannheim.swt.lasso.llm.test;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.stmt.AssertStmt;
+import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.Type;
 import com.github.javaparser.printer.YamlPrinter;
 import com.github.javaparser.resolution.declarations.ResolvedConstructorDeclaration;
 import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
+import com.github.javaparser.resolution.types.ResolvedReferenceType;
 import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ClassLoaderTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import de.uni_mannheim.swt.lasso.arena.classloader.Container;
+import de.uni_mannheim.swt.lasso.core.dto.srm.Sheet;
 import de.uni_mannheim.swt.lasso.core.model.Interface;
+import de.uni_mannheim.swt.lasso.core.model.Specification;
 import de.uni_mannheim.swt.lasso.llm.problem.Problem;
 import de.uni_mannheim.swt.lasso.llm.util.EvalAndSerialize;
 import de.uni_mannheim.swt.lasso.lql.parser.LQL;
 import de.uni_mannheim.swt.lasso.lql.parser.LQLParseResult;
+import de.uni_mannheim.swt.lasso.ssn.SheetResolver;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -111,6 +117,7 @@ public class ProblemToSheetParser {
         List<MethodDeclaration> testMethods = cu.getType(0).getMethods().stream().filter(m -> !m.getName().toString().equals("main")).collect(Collectors.toList());
 
         LOG.debug("{}", testMethods.get(0).getNameAsString());
+        LOG.debug("{}", testMethods.get(0));
 
         MethodDeclaration md = testMethods.get(0);
 
@@ -245,9 +252,10 @@ public class ProblemToSheetParser {
 
         List<AssertStmt> assertStmts = md.findAll(AssertStmt.class);
 
+        int t = 0;
         for(AssertStmt assertStmt : assertStmts) {
             Sequence sequence = new Sequence();
-            sequence.setId(interfaceSpecification.getName());
+            sequence.setId("test" + t++);
             sequences.add(sequence);
 
             Expression check = assertStmt.getCheck();
@@ -335,13 +343,30 @@ public class ProblemToSheetParser {
 
             LOG.debug("Parsed input '{}'", arg.toString());
 
+            // make sure to fully qualify casts
+            List<CastExpr> casts = arg.findAll(CastExpr.class);
+            for(CastExpr castExpr : casts) {
+                if(castExpr.getType().isClassOrInterfaceType()) {
+                    ClassOrInterfaceType type = castExpr.getType().asClassOrInterfaceType();
+
+                    ResolvedReferenceType resolved = type.resolve();
+
+                    type.getName().setIdentifier(resolved.getQualifiedName());
+                }
+            }
+
+
 //            if(StringUtils.containsIgnoreCase(arg.toString(), "Pair")) {
 //                throw new RuntimeException("PAIR");
 //            }
 
-            Value value = evalAndSerialize.evalAndSerializeToJson(
-                    arg.toString(),
-                    container);
+//            Value value = evalAndSerialize.evalAndSerializeToJson(
+//                    arg.toString(),
+//                    container);
+
+            Value value = new Value();
+            value.setValue(arg.toString());
+            value.setCode(arg.toString());
 
             valueList.add(value);
         }
@@ -396,5 +421,74 @@ public class ProblemToSheetParser {
                 }
             }
         });
+    }
+
+    public List<Sheet> sequences2SheetsJSONL(List<Sequence> sequences, Specification specification, boolean initialize) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        List<Sheet> stimulusSheets = new LinkedList<>();
+
+        for (Sequence sequence : sequences) {
+            String signature = sequence.getId() + "()";
+
+            List<Map<String, Object>> jsonRows = new ArrayList<>();
+
+            if(initialize) {
+                Map<String, Object> rowData = new LinkedHashMap<>();
+
+                // operation
+                rowData.put(SheetResolver.toColumnLabel(1) + SheetResolver.toRowLabel(0), "create");
+                // service
+                rowData.put(SheetResolver.toColumnLabel(2) + SheetResolver.toRowLabel(0), specification.getInterfaceSpecification().getName());
+//                for(int p = 0; p < row.getInputs().size(); p++) {
+//                    Value pValue = row.getInputs().get(p);
+//                    // FIXME as code
+//                    String value = objectMapper.writeValueAsString(pValue.getValue());
+//                    rowData.put(toColumnLabel(p + 2) + toRowLabel(r), value);
+//                }
+
+                jsonRows.add(rowData);
+            }
+
+            List<Statement> rows = sequence.getStatements();
+
+            for(int r = 0; r < rows.size(); r++) {
+                int currentRow = initialize ? r + 1 : r;
+
+                Map<String, Object> rowData = new LinkedHashMap<>();
+
+                Statement row = rows.get(r);
+
+                // output
+                rowData.put(SheetResolver.toColumnLabel(0) + SheetResolver.toRowLabel(r), row.getExpectedOutputs().get(0).getValue());
+                // operation
+                rowData.put(SheetResolver.toColumnLabel(1) + SheetResolver.toRowLabel(currentRow), row.getOperation());
+                // service
+                rowData.put(SheetResolver.toColumnLabel(2) + SheetResolver.toRowLabel(currentRow), "A1");
+                for(int p = 0; p < row.getInputs().size(); p++) {
+                    Value pValue = row.getInputs().get(p);
+                    rowData.put(SheetResolver.toColumnLabel(p + 3) + SheetResolver.toRowLabel(currentRow), pValue.getValue());
+                }
+
+                jsonRows.add(rowData);
+            }
+
+            StringBuilder jsonl = new StringBuilder();
+            for (Map<String, Object> row : jsonRows) {
+                Map<String, Map<String, Object>> m = new LinkedHashMap<>();
+                m.put("cells", row);
+                String json = objectMapper.writeValueAsString(m);
+
+                jsonl.append(json);
+                jsonl.append("\n");
+            }
+
+            String body = jsonl.toString();
+
+            Sheet stimulusSheet = new Sheet(signature, body, specification.getInterfaceSpecification().getLqlQuery());
+            stimulusSheets.add(stimulusSheet);
+        }
+
+        return stimulusSheets;
     }
 }

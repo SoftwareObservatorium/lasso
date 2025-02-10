@@ -1,7 +1,7 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model;
 
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.eval.Eval;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.eval.EvalException;
+import de.uni_mannheim.swt.lasso.ssn.eval.Eval;
+import de.uni_mannheim.swt.lasso.ssn.eval.EvalException;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocation.CodeInvocation;
 
 /**

@@ -102,7 +102,7 @@ public abstract class MavenAction extends DefaultAction {
             List<String> commands = createMavenCommand(newMavenCommand(mavenSpyMonitor));
 
             // set default commands
-            Environment environment = actionConfiguration.getProfile().getEnvironment();
+            Environment environment = actionConfiguration.getProfile().getEnvironment().copy();;
             if(CollectionUtils.isEmpty(environment.getCommandArgsList())) {
                 environment.setCommandArgsList(new LinkedList<>());
             }

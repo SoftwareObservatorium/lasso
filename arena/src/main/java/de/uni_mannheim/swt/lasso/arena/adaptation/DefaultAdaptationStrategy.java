@@ -57,6 +57,9 @@ public class DefaultAdaptationStrategy implements AdaptationStrategy {
     private static final org.slf4j.Logger LOG = LoggerFactory
             .getLogger(DefaultAdaptationStrategy.class);
 
+    // FIXME dynamically adapt based on number of methods
+    public static final int METHOD_MAX = 5;
+
     /**
      * Permutation validation
      */
@@ -207,7 +210,7 @@ public class DefaultAdaptationStrategy implements AdaptationStrategy {
             String[] methodNames = specification.getMethodNames();
             Comparator<ClassPermutation> ranking = new ClassPermutatorDistanceRanking(methodNames);
 
-            EfficientCombination permutationStrategy = new EfficientCombination(5, limit);
+            EfficientCombination permutationStrategy = new EfficientCombination(METHOD_MAX, limit);
 
             // create method permutations for all combinations of methods
             return createPermutations(constructorCandidates,

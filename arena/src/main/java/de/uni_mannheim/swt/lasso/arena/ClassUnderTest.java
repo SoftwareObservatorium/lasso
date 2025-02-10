@@ -23,6 +23,8 @@ import de.uni_mannheim.swt.lasso.core.model.System;
 import de.uni_mannheim.swt.lasso.core.model.MavenProject;
 import org.apache.commons.lang3.StringUtils;
 
+import java.net.URL;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -44,6 +46,8 @@ public class ClassUnderTest {
     private String variantId = "original";
 
     private boolean pseudo;
+
+    private List<URL> urls;
 
     public ClassUnderTest(System implementation) {
         this(implementation.getId(),
@@ -166,5 +170,13 @@ public class ClassUnderTest {
 
     public void setPseudo(boolean pseudo) {
         this.pseudo = pseudo;
+    }
+
+    public List<URL> getUrls() {
+        return urls;
+    }
+
+    public void setUrls(List<URL> urls) {
+        this.urls = urls;
     }
 }

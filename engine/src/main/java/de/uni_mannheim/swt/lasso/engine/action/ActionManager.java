@@ -110,6 +110,10 @@ public class ActionManager {
         return clazz.getAnnotation(Local.class) != null;
     }
 
+    public int getParallelStimulusMatrices(Class<? extends DefaultAction> actionClass) {
+        return actionClass.getAnnotation(Local.class).numberOfParallelStimulusMatrices();
+    }
+
     public boolean isDisablePartitioning(String type) {
         Class<? extends DefaultAction> clazz = registry.get(type);
         Validate.notNull(clazz, "Given type unknown '%s'", clazz);

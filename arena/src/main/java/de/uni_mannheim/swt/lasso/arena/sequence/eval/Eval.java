@@ -31,6 +31,7 @@ import java.math.BigDecimal;
  *
  * @author Marcus Kessel
  */
+@Deprecated
 public class Eval {
 
     private final Container container;

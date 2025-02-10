@@ -19,15 +19,9 @@
  */
 package de.uni_mannheim.swt.lasso.service.systemtests.integration
 
-import de.uni_mannheim.swt.lasso.cluster.ClusterEngine
 import de.uni_mannheim.swt.lasso.engine.DataSourceNotFoundException
-import de.uni_mannheim.swt.lasso.engine.LSLExecutionContext
-import de.uni_mannheim.swt.lasso.engine.LSLExecutionResult
-import de.uni_mannheim.swt.lasso.engine.LSLScript
 import de.uni_mannheim.swt.lasso.service.systemtests.util.LassoTestEngine
-import de.uni_mannheim.swt.lasso.srm.ClusterSRMRepository
 import de.uni_mannheim.swt.lasso.srm.JDBC
-import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
@@ -50,92 +44,5 @@ class JDBCPlaygroundSystemTest extends AbstractGroovySystemTest {
 
         Table schemaTable = jdbc.sqlToTable("SELECT * FROM INFORMATION_SCHEMA.TABLES");
         System.out.println(schemaTable.printAll());
-    }
-
-    /**
-     * Arena EXECUTE Sequence task (resembles a test-driven search based on a given sheet)
-     *
-     * @throws IOException
-     * @throws de.uni_mannheim.swt.lasso.engine.DataSourceNotFoundException
-     */
-    @Test
-    void test_create_CSV() throws IOException, DataSourceNotFoundException {
-        @Language("Groovy")
-        String content = '''
-        dataSource 'mavenCentral2020' // define data source to use
-        // interface of a Stack in LQL notation
-        def interfaceSpec = """Stack {
-            push(java.lang.Object)->java.lang.Object
-            pop()->java.lang.Object
-            peek()->java.lang.Object
-            size()->int}"""
-        /** Define a new study */
-        study(name: 'Select') {
-            /** Retrieve class implementations */
-            action(name: 'select', type: 'Select') {
-                abstraction('Stack') {
-                    queryForClasses interfaceSpec, 'class'
-                    rows = 10
-                    
-                    directly = true // without cursor functionality
-                    
-                    // pick a known stack
-                    //filter 'id:"4e73bb0d-f01f-43e5-bf46-7ab7870a289f"'
-                }
-            }
-            
-            action(name:'execute',type:'Arena') { // execute
-                specification = interfaceSpec
-                sheets = [
-                        sheet1: sheet() {
-                            row  '',  'CREATE', 'Stack'
-                            row 'hi!',  'push',   'A1',     'hi!'
-                            row 'hi!',  'peek',   'A1'
-                            row     1,  'size',   'A1'
-                            row 'hi!',  'pop',    'A1'
-                            row     0,  'size',   'A1'
-                        }
-                ]
-        
-                maxPermutations = 1
-                task = 'Execute'
-                features = ['mutation', 'cc'] // enable mutation and code coverage
-        
-                exportCsv = true
-        
-                dependsOn 'select'
-                includeAbstractions 'Stack'
-                includeTests '*'
-                profile {
-                    environment('java8') {
-                        image = 'openjdk:8-jdk-alpine'
-                    }
-                }
-            }
-        }
-        '''
-
-        //
-        LSLScript scriptUnderTest = createScript(content)
-
-
-        // DO EXECUTE
-        LSLExecutionResult lslExecutionResult = lassoEngine.execute(scriptUnderTest);
-        LSLExecutionContext lslExecutionContext = lassoEngine.getLastContext();
-
-        // assertions
-        //verifyAbstraction(lslExecutionContext, 'select', 'Stack', 1)
-        //verifyAbstraction(lslExecutionContext, 'execute', 'Stack', 1)
-
-        // TODO verify SRM
-        // put
-        ClusterEngine clusterEngine = lslExecutionContext.getConfiguration().getService(ClusterEngine.class);
-
-        // also make sure that the SRM is initialized (otherwise the client has no way to put cells)
-        ClusterSRMRepository srmRepository = clusterEngine.getClusterSRMRepository();
-        Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
-        System.out.println(table.printAll());
-
-        table.write().csv("/tmp/stack.csv")
     }
 }

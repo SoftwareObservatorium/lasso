@@ -81,6 +81,8 @@ public class MavenProject implements Serializable {
             srcTest.mkdirs();
             resTest.mkdirs();
 
+            getTarget().mkdirs();
+
             lassoBaseDir.mkdirs();
         }
     }

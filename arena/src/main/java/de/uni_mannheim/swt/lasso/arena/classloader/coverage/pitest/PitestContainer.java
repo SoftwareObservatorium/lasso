@@ -21,10 +21,6 @@ package de.uni_mannheim.swt.lasso.arena.classloader.coverage.pitest;
 
 import de.uni_mannheim.swt.lasso.arena.classloader.Container;
 import de.uni_mannheim.swt.lasso.arena.classloader.Containers;
-import de.uni_mannheim.swt.lasso.arena.event.ArenaExecutionListener;
-import de.uni_mannheim.swt.lasso.arena.event.DefaultExecutionListener;
-import de.uni_mannheim.swt.lasso.arena.sequence.SequenceExecutionRecord;
-import de.uni_mannheim.swt.lasso.arena.sequence.SequenceExecutionRecords;
 import org.apache.commons.lang3.StringUtils;
 
 import org.pitest.mutationtest.engine.Mutant;
@@ -32,7 +28,6 @@ import org.pitest.mutationtest.engine.Mutant;
 import org.pitest.mutationtest.engine.MutationDetails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import randoop.sequence.ExecutableSequence;
 
 /**
  * Pitest container for handling {@link Mutant}s.
@@ -71,47 +66,6 @@ public class PitestContainer extends Container {
         }
 
         return mutant.getBytes();
-    }
-
-    @Override
-    public ArenaExecutionListener getArenaExecutionListener() {
-        return new DefaultExecutionListener(this) {
-            @Override
-            public void onBeforeExecution(SequenceExecutionRecords results) {
-                super.onBeforeExecution(results);
-            }
-
-            @Override
-            public void onAfterExecution(SequenceExecutionRecords results) {
-                try {
-                    MutationDetails details = mutant.getDetails();
-                    MutantObservation observation = new MutantObservation(details);
-                    results.addObservation("mutation", observation);
-                } catch (Throwable e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onBeforeStatement(SequenceExecutionRecord result, ExecutableSequence executableSequence, int i) {
-                super.onBeforeStatement(result, executableSequence, i);
-            }
-
-            @Override
-            public void onAfterStatement(SequenceExecutionRecord result, ExecutableSequence executableSequence, int i) {
-                super.onAfterStatement(result, executableSequence, i);
-            }
-
-            @Override
-            public void onBeforeSequence(SequenceExecutionRecord result, ExecutableSequence executableSequence) {
-                super.onBeforeSequence(result, executableSequence);
-            }
-
-            @Override
-            public void onAfterSequence(SequenceExecutionRecord result, ExecutableSequence executableSequence) {
-                super.onAfterSequence(result, executableSequence);
-            }
-        };
     }
 
     public Mutant getMutant() {

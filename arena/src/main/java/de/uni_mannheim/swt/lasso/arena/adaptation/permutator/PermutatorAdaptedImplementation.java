@@ -165,6 +165,7 @@ public class PermutatorAdaptedImplementation extends AdaptedImplementation {
         AdapterDesc adapterDesc = new AdapterDesc();
         adapterDesc.setAdapterId(getAdapterId());
         adapterDesc.setSystemId(getAdaptee().getId());
+        adapterDesc.setVariantId(getAdaptee().getVariantId());
         adapterDesc.setClassName(getAdaptee().getClassName());
 
         List<MethodDesc> initializers = new ArrayList<>(interfaceSpecification.getConstructors().size());

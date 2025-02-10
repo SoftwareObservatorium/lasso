@@ -19,6 +19,8 @@
  */
 package de.uni_mannheim.swt.lasso.sheets.service.dto;
 
+import de.uni_mannheim.swt.lasso.core.model.CodeUnit;
+
 import java.util.List;
 
 /**
@@ -30,6 +32,12 @@ public class ClassUnderTestSpec {
 
     private String className;
     private List<String> artifacts;
+
+    private String codeGenerationId;
+
+    private String id;
+
+    private CodeUnit codeUnit;
 
     public String getClassName() {
         return className;
@@ -45,5 +53,29 @@ public class ClassUnderTestSpec {
 
     public void setArtifacts(List<String> artifacts) {
         this.artifacts = artifacts;
+    }
+
+    public CodeUnit getCodeUnit() {
+        return codeUnit;
+    }
+
+    public void setCodeUnit(CodeUnit codeUnit) {
+        this.codeUnit = codeUnit;
+    }
+
+    public String getCodeGenerationId() {
+        return codeGenerationId;
+    }
+
+    public void setCodeGenerationId(String codeGenerationId) {
+        this.codeGenerationId = codeGenerationId;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 }

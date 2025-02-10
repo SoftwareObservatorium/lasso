@@ -4,17 +4,18 @@ import de.uni_mannheim.swt.lasso.arena.ClassUnderTest;
 import de.uni_mannheim.swt.lasso.arena.MethodSignature;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
 import de.uni_mannheim.swt.lasso.arena.search.InterfaceSpecification;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.eval.BshEval;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.eval.Eval;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.eval.EvalException;
+import de.uni_mannheim.swt.lasso.ssn.eval.BshEval;
+import de.uni_mannheim.swt.lasso.ssn.eval.Eval;
+import de.uni_mannheim.swt.lasso.ssn.eval.EvalException;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocation.CodeInvocation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocation.InstanceInvocation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocation.MethodInvocation;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.TestInvocation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.CodeExpressionUtils;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.FAMarker;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.MemberResolutionUtils;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.*;
+import de.uni_mannheim.swt.lasso.ssn.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.ClassUtils;
@@ -47,82 +48,82 @@ public class SSNInterpreter {
     public static final String $_CREATE = "$create";
     public static final String $_EVAL = "$eval";
 
-    /**
-     * Interpret sheet specifications.
-     *
-     * @param parsedSheet
-     * @return
-     */
-    public Invocations interpret(ParsedSheet parsedSheet) {
-        return interpret(parsedSheet, SSNInterpreter.class.getClassLoader(), new TestInvocation(parsedSheet.getName(), ""));
-    }
+//    /**
+//     * Interpret sheet specifications.
+//     *
+//     * @param parsedSheet
+//     * @return
+//     */
+//    public Invocations interpret(ParsedSheet parsedSheet) {
+//        return interpret(parsedSheet, SSNInterpreter.class.getClassLoader(), new TestInvocation(parsedSheet.getName(), ""));
+//    }
+//
+//    /**
+//     * Interpret sheet specifications.
+//     *
+//     * @param parsedSheet
+//     * @param testInvocation
+//     * @return
+//     */
+//    public Invocations interpret(ParsedSheet parsedSheet, TestInvocation testInvocation) {
+//        return interpret(parsedSheet, SSNInterpreter.class.getClassLoader(), testInvocation);
+//    }
 
     /**
      * Interpret sheet specifications.
      *
-     * @param parsedSheet
-     * @param testInvocation
-     * @return
-     */
-    public Invocations interpret(ParsedSheet parsedSheet, TestInvocation testInvocation) {
-        return interpret(parsedSheet, SSNInterpreter.class.getClassLoader(), testInvocation);
-    }
-
-    /**
-     * Interpret sheet specifications.
-     *
-     * @param parsedSheet
+     * @param test
      * @param classUnderTest
      * @param testInvocation
      * @return
      */
-    public Invocations interpret(ParsedSheet parsedSheet, ClassUnderTest classUnderTest, TestInvocation testInvocation) {
-        return interpret(parsedSheet, classUnderTest.getProject().getContainer(), testInvocation);
+    public Invocations interpret(Test test, ClassUnderTest classUnderTest, TestInvocation testInvocation) {
+        return interpret(test, classUnderTest.getProject().getContainer(), testInvocation);
     }
 
     /**
      * Interpret sheet specifications.
      *
-     * @param parsedSheet
+     * @param test
      * @param classUnderTest
      * @return
      */
-    public Invocations interpret(ParsedSheet parsedSheet, ClassUnderTest classUnderTest) {
-        return interpret(parsedSheet, classUnderTest.getProject().getContainer(), new TestInvocation(parsedSheet.getName(), ""));
+    public Invocations interpret(Test test, ClassUnderTest classUnderTest) {
+        return interpret(test, classUnderTest.getProject().getContainer(), new TestInvocation(test.getName(), ""));
     }
 
     /**
      * Interpret
      *
-     * @param parsedSheet
+     * @param test
      * @param classLoader
      * @param testInvocation
      * @return
      */
-    public Invocations interpret(ParsedSheet parsedSheet, ClassLoader classLoader, TestInvocation testInvocation) {
+    public Invocations interpret(Test test, ClassLoader classLoader, TestInvocation testInvocation) {
         // our interpreter that holds signatures on the fly for resolution
         Eval eval = new BshEval();
         eval.setClassLoader(classLoader);
 
-        return interpret(parsedSheet, testInvocation, eval);
+        return interpret(test, testInvocation, eval);
     }
 
     /**
      * Interpret sheet specifications.
      *
-     * @param parsedSheet
+     * @param test
      * @param testInvocation
      * @param eval
      * @return
      */
-    public Invocations interpret(ParsedSheet parsedSheet, TestInvocation testInvocation, Eval eval) {
+    public Invocations interpret(Test test, TestInvocation testInvocation, Eval eval) {
         // all LQL specs to Java (here classes)
-        Map<Member, MethodSignature> resolvedMappings = lqlToJava(eval, parsedSheet.getInterfaceSpecification());
+        Map<Member, MethodSignature> resolvedMappings = lqlToJava(eval, test.getInterfaceSpecification());
 
-        Invocations invocations = new Invocations(parsedSheet, testInvocation, resolvedMappings, eval);
+        Invocations invocations = new Invocations(test, testInvocation, resolvedMappings, eval);
 
         // now build the call sequence
-        for(ParsedRow row : parsedSheet.getRows()) {
+        for(ParsedRow row : test.getParsedSheet().getRows()) {
             // TODO oracle values
             ParsedCell output = row.getOutput();
             ParsedCell operation = row.getOperation();
@@ -141,7 +142,7 @@ public class SSNInterpreter {
             Invocation invocation;
             if(StringUtils.equalsAnyIgnoreCase(operationName, CREATE, $_CREATE)) {
                 // create invocation
-                LOG.debug("create invocation = {}", operationName);
+                LOG.debug("create invocation = {} for class = {}", operationName, clazz);
 
                 String className = clazz;
                 // create instance
@@ -449,6 +450,8 @@ public class SSNInterpreter {
         } catch (EvalException e) {
             throw new RuntimeException(e);
         } catch (NoSuchMethodException e) {
+            LOG.warn("Did not find method {} / {}", className, methodName);
+
             throw new RuntimeException(e);
         }
     }
@@ -528,8 +531,8 @@ public class SSNInterpreter {
             LOG.debug("Found test parameter '{}'", param);
 
             int i = -1;
-            for(int p = 0;  p < invocations.getParsedSheet().getSignature().getMethod().getInputNames().size(); p++) {
-                String inputName = invocations.getParsedSheet().getSignature().getMethod().getInputNames().get(p);
+            for(int p = 0;  p < invocations.getSheetSignature().getMethod().getInputNames().size(); p++) {
+                String inputName = invocations.getSheetSignature().getMethod().getInputNames().get(p);
                 if(StringUtils.equals(inputName, param)) {
                     i = p;
                 }

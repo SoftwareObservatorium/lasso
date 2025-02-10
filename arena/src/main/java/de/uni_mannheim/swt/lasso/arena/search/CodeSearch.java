@@ -43,6 +43,7 @@ import de.uni_mannheim.swt.lasso.lsl.LassoContext;
 import de.uni_mannheim.swt.lasso.lsl.SimpleLogger;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.Validate;
 import org.apache.http.client.HttpClient;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
@@ -52,8 +53,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * Simple code search facade.
@@ -80,7 +79,7 @@ public class CodeSearch {
                 .withHttpClient(client).build();
         mavenCentralRepository = new RandomMavenCentralRepository(solrClient);
 
-        assertNotNull(mavenCentralRepository);
+        Validate.notNull(mavenCentralRepository);
 
         mavenCentralIndex = new MavenCentralIndex(mavenCentralRepository,
                 new QueryBuilder());

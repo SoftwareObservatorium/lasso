@@ -5,6 +5,7 @@ import de.uni_mannheim.swt.lasso.arena.MethodSignature;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptationStrategy;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
 import de.uni_mannheim.swt.lasso.arena.search.InterfaceSpecification;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.HierarchyMemberResolver;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.MemberResolutionUtils;
 
 import java.lang.reflect.Constructor;
@@ -19,6 +20,11 @@ import java.util.Map;
  * @author Marcus Kessel
  */
 public class PassThroughAdaptationStrategy implements AdaptationStrategy {
+
+    /**
+     * Relaxing naming allowed if no candidate found?
+     */
+    private boolean relaxMethodNaming;
 
     /**
      * Only one {@link AdaptedImplementation} is returned.
@@ -47,8 +53,23 @@ public class PassThroughAdaptationStrategy implements AdaptationStrategy {
     Map<MethodSignature, Method> resolveMethods(InterfaceSpecification specification, ClassUnderTest classUnderTest) throws ClassNotFoundException, NoSuchMethodException {
         Map<MethodSignature, Method> mapping = new LinkedHashMap<>();
         for(MethodSignature m : specification.getMethods()) {
-            Method method = MemberResolutionUtils.resolveDeclaredMethod(classUnderTest.loadClass(), m.getName(), m.getParameterTypes(classUnderTest.loadClass()), true);
-            mapping.put(m, method);
+            try {
+                Method method = MemberResolutionUtils.resolveDeclaredMethod(classUnderTest.loadClass(), m.getName(), m.getParameterTypes(classUnderTest.loadClass()), true);
+                mapping.put(m, method);
+            } catch (NoSuchMethodException e) {
+                if(isRelaxMethodNaming()) {
+                    HierarchyMemberResolver resolver = new HierarchyMemberResolver(classUnderTest.loadClass(), m.getName(), m.getParameterTypes(classUnderTest.loadClass()));
+                    resolver.setIgnoreMethodName(true);
+
+                    Method method = resolver.resolveMethod();
+
+                    mapping.put(m, method);
+                } else {
+                    throw e;
+                }
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
         }
 
         return mapping;
@@ -62,5 +83,13 @@ public class PassThroughAdaptationStrategy implements AdaptationStrategy {
         }
 
         return mapping;
+    }
+
+    public boolean isRelaxMethodNaming() {
+        return relaxMethodNaming;
+    }
+
+    public void setRelaxMethodNaming(boolean relaxMethodNaming) {
+        this.relaxMethodNaming = relaxMethodNaming;
     }
 }

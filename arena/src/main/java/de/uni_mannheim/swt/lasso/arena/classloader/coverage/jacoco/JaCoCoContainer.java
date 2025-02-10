@@ -22,11 +22,6 @@ package de.uni_mannheim.swt.lasso.arena.classloader.coverage.jacoco;
 import de.uni_mannheim.swt.lasso.arena.classloader.Container;
 import de.uni_mannheim.swt.lasso.arena.classloader.Containers;
 
-import de.uni_mannheim.swt.lasso.arena.event.ArenaExecutionListener;
-
-import de.uni_mannheim.swt.lasso.arena.event.DefaultExecutionListener;
-import de.uni_mannheim.swt.lasso.arena.sequence.SequenceExecutionRecord;
-import de.uni_mannheim.swt.lasso.arena.sequence.SequenceExecutionRecords;
 import de.uni_mannheim.swt.lasso.core.model.CompilationUnit;
 import de.uni_mannheim.swt.lasso.core.model.MavenProject;
 import de.uni_mannheim.swt.lasso.core.model.Scope;
@@ -46,7 +41,6 @@ import org.jacoco.report.IReportVisitor;
 import org.jacoco.report.html.HTMLFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import randoop.sequence.ExecutableSequence;
 
 import java.io.File;
 import java.io.IOException;
@@ -65,6 +59,7 @@ public class JaCoCoContainer extends Container {
 
     private final LoggerRuntime runtime;
     private final Instrumenter instrumenter;
+
     private final Scope scope;
     private RuntimeData data;
 
@@ -118,71 +113,6 @@ public class JaCoCoContainer extends Container {
         }
 
         return bytes;
-    }
-
-    /**
-     * Default behavior is to start measurement before sequence execution and to end it after sequence execution.
-     *
-     * FIXME make measurement session configurable (i.e when to start/end measurement).
-     *
-     * @return
-     */
-    @Override
-    public ArenaExecutionListener getArenaExecutionListener() {
-        return new DefaultExecutionListener(this) {
-            @Override
-            public void onBeforeExecution(SequenceExecutionRecords results) {
-                super.onBeforeExecution(results);
-
-                if(LOG.isDebugEnabled()) {
-                    LOG.debug("Starting JaCoCo measurement");
-                }
-
-                try {
-                    start();
-                } catch (Throwable e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onAfterExecution(SequenceExecutionRecords results) {
-                super.onAfterExecution(results);
-
-                if(LOG.isDebugEnabled()) {
-                    LOG.debug("Stopping JaCoCo measurement");
-                }
-
-                try {
-                    CoverageBuilder coverageBuilder = stop();
-
-                    JaCoCoObservation observation = new JaCoCoObservation(coverageBuilder);
-                    results.addObservation("jacoco", observation);
-                } catch (Throwable e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onBeforeStatement(SequenceExecutionRecord result, ExecutableSequence executableSequence, int i) {
-                super.onBeforeStatement(result, executableSequence, i);
-            }
-
-            @Override
-            public void onAfterStatement(SequenceExecutionRecord result, ExecutableSequence executableSequence, int i) {
-                super.onAfterStatement(result, executableSequence, i);
-            }
-
-            @Override
-            public void onBeforeSequence(SequenceExecutionRecord result, ExecutableSequence executableSequence) {
-                super.onBeforeSequence(result, executableSequence);
-            }
-
-            @Override
-            public void onAfterSequence(SequenceExecutionRecord result, ExecutableSequence executableSequence) {
-                super.onAfterSequence(result, executableSequence);
-            }
-        };
     }
 
     /**
@@ -342,5 +272,9 @@ public class JaCoCoContainer extends Container {
         // Signal end of structure information to allow report to write all
         // information out
         visitor.visitEnd();
+    }
+
+    public Scope getScope() {
+        return scope;
     }
 }

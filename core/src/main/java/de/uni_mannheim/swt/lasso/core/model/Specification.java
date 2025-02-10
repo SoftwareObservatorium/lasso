@@ -19,6 +19,8 @@
  */
 package de.uni_mannheim.swt.lasso.core.model;
 
+import de.uni_mannheim.swt.lasso.core.dto.srm.Sheet;
+
 import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
@@ -31,7 +33,13 @@ import java.util.List;
 public class Specification implements Serializable {
 
     private Interface interfaceSpecification;
+
+    private List<Sheet> tests = new LinkedList<>();
+
+    // FIXME remove
     private List<Sequence> sequences = new LinkedList<>();
+
+    private List<String> dependencies;
 
     public Interface getInterfaceSpecification() {
         return interfaceSpecification;
@@ -47,5 +55,21 @@ public class Specification implements Serializable {
 
     public void setSequences(List<Sequence> sequences) {
         this.sequences = sequences;
+    }
+
+    public List<Sheet> getTests() {
+        return tests;
+    }
+
+    public void setTests(List<Sheet> tests) {
+        this.tests = tests;
+    }
+
+    public List<String> getDependencies() {
+        return dependencies;
+    }
+
+    public void setDependencies(List<String> dependencies) {
+        this.dependencies = dependencies;
     }
 }

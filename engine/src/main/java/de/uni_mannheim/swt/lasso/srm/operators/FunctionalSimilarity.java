@@ -22,12 +22,16 @@ package de.uni_mannheim.swt.lasso.srm.operators;
 import de.uni_mannheim.swt.lasso.cluster.ClusterEngine;
 import de.uni_mannheim.swt.lasso.core.model.Behaviour;
 
+import de.uni_mannheim.swt.lasso.srm.JDBC;
+import de.uni_mannheim.swt.lasso.srm.olap.ArrowOlap;
 import joinery.DataFrame;
 import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,11 +47,14 @@ public class FunctionalSimilarity {
     private static final Logger LOG = LoggerFactory
             .getLogger(FunctionalSimilarity.class);
 
-    private final ClusterEngine clusterEngine;
+    //private final ClusterEngine clusterEngine;
     private final FunctionalCorrectness correctness;
 
+    JDBC jdbc = new JDBC();
+    ArrowOlap olap = new ArrowOlap();
+
     public FunctionalSimilarity(ClusterEngine clusterEngine, FunctionalCorrectness correctness) {
-        this.clusterEngine = clusterEngine;
+        //this.clusterEngine = clusterEngine;
         this.correctness = correctness;
     }
 
@@ -63,7 +70,7 @@ public class FunctionalSimilarity {
         String oracleId = null;
         // manually-specified oracle
         if (behaviour.isManualOracle()) {
-            oracleId = "oracle_oracle";
+            oracleId = "oracle_oracle_oracle";
         }
 
         // executable specification
@@ -79,27 +86,39 @@ public class FunctionalSimilarity {
         // FIXME arenaid should be passed as parameter
         String arenaId = "execute";
         String valueType = "value";
-        DataFrame df = clusterEngine.getClusterSRMRepository().sqlToDataFrame(
-                "SELECT CONCAT(REGEXP_REPLACE(SHEETID, '_[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}',''),'@',X, ',', Y) as statement," +
-                        " CONCAT(SYSTEMID,'_',ADAPTERID) as SYSTEMID, VALUE FROM srm.cellvalue where executionid = ? and actionId = ? and ARENAID = '"
-                        + arenaId + "' and type = '" + valueType + "' order by sheetid",
-                map.get("executionId"), map.get("actionName"));
 
-        // pivot - widen (statements as rows and systems as columns)
-        DataFrame wide_statement = df.pivot("STATEMENT", "SYSTEMID", "VALUE");
+        String sql = "SELECT CONCAT(SHEETID,'@',X, ',', Y) as statement, CONCAT(SYSTEMID,'_',ADAPTERID, '_', VARIANTID) as SYSTEMID, VALUE FROM srm.cellvalue where executionid = ? and type = ? order by sheetid";
 
-        List<String> stmts = wide_statement.col("STATEMENT");
+        DataFrame wide;
+        try (PreparedStatement preparedStatement = jdbc.createPreparedStatement(sql)) {
+            preparedStatement.setString(1, (String) map.get("executionId"));
+            preparedStatement.setString(2, valueType);
+
+            wide = olap.queryDuckDB(preparedStatement, false);
+        } catch (SQLException e) {
+            throw new IOException(e);
+        }
+
+//        DataFrame df = clusterEngine.getClusterSRMRepository().sqlToDataFrame(
+//                "SELECT CONCAT(SHEETID,'@',X, ',', Y) as statement," +
+//                        " CONCAT(SYSTEMID,'_',ADAPTERID, '_', VARIANTID) as SYSTEMID, VALUE FROM srm.cellvalue where executionid = ? and actionId = ? and type = '" + valueType + "' order by sheetid",
+//                map.get("executionId"), map.get("actionName"));
+//
+//        // pivot - widen (statements as rows and systems as columns)
+//        DataFrame wide_statement = df.pivot("STATEMENT", "SYSTEMID", "VALUE");
+
+        List<String> stmts = wide.col("STATEMENT");
 
         // TODO we have to determine the "best match" if ref impl is used (?)
-        // for manual oracle, it is "oracle_oracle"
+        // for manual oracle, it is "oracle_oracle_oracle"
 
         // select oracle column
-        List oracle = wide_statement.col(oracleId);
+        List oracle = wide.col(oracleId);
 
         // calculate pair-wise similarities between oracle and alternative system
         Map<String, Double> similarities = new LinkedHashMap<>();
-        for (Object column : wide_statement.drop(0).drop(oracleId).columns()) {
-            List alternative = wide_statement.col(column);
+        for (Object column : wide.drop(0).drop(oracleId).columns()) {
+            List alternative = wide.col(column);
 
             //double sim = similarity(oracle, alternative);
             Similarity similarity = correctness.assertStringEquals(stmts, oracle, alternative);

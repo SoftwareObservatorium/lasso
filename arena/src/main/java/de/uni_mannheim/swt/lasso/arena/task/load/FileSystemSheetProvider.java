@@ -24,8 +24,6 @@ import de.uni_mannheim.swt.lasso.arena.ClassUnderTest;
 import de.uni_mannheim.swt.lasso.arena.search.CodeSearch;
 import de.uni_mannheim.swt.lasso.arena.search.InterfaceSpecification;
 import de.uni_mannheim.swt.lasso.arena.sequence.SequenceSpecification;
-import de.uni_mannheim.swt.lasso.arena.sequence.parser.sheet.SheetSequenceSpecificationParser;
-import de.uni_mannheim.swt.lasso.arena.sequence.parser.sheet.SpreadSheet;
 import de.uni_mannheim.swt.lasso.arena.sequence.parser.unit.JUnitSequenceSpecificationParser;
 import de.uni_mannheim.swt.lasso.engine.matcher.TestMatcher;
 import org.apache.commons.collections4.CollectionUtils;
@@ -202,32 +200,33 @@ public class FileSystemSheetProvider implements SheetProvider {
             resolvedSheets.setSheets(executableSheets);
 
             return resolvedSheets;
-        } else if(sheetMatch.isSheet()) {
-            SheetSequenceSpecificationParser sheetSequenceSpecificationParser = new SheetSequenceSpecificationParser();
-
-            InterfaceSpecification specification = getInterfaceSpecification();
-            if(specification == null) {
-                throw new UnsupportedOperationException("specification must be set for sheets");
-            }
-
-            LOG.debug("CUT " + classUnderTest.getClassName());
-            LOG.debug("SPEC LQL " + specification.toLQL());
-
-            //
-            ResolvedSheets resolvedSheets = new ResolvedSheets();
-            resolvedSheets.setClassUnderTest(classUnderTest);
-            resolvedSheets.setSpecification(specification);
-
-            // now parse sheets
-            Map<String, SequenceSpecification> executableSheets = sheetSequenceSpecificationParser.toSequenceSpecifications(
-                    new SpreadSheet(sheetMatch.getFile()),
-                    specification,
-                    classUnderTest,
-                    classUnderTest.getId() /*postfix*/);
-
-            resolvedSheets.setSheets(executableSheets);
-
-            return resolvedSheets;
+//        } else if(sheetMatch.isSheet()) {
+//            SheetSequenceSpecificationParser sheetSequenceSpecificationParser = new SheetSequenceSpecificationParser();
+//
+//            InterfaceSpecification specification = getInterfaceSpecification();
+//            if(specification == null) {
+//                throw new UnsupportedOperationException("specification must be set for sheets");
+//            }
+//
+//            LOG.debug("CUT " + classUnderTest.getClassName());
+//            LOG.debug("SPEC LQL " + specification.toLQL());
+//
+//            //
+//            ResolvedSheets resolvedSheets = new ResolvedSheets();
+//            resolvedSheets.setClassUnderTest(classUnderTest);
+//            resolvedSheets.setSpecification(specification);
+//
+//            // now parse sheets
+//            Map<String, SequenceSpecification> executableSheets = sheetSequenceSpecificationParser.toSequenceSpecifications(
+//                    new SpreadSheet(sheetMatch.getFile()),
+//                    specification,
+//                    classUnderTest,
+//                    classUnderTest.getId() /*postfix*/);
+//
+//            resolvedSheets.setSheets(executableSheets);
+//
+//            return resolvedSheets;
+//        }
         } else {
             throw new UnsupportedOperationException("sheet match type unsupported");
         }

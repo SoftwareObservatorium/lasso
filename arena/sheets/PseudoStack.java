@@ -2,6 +2,8 @@ package some.example.pkg;
 
 import org.junit.Test;
 
+import java.util.Stack;
+
 public class StackTest {
 
     @Test

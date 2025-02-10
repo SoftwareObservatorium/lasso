@@ -92,4 +92,8 @@ public class Abstraction implements Serializable {
     public void setSpecification(Specification specification) {
         this.specification = specification;
     }
+
+    public String getLql() {
+        return specification.getInterfaceSpecification().getLqlQuery();
+    }
 }

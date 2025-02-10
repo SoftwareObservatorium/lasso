@@ -14,6 +14,7 @@ import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.run.Invo
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.run.Runner;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.CutUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.codehaus.plexus.util.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cglib.proxy.Enhancer;
@@ -66,8 +67,9 @@ public class InvocationInterceptor implements MethodInterceptor {
         ExecutionResult result = createAdapteeInstance(executedInvocation, inputs);
 
         if(result.getExceptionThrown() != null) {
-            System.err.println("No instance");
-            result.getExceptionThrown().printStackTrace();
+            LOG.warn("No instance", result.getExceptionThrown());
+
+            throw new RuntimeException(ExceptionUtils.getRootCause(result.getExceptionThrown()));
         }
 
         // set adapter instance
@@ -93,8 +95,6 @@ public class InvocationInterceptor implements MethodInterceptor {
         ExecutedInvocation executedInvocation = executedInvocations.getLastExecutedInvocation();
 
         AdaptedMethod adaptedMethod = executedInvocation.resolveAdaptedMethod(adaptedImplementation);
-
-        System.err.println("ADAPTER METHOD" + adaptedMethod.getMethod());
 
         // inputs change proxy to adaptee object
         Object[] cleanInputs;
@@ -147,9 +147,9 @@ public class InvocationInterceptor implements MethodInterceptor {
 
         ExecutionResult result = runner.run(invoke);
 
-        System.err.println("QUAAAAAAAAAAAAAAAAARK " + result.getExceptionThrown() + " / " + adapteeInstance);
         if(result.getExceptionThrown() != null) {
-            result.getExceptionThrown().printStackTrace();
+            LOG.warn("exception", result.getExceptionThrown());
+            throw result.getExceptionThrown();
         }
 
         // FIXME include or exclude adaptation logic in duration?
@@ -209,7 +209,13 @@ public class InvocationInterceptor implements MethodInterceptor {
 
             Runner runner = new Runner();
             ExecutionResult result = runner.run(() -> adaptedConstructor.newInstance(inputs));
-            executedInvocation.setOutput(Obj.fromValue(result.getValue(), executedInvocation.getInvocation().getIndex()));
+
+            if(result.getExceptionThrown() != null) {
+                executedInvocation.setOutput(Obj.fromException(ExceptionUtils.getRootCause(result.getExceptionThrown()), executedInvocation.getInvocation().getIndex()));
+            } else {
+                executedInvocation.setOutput(Obj.fromValue(result.getValue(), executedInvocation.getInvocation().getIndex()));
+            }
+
             executedInvocation.setExecutionTime(result.getDurationNanos());
 
             LOG.debug("cut constructor '{}'", executedInvocation.getOutput().getValue());

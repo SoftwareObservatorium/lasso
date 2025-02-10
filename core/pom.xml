@@ -17,7 +17,6 @@
     <description>lasso core</description>
 
     <properties>
-        <plantuml.version>8059</plantuml.version>
     </properties>
 
     <licenses>
@@ -83,12 +82,6 @@
             <groupId>sh.joinery</groupId>
             <artifactId>joinery-dataframe</artifactId>
             <version>${joinery.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>net.sourceforge.plantuml</groupId>
-            <artifactId>plantuml</artifactId>
-            <version>${plantuml.version}</version>
         </dependency>
 
         <dependency>

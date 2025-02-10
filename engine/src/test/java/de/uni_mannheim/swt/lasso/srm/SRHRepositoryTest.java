@@ -60,4 +60,17 @@ public class SRHRepositoryTest {
 
         assertEquals(new HashSet(Arrays.asList("STATEMENT", "system1", "system3")), wide.columns());
     }
+
+    @Test
+    public void testOracleFilters_live() throws IOException {
+        String executionId = "aeb524b9-cfe7-4d2b-afa4-503ef9079f45";
+
+        Map<String, String> oracleFilters = new HashMap<>();
+        oracleFilters.put("evo_085ca14148964aafa6ccb4ddd59e50b7_test0_()@0,1", "-713");
+
+        SRHRepository srhRepository = new SRHRepository(null, correctness);
+        DataFrame filtered = srhRepository.getActuationSheets(executionId, null, SRHRepository.TYPE_VALUE, oracleFilters);
+
+        System.out.println(filtered);
+    }
 }

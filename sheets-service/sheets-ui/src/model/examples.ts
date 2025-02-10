@@ -2,24 +2,41 @@
 export class Examples {
     static MAP = {
         BASE64_ENCODE: {
-            label: "Base64 Encode",
+            label: "Base64 Encode Decode",
             scenario:{
                 abstraction: {
                     interfaceSignature: `Base64{
     encode(byte[])->byte[]
-}`},
+    decode(java.lang.String)->byte[]
+}`,
+                    description: "Base64 encoding and decoding",
+},
                 codeModules: [
                     {
+                        id: crypto.randomUUID(),
                         className: "org.apache.commons.codec.binary.Base64",
                         artifacts: ["commons-codec:commons-codec:1.15"]
+                    },
+                    {
+                        id: crypto.randomUUID(),
+                        className: "org.apache.commons.codec.binary.Base64",
+                        artifacts: ["commons-codec:commons-codec:1.17"]
                     }
                 ],
                 tests: [
                     {
-                        signature: "test1()",
+                        signature: "testEncode()",
                         body: `
                 {"cells": {"A1": {}, "B1": "create", "C1": "Base64"}}
                 {"cells": {"A2": {}, "B2": "encode", "C2": "A1", "D2": "\\"Hello World!\\".getBytes()"}}
+        `,
+                        invocations: []
+                    },
+                    {
+                        signature: "testDecode()",
+                        body: `
+                {"cells": {"A1": {}, "B1": "create", "C1": "Base64"}}
+                {"cells": {"A2": {}, "B2": "decode", "C2": "A1", "D2": "\\"SGVsbG8gV29ybGQh\\""}}
         `,
                         invocations: []
                     }
@@ -33,10 +50,23 @@ export class Examples {
                     interfaceSignature: `Stack {
     push(java.lang.String)->java.lang.String
     size()->int
-}`},
+}`,
+                description: "Stack data structure",
+},
                 codeModules: [
                     {
+                        id: crypto.randomUUID(),
                         className: "java.util.Stack",
+                        artifacts: [""]
+                    },
+                    {
+                        id: crypto.randomUUID(),
+                        className: "java.util.ArrayDeque",
+                        artifacts: [""]
+                    },
+                    {
+                        id: crypto.randomUUID(),
+                        className: "java.util.LinkedList",
                         artifacts: [""]
                     }
                 ],
@@ -58,15 +88,18 @@ export class Examples {
             label: "BoundedQueue (Parameterized)",
             scenario: {
                 abstraction: {
-                    interfaceSignature: `BoundedQueue {
-            BoundedQueue(int)
-            enQueue(java.lang.Object)->void
-            deQueue()->java.lang.Object
-            isEmpty()->boolean
-            isFull()->boolean
-        }`},
+                    interfaceSignature: `MyBoundedQueue {
+    MyBoundedQueue(int)
+    enQueue(java.lang.Object)->void
+    deQueue()->java.lang.Object
+    isEmpty()->boolean
+    isFull()->boolean
+}`,
+                    description: "Bounded queue data structure",
+},
                 codeModules: [
                     {
+                        id: crypto.randomUUID(),
                         className: "demo_examples.BoundedQueue",
                         artifacts: [""]
                     }
@@ -75,7 +108,7 @@ export class Examples {
                     {
                         signature: "test1(p1=int)",
                         body: `
-        {"cells": {"A1": {}, "B1": "create", "C1": "BoundedQueue", "D1": "?p1"}}
+        {"cells": {"A1": {}, "B1": "create", "C1": "MyBoundedQueue", "D1": "?p1"}}
         {"cells": {"A2": {}, "B2": "enQueue", "C2": "A1", "D2": "'Hello World!'"}}
         {"cells": {"A3": {}, "B3": "isEmpty", "C3": "A1"}}
         {"cells": {"A4": {}, "B4": "isFull", "C4": "A1"}}

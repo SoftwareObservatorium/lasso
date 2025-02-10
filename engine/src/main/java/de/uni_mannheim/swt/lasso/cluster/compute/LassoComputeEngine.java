@@ -23,7 +23,9 @@ import de.uni_mannheim.swt.lasso.benchmark.BenchmarkManager;
 import de.uni_mannheim.swt.lasso.cluster.ClusterEngine;
 import de.uni_mannheim.swt.lasso.cluster.data.repository.StepReport;
 import de.uni_mannheim.swt.lasso.cluster.event.SessionEvent;
+import de.uni_mannheim.swt.lasso.core.dto.srm.Sheet;
 import de.uni_mannheim.swt.lasso.engine.action.ActionExecutionListener;
+import de.uni_mannheim.swt.lasso.engine.action.utils.SequenceUtils;
 import de.uni_mannheim.swt.lasso.engine.collect.Result;
 import de.uni_mannheim.swt.lasso.engine.dag.*;
 import de.uni_mannheim.swt.lasso.core.model.*;
@@ -42,6 +44,7 @@ import de.uni_mannheim.swt.lasso.engine.workspace.WorkspaceManager;
 import de.uni_mannheim.swt.lasso.lsl.LassoContext;
 import de.uni_mannheim.swt.lasso.lsl.spec.*;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -76,10 +79,10 @@ public class LassoComputeEngine extends LassoEngine {
     private final ClusterEngine clusterEngine;
 
     private final PartitioningStrategy partitioningStrategy;
+    private final Integer threadsPerAbstraction;
 
     private ExecutorService singleExecutor = Executors.newFixedThreadPool(1);
 
-    private final ExecutorService localExecutorService;
     private final int taskTimeout;
 
     /**
@@ -97,11 +100,8 @@ public class LassoComputeEngine extends LassoEngine {
         this.clusterEngine = clusterEngine;
 
         // parallelism for processing local abstractions
-        int threadsPerAbstraction = configuration.getProperty("master.threadsPerAbstraction", Integer.class);
-        
+        this.threadsPerAbstraction = configuration.getProperty("master.threadsPerAbstraction", Integer.class);
         this.taskTimeout = configuration.getProperty("master.jobs.taskTimeout", Integer.class);
-
-        this.localExecutorService = createExecutor("abstraction-worker", threadsPerAbstraction);
 
         //
         this.partitioningStrategy = new PrioritizePowerfulNodes(configuration);
@@ -161,12 +161,12 @@ public class LassoComputeEngine extends LassoEngine {
             populateWorkspaces();
         }
 
-        // XXX DEBUG create image for debugging purposes
-        try {
-            DAG.writeGraph(actionsDag, lslExecutionContext.getWorkspace());
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
+//        // XXX DEBUG create image for debugging purposes
+//        try {
+//            DAG.writeGraph(actionsDag, lslExecutionContext.getWorkspace());
+//        } catch (Throwable e) {
+//            e.printStackTrace();
+//        }
 
         if(LOG.isInfoEnabled()) {
             LOG.info("Action nodes '{}'", actionsDag.vertexSet().size());
@@ -428,19 +428,45 @@ public class LassoComputeEngine extends LassoEngine {
             if (CollectionUtils.isNotEmpty(definesAbstractionSpecs) && producerAction != null) {
                 // run in parallel (producers are always local!)
                 DefaultAction finalProducerAction = producerAction;
-                Future<?> result = localExecutorService.submit(() -> definesAbstractionSpecs.parallelStream().forEach(abstractionSpec -> {
+
+                ExecutorService executorService = createExecutor("createAbstractions-local", threadsPerAbstraction /*FIXME dedicate own variable*/);
+                Future<?> result = executorService.submit(() -> definesAbstractionSpecs.parallelStream().forEach(abstractionSpec -> {
                     try {
                         Abstraction abstraction;
                         if(abstractionSpec.getAbstraction() != null) {
                             LOG.info("Abstraction is defined by LSL");
 
                             abstraction = abstractionSpec.getAbstraction();
+
                         } else {
                             LOG.info("Abstraction must be computed in action");
 
                             abstraction = finalProducerAction.createAbstraction(lslExecutionContext, actionConfiguration, abstractionSpec);
                             // set
                             abstractionSpec.setAbstraction(abstraction);
+                        }
+
+                        // set interface specification
+                        if(StringUtils.isNotBlank(abstractionSpec.getLql())) {
+                            Specification spec = SequenceUtils.parseSpecificationFromLQL(abstractionSpec.getLql());
+                            abstraction.setSpecification(spec);
+                        }
+
+                        // write manual sheets
+                        if (CollectionUtils.isNotEmpty(abstractionSpec.getTests())) {
+                            try {
+                                List<Sheet> stimulusSheets = SequenceUtils.toSheetsJSONL(abstractionSpec.getTests(), abstraction.getSpecification().getInterfaceSpecification().getLqlQuery());
+                                // FIXME potential non empty check and addall
+                                abstraction.getSpecification().setTests(stimulusSheets);
+                            } catch (Throwable e) {
+                                throw new RuntimeException("Could not parse tests", e);
+                            }
+                        }
+
+                        // any dependencies?
+                        if (CollectionUtils.isNotEmpty(abstractionSpec.getDependencies())) {
+                            // add
+                            abstraction.getSpecification().setDependencies(abstractionSpec.getDependencies());
                         }
 
                         // add to current action
@@ -457,6 +483,8 @@ public class LassoComputeEngine extends LassoEngine {
                     result.get();
                 } catch (Throwable e) {
                     LOG.warn("Local executor failed for action producers", e);
+                } finally {
+                    executorService.shutdown();
                 }
             }
 
@@ -586,16 +614,24 @@ public class LassoComputeEngine extends LassoEngine {
                     return task;
                 }).collect(Collectors.toList());
 
-                if(LOG.isInfoEnabled()) {
-                    LOG.info("Running parallel (local)");
+                int parallelStimulusMatrices = actionManager.getParallelStimulusMatrices(producerAction.getClass());
+                if(parallelStimulusMatrices < 0) {
+                    parallelStimulusMatrices = threadsPerAbstraction;
                 }
 
+                if(LOG.isInfoEnabled()) {
+                    LOG.info("Running local action in parallel with threads = {}", parallelStimulusMatrices);
+                }
+
+                ExecutorService localExecutorService = createExecutor("local-abstraction-worker", parallelStimulusMatrices);
+
                 // wait and get
-                List<Future<Void>> results = null;
                 try {
-                    results = localExecutorService.invokeAll(localTasks);
+                    List<Future<Void>> results = localExecutorService.invokeAll(localTasks);
                 } catch (InterruptedException e) {
-                    LOG.warn("N-thread executor failed for action executions", e);
+                    LOG.warn("N-thread local executor failed for action executions", e);
+                } finally {
+                    localExecutorService.shutdown();
                 }
 
                 // --- end local action
@@ -1056,11 +1092,6 @@ public class LassoComputeEngine extends LassoEngine {
     public void shutdown() {
         //-- release all shared things
         //cleanUp();
-
-        //
-        if(localExecutorService != null) {
-            localExecutorService.shutdown();
-        }
 
         if(singleExecutor != null) {
             singleExecutor.shutdown();

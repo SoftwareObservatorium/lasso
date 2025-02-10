@@ -21,16 +21,16 @@ package de.uni_mannheim.swt.lasso.llm.test;
 
 
 import de.uni_mannheim.swt.lasso.arena.classloader.Container;
+import de.uni_mannheim.swt.lasso.core.dto.srm.Sheet;
+import de.uni_mannheim.swt.lasso.core.model.Specification;
+import de.uni_mannheim.swt.lasso.engine.action.utils.SequenceUtils;
 import de.uni_mannheim.swt.lasso.llm.problem.MultiPLE;
 import de.uni_mannheim.swt.lasso.llm.problem.Problem;
 import de.uni_mannheim.swt.lasso.lql.parser.LQLParseResult;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -109,9 +109,14 @@ public class ProblemToSheetParserTest {
 
         // FIXME store FA somewhere
 
-        debug(ss);
+        //debug(ss);
 
-        System.out.println(ProblemToAbstraction.toJson(fa));
+        //System.out.println(ProblemToAbstraction.toJson(fa));
+
+        Specification specification = SequenceUtils.parseSpecificationFromLQL(fa.getLql());
+
+        List<Sheet> stimulusSheets = parse.sequences2SheetsJSONL(ss, specification, true);
+        stimulusSheets.forEach(s -> System.out.println("\n" + s.getBody()));
     }
 
     static void debug(List<Sequence> ss) {
@@ -141,7 +146,10 @@ public class ProblemToSheetParserTest {
 
         debug(ss);
 
-        System.out.println(ProblemToAbstraction.toJson(fa));
+        Specification specification = SequenceUtils.parseSpecificationFromLQL(fa.getLql());
+
+        List<Sheet> stimulusSheets = parse.sequences2SheetsJSONL(ss, specification, true);
+        stimulusSheets.forEach(s -> System.out.println("\n" + s.getBody()));
     }
 
     // this is faulty, so not our fault
@@ -245,6 +253,8 @@ public class ProblemToSheetParserTest {
 
         // FIXME store FA somewhere
 
+        System.out.println(problem.getPrompt());
+
         debug(ss);
 
         System.out.println(ProblemToAbstraction.toJson(fa));
@@ -288,6 +298,23 @@ public class ProblemToSheetParserTest {
 
         // another one is HumanEval_87_get_row
         List<Sequence> ss = parse.parse(problemsMap.get("HumanEval_107_even_odd_palindrome"));
+
+        debug(ss);
+    }
+
+    /**
+     * MultiPLE uses javatuples. Special handling required.
+     *
+     * @throws IOException
+     */
+    @Test
+    public void testParseProblem_javatuples_Pair_mbpp_120_max_product_tuple() throws IOException {
+        MultiPLE multiple = new MultiPLE();
+        Container container = multiple.createContainer();
+        ProblemToSheetParser parse = new ProblemToSheetParser(container);
+        Map<String, Problem> problemsMap = MultiPLE.toMap(multiple.getProblems("/problems/mbpp-java-reworded.json"));
+
+        List<Sequence> ss = parse.parse(problemsMap.get("mbpp_120_max_product_tuple"));
 
         debug(ss);
     }

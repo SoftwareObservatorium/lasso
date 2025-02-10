@@ -19,4 +19,19 @@ public class RunnerTest {
 
         System.out.println(executionResult.getDurationNanos());
     }
+
+    @Test
+    public void test_thread() throws Throwable {
+        Runner.CALL_TIMEOUT_MILLIS = 1 * 1000l;
+        Runner runner = new Runner();
+
+        ExecutionResult<Integer> executionResult = runner.run(() -> {
+            Thread.sleep(10 * 1000l);
+            return 1;
+        });
+
+        assertEquals(10, executionResult.getValue());
+
+        System.out.println(executionResult.getDurationNanos());
+    }
 }

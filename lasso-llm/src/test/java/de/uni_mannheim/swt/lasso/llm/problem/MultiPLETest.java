@@ -22,7 +22,7 @@ package de.uni_mannheim.swt.lasso.llm.problem;
 import de.uni_mannheim.swt.lasso.arena.classloader.Container;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.List;

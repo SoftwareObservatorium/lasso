@@ -19,19 +19,21 @@
  */
 package de.uni_mannheim.swt.lasso.engine.action.utils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import de.uni_mannheim.swt.lasso.benchmark.*;
 import de.uni_mannheim.swt.lasso.benchmark.Sequence;
+import de.uni_mannheim.swt.lasso.core.dto.srm.Sheet;
 import de.uni_mannheim.swt.lasso.core.model.*;
 import de.uni_mannheim.swt.lasso.core.model.System;
 import de.uni_mannheim.swt.lasso.engine.LSLExecutionContext;
 import de.uni_mannheim.swt.lasso.engine.LassoUtils;
-import de.uni_mannheim.swt.lasso.engine.action.arena.Sheet2XSLX;
 import de.uni_mannheim.swt.lasso.lql.LQLLexer;
 import de.uni_mannheim.swt.lasso.lql.LQLParser;
 import de.uni_mannheim.swt.lasso.lql.listener.InterfaceListener;
 import de.uni_mannheim.swt.lasso.lql.parser.LQLParseResult;
 import de.uni_mannheim.swt.lasso.lsl.spec.SheetSpec;
+import de.uni_mannheim.swt.lasso.ssn.SheetResolver;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
@@ -335,8 +337,164 @@ public class SequenceUtils {
         return sequences;
     }
 
-    public static void toXlsx(Map<String, Object> sheets, Action action, Systems systems) {
-        Sheet2XSLX sheet2XSLX = new Sheet2XSLX();
+    public static List<Sheet> toSheetsJSONL(List sheets, String interfaceSpecification) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        List<Sheet> stimulusSheets = new LinkedList<>();
+
+        Map<String, Sheet> seen = new HashMap<>();
+        for (Object testObj : sheets) {
+            if(testObj instanceof Sheet) {
+                stimulusSheets.add((Sheet) testObj);
+                continue;
+            }
+
+            SheetSpec spec = (SheetSpec) testObj;
+            String signature = spec.getName();
+
+            Sheet stimulusSheet;
+            if(seen.containsKey(signature)) {
+                // parameterized sheet, so sheet already exists
+                stimulusSheet = seen.get(signature);
+            } else {
+                LOG.info("Writing sheet '{}' with input parameters '{}'", signature, spec.getInputParameters());
+
+                List<Map<String, Object>> jsonRows = new ArrayList<>();
+
+                List<Object[]> rows = spec.getRows();
+
+                for(int r = 0; r < rows.size(); r++) {
+                    Map<String, Object> rowData = new LinkedHashMap<>();
+
+                    Object[] row = rows.get(r);
+
+                    for(int c = 0; c < row.length; c++) {
+                        Object cellValue = row[c];
+                        String cellId = SheetResolver.toColumnLabel(c) + SheetResolver.toRowLabel(r);
+                        rowData.put(cellId, cellValue);
+                    }
+
+                    jsonRows.add(rowData);
+                }
+
+                StringBuilder jsonl = new StringBuilder();
+                for (Map<String, Object> row : jsonRows) {
+                    Map<String, Map<String, Object>> m = new LinkedHashMap<>();
+                    m.put("cells", row);
+                    String json = objectMapper.writeValueAsString(m);
+
+                    jsonl.append(json);
+                    jsonl.append("\n");
+                }
+
+                String body = jsonl.toString();
+
+                stimulusSheet = new Sheet(signature, body, interfaceSpecification);
+                stimulusSheets.add(stimulusSheet);
+                // add to seen
+                seen.put(signature, stimulusSheet);
+            }
+
+            // parameters defined
+            Set<String> inputParameterKeys = spec.getParameters();
+            if(CollectionUtils.isNotEmpty(inputParameterKeys)) {
+                List<String> paramValues = new ArrayList<>(inputParameterKeys.size());
+                for(String inputKey : inputParameterKeys) {
+                    Object value = spec.getInputParameters().get(inputKey);
+
+                    String json = objectMapper.writeValueAsString(value);
+                    paramValues.add(json);
+                }
+
+                if(CollectionUtils.isEmpty(stimulusSheet.getInvocations())) {
+                    stimulusSheet.setInvocations(new LinkedList<>());
+                }
+
+                stimulusSheet.getInvocations().add(String.join(",", paramValues));
+            }
+        }
+
+        return stimulusSheets;
+    }
+
+    public static List<Sheet> sequences2SheetsJSONL(List<Sequence> sequences, Specification specification, boolean initialize, String testPrefix) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        List<Sheet> stimulusSheets = new LinkedList<>();
+
+        for (Sequence sequence : sequences) {
+            String signature = testPrefix + "_" + sequence.getId() + "()";
+
+            List<Map<String, Object>> jsonRows = new ArrayList<>();
+
+            if(initialize) {
+                Map<String, Object> rowData = new LinkedHashMap<>();
+
+                // operation
+                rowData.put(SheetResolver.toColumnLabel(1) + SheetResolver.toRowLabel(0), "create");
+                // service
+                rowData.put(SheetResolver.toColumnLabel(2) + SheetResolver.toRowLabel(0), specification.getInterfaceSpecification().getName());
+//                for(int p = 0; p < row.getInputs().size(); p++) {
+//                    Value pValue = row.getInputs().get(p);
+//                    // FIXME as code
+//                    String value = objectMapper.writeValueAsString(pValue.getValue());
+//                    rowData.put(toColumnLabel(p + 2) + toRowLabel(r), value);
+//                }
+
+                jsonRows.add(rowData);
+            }
+
+            List<Statement> rows = sequence.getStatements();
+
+            for(int r = 0; r < rows.size(); r++) {
+                int currentRow = initialize ? r + 1 : r;
+
+                Map<String, Object> rowData = new LinkedHashMap<>();
+
+                Statement row = rows.get(r);
+
+                // output
+                //String outValue = objectMapper.writeValueAsString(row.getExpectedOutputs().get(0));
+                //rowData.put(toColumnLabel(0) + toRowLabel(r), row.getOperation());
+                // operation
+                rowData.put(SheetResolver.toColumnLabel(1) + SheetResolver.toRowLabel(currentRow), row.getOperation());
+                // service
+                rowData.put(SheetResolver.toColumnLabel(2) + SheetResolver.toRowLabel(currentRow), "A1");
+                for(int p = 0; p < row.getInputs().size(); p++) {
+                    Value pValue = row.getInputs().get(p);
+                    // FIXME as code
+                    String value = objectMapper.writeValueAsString(pValue.getValue());
+                    rowData.put(SheetResolver.toColumnLabel(p + 3) + SheetResolver.toRowLabel(currentRow), value);
+                }
+
+                jsonRows.add(rowData);
+            }
+
+            StringBuilder jsonl = new StringBuilder();
+            for (Map<String, Object> row : jsonRows) {
+                Map<String, Map<String, Object>> m = new LinkedHashMap<>();
+                m.put("cells", row);
+                String json = objectMapper.writeValueAsString(m);
+
+                jsonl.append(json);
+                jsonl.append("\n");
+            }
+
+            String body = jsonl.toString();
+
+            Sheet stimulusSheet = new Sheet(signature, body, specification.getInterfaceSpecification().getLqlQuery());
+            stimulusSheets.add(stimulusSheet);
+        }
+
+        return stimulusSheets;
+    }
+
+    // FIXME deprecated
+    @Deprecated
+    public static List<Sheet> toSheetsJSONL(Map<String, Object> sheets, String interfaceSpecification) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        List<Sheet> stimulusSheets = new LinkedList<>();
 
         for (String name : sheets.keySet()) {
             Object sheet = sheets.get(name);
@@ -353,31 +511,46 @@ public class SequenceUtils {
 
                 LOG.info("Writing sheet '{}' with input parameters '{}'", name, spec.getInputParameters());
 
-                de.uni_mannheim.swt.lasso.core.model.Sequence sequence = new de.uni_mannheim.swt.lasso.core.model.Sequence();
-                sequence.setName(name);
-                sequence.setId(action.getName() + "_" + name);
-                sequence.setActionId(action.getName());
-                systems.addSequence(sequence);
+                List<Map<String, Object>> jsonRows = new ArrayList<>();
 
-                try {
-                    XSSFSheet xssfSheet = sheet2XSLX.createSheet(spec, name);
+                List<Object[]> rows = spec.getRows();
 
-                    for (System executable : systems.getExecutables()) {
-                        try {
-                            LOG.info("Writing sheet '{}' for '{}'", name, executable.getId());
+                for(int r = 0; r < rows.size(); r++) {
+                    Map<String, Object> rowData = new LinkedHashMap<>();
 
-                            sheet2XSLX.write(executable, xssfSheet, name);
-                        } catch (Throwable e) {
-                            LOG.warn("Failed to write sheet for '{}'", executable.getId());
-                            LOG.warn("stack trace", e);
-                        }
+                    Object[] row = rows.get(r);
+
+                    for(int c = 0; c < row.length; c++) {
+                        Object cellValue = row[c];
+                        String cellId = SheetResolver.toColumnLabel(c) + SheetResolver.toRowLabel(r);
+                        rowData.put(cellId, cellValue);
                     }
-                } catch (Throwable e) {
-                    LOG.warn("Failed to write sheet '{}'", name);
-                    LOG.warn("stack trace", e);
+
+                    jsonRows.add(rowData);
                 }
+
+                StringBuilder jsonl = new StringBuilder();
+                for (Map<String, Object> row : jsonRows) {
+                    Map<String, Map<String, Object>> m = new LinkedHashMap<>();
+                    m.put("cells", row);
+                    String json = objectMapper.writeValueAsString(m);
+
+                    jsonl.append(json);
+                    jsonl.append("\n");
+                }
+
+                String body = jsonl.toString();
+
+                String signature = name;
+                Map<String, ?> inputParameters = spec.getInputParameters();
+                // FIXME parameterized sheets
+
+                Sheet stimulusSheet = new Sheet(signature, body, interfaceSpecification);
+                stimulusSheets.add(stimulusSheet);
             }
         }
+
+        return stimulusSheets;
     }
 
     /**

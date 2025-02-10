@@ -1,12 +1,13 @@
 package de.uni_mannheim.swt.lasso.core.dto.srm;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  *
  * @author Marcus Kessel
  */
-public class Sheet {
+public class Sheet implements Serializable {
 
     private String signature;
     private String body;
@@ -19,6 +20,10 @@ public class Sheet {
         this.signature = signature;
         this.body = body;
         this.interfaceSpecification = interfaceSpecification;
+    }
+
+    public boolean isSSN() {
+        return this.getClass().equals(Sheet.class);
     }
 
     public String getSignature() {

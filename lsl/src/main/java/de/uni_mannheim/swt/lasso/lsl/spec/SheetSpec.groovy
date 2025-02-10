@@ -60,4 +60,12 @@ class SheetSpec extends LassoSpec {
     void apply() {
         callRehydrate(closure, this, null, null)
     }
+
+    String getName() {
+        return inputParameters["name"]
+    }
+
+    Set<String> getParameters() {
+        return inputParameters.keySet().findAll(k -> !k.equals("name"))
+    }
 }

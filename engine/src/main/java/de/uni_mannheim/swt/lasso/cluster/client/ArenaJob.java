@@ -19,6 +19,7 @@
  */
 package de.uni_mannheim.swt.lasso.cluster.client;
 
+import de.uni_mannheim.swt.lasso.core.dto.srm.Sheet;
 import de.uni_mannheim.swt.lasso.core.model.Scope;
 import de.uni_mannheim.swt.lasso.core.model.System;
 
@@ -33,6 +34,13 @@ import java.util.Map;
  */
 public class ArenaJob {
 
+    // Stimulus Matrix
+    private List<Sheet> stimulusSheets;
+    private List<System> implementations;
+    private String specification;
+
+    private String adapterStrategy = "DefaultAdaptationStrategy";
+
     private String id;
     private String executionId;
     private String workerNode;
@@ -43,12 +51,10 @@ public class ArenaJob {
     private JobStatus status = JobStatus.CREATED;
 
     private Date lastModified = new Date();
-    private List<System> implementations;
+
     private Map<String,String> sheets;
 
     private String cut;
-
-    private String specification;
 
     private Map<String, Object> configuration = new LinkedHashMap<>();
 
@@ -221,5 +227,21 @@ public class ArenaJob {
 
     public void setScope(Scope scope) {
         this.scope = scope;
+    }
+
+    public List<Sheet> getStimulusSheets() {
+        return stimulusSheets;
+    }
+
+    public void setStimulusSheets(List<Sheet> stimulusSheets) {
+        this.stimulusSheets = stimulusSheets;
+    }
+
+    public String getAdapterStrategy() {
+        return adapterStrategy;
+    }
+
+    public void setAdapterStrategy(String adapterStrategy) {
+        this.adapterStrategy = adapterStrategy;
     }
 }

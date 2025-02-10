@@ -1,8 +1,8 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocation;
 
 
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.eval.BshEval;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.eval.EvalException;
+import de.uni_mannheim.swt.lasso.ssn.eval.BshEval;
+import de.uni_mannheim.swt.lasso.ssn.eval.EvalException;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;

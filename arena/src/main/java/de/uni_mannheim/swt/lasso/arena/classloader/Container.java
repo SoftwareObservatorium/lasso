@@ -20,9 +20,7 @@
 package de.uni_mannheim.swt.lasso.arena.classloader;
 
 import de.uni_mannheim.swt.lasso.arena.ClassUnderTest;
-import de.uni_mannheim.swt.lasso.arena.event.ArenaExecutionListener;
 
-import de.uni_mannheim.swt.lasso.arena.event.DefaultExecutionListener;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -151,11 +149,9 @@ public abstract class Container extends ClassRealm {
             }
         }
 
-        // FIXME first try to load from here
+        // first try to load from this container
         try {
             byte[] bytes = loadClassBytes(name);
-
-            LOG.debug("result " + bytes);
 
             if(bytes != null) {
                 Class<?> clazz = defineClass(name, bytes, 0, bytes.length);
@@ -186,6 +182,7 @@ public abstract class Container extends ClassRealm {
 
         }
 
+        // resolve in hierarchy
         Class<?> clazz = super.loadClass(name, resolve);
 
         classes.put(name, clazz);
@@ -344,14 +341,6 @@ public abstract class Container extends ClassRealm {
 
     public Map<String, Class<?>> getClasses() {
         return Collections.unmodifiableMap(classes);
-    }
-
-    /**
-     *
-     * @return ArenaExecutionListener
-     */
-    public ArenaExecutionListener getArenaExecutionListener() {
-        return new DefaultExecutionListener(this);
     }
 
     public ClassUnderTest getClassUnderTest() {

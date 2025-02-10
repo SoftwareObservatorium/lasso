@@ -26,7 +26,6 @@ import de.uni_mannheim.swt.lasso.core.model.Behaviour;
 import de.uni_mannheim.swt.lasso.core.model.System;
 import de.uni_mannheim.swt.lasso.core.srm.SRM;
 import de.uni_mannheim.swt.lasso.engine.LassoConfiguration;
-import de.uni_mannheim.swt.lasso.engine.action.arena.FunctionalSimilarityReport;
 import de.uni_mannheim.swt.lasso.engine.data.ReportKey;
 import de.uni_mannheim.swt.lasso.srm.operators.FunctionalCorrectness;
 import de.uni_mannheim.swt.lasso.srm.operators.FunctionalSimilarity;
@@ -111,10 +110,10 @@ public class DefaultSRM implements SRM {
 
             Double score = similarityMap.get(fullId);
 
-            FunctionalSimilarityReport similarityReport = new FunctionalSimilarityReport();
-            similarityReport.setScore(score);
-
-            clusterEngine.getReportRepository().put((String) map.get("executionId"), reportKey, similarityReport);
+//            FunctionalSimilarityReport similarityReport = new FunctionalSimilarityReport();
+//            similarityReport.setScore(score);
+//
+//            clusterEngine.getReportRepository().put((String) map.get("executionId"), reportKey, similarityReport);
 
             if(!bestMatches.containsKey(systemId)) {
                 bestMatches.put(systemId, score);
@@ -133,10 +132,10 @@ public class DefaultSRM implements SRM {
 
             Double score = bestMatches.get(systemId);
 
-            FunctionalSimilarityReport similarityReport = new FunctionalSimilarityReport();
-            similarityReport.setScore(score);
-
-            clusterEngine.getReportRepository().put((String) map.get("executionId"), reportKey, similarityReport);
+//            FunctionalSimilarityReport similarityReport = new FunctionalSimilarityReport();
+//            similarityReport.setScore(score);
+//
+//            clusterEngine.getReportRepository().put((String) map.get("executionId"), reportKey, similarityReport);
         }
 
         return similarityMap.entrySet().stream().filter(e -> e.getValue() >= minimum).map(Map.Entry::getKey).collect(Collectors.toList());

@@ -23,9 +23,6 @@ import de.uni_mannheim.swt.lasso.engine.dag.model.LEdge;
 import de.uni_mannheim.swt.lasso.engine.dag.model.LGraph;
 import de.uni_mannheim.swt.lasso.engine.dag.model.LNode;
 import de.uni_mannheim.swt.lasso.engine.workspace.Workspace;
-import net.sourceforge.plantuml.FileFormat;
-import net.sourceforge.plantuml.FileFormatOption;
-import net.sourceforge.plantuml.SourceStringReader;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -45,47 +42,47 @@ public class DAG {
         return executionPlan;
     }
 
-    public static void writeGraph(ExecutionPlan actionsDag, Workspace workspace) {
-        writeGraph(actionsDag, workspace.createFile("dag.png"));
-    }
-
-    public static void writeGraph(ExecutionPlan actionsDag, File dagPng ) {
-        try(FileOutputStream out = new FileOutputStream(dagPng)) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("@startuml\n");
-
-            actionsDag.edgeSet().forEach(e -> {
-                ActionNode source = actionsDag.getEdgeSource(e);
-                ActionNode target = actionsDag.getEdgeTarget(e);
-
-                if(actionsDag.getAncestors(source).isEmpty()) {
-                    sb.append("[*] --> " + source.getName() + "\n");
-                }
-
-                if(source != null && target != null) {
-                    sb.append(source.getName() + " -> " + target.getName()
-                            + " : " + target.getActionSpec().getIncludeAbstractions() + " >\n");
-                }
-
-                if(actionsDag.getDescendants(target).isEmpty()) {
-                    sb.append(target.getName() + " --> [*]" + "\n");
-                }
-            });
-
-            actionsDag.vertexSet().forEach(v -> {
-                sb.append(v.getName() + " : " + v.getType() + "\n");
-            });
-
-            sb.append("@enduml\n");
-
-            System.out.println(sb.toString());
-
-            SourceStringReader reader = new SourceStringReader(sb.toString());
-            reader.generateImage(out, new FileFormatOption(FileFormat.PNG));
-        } catch(Throwable e) {
-            e.printStackTrace();
-        }
-    }
+//    public static void writeGraph(ExecutionPlan actionsDag, Workspace workspace) {
+//        writeGraph(actionsDag, workspace.createFile("dag.png"));
+//    }
+//
+//    public static void writeGraph(ExecutionPlan actionsDag, File dagPng ) {
+//        try(FileOutputStream out = new FileOutputStream(dagPng)) {
+//            StringBuilder sb = new StringBuilder();
+//            sb.append("@startuml\n");
+//
+//            actionsDag.edgeSet().forEach(e -> {
+//                ActionNode source = actionsDag.getEdgeSource(e);
+//                ActionNode target = actionsDag.getEdgeTarget(e);
+//
+//                if(actionsDag.getAncestors(source).isEmpty()) {
+//                    sb.append("[*] --> " + source.getName() + "\n");
+//                }
+//
+//                if(source != null && target != null) {
+//                    sb.append(source.getName() + " -> " + target.getName()
+//                            + " : " + target.getActionSpec().getIncludeAbstractions() + " >\n");
+//                }
+//
+//                if(actionsDag.getDescendants(target).isEmpty()) {
+//                    sb.append(target.getName() + " --> [*]" + "\n");
+//                }
+//            });
+//
+//            actionsDag.vertexSet().forEach(v -> {
+//                sb.append(v.getName() + " : " + v.getType() + "\n");
+//            });
+//
+//            sb.append("@enduml\n");
+//
+//            System.out.println(sb.toString());
+//
+//            SourceStringReader reader = new SourceStringReader(sb.toString());
+//            reader.generateImage(out, new FileFormatOption(FileFormat.PNG));
+//        } catch(Throwable e) {
+//            e.printStackTrace();
+//        }
+//    }
 
     public static LGraph writeGraphToModel(ExecutionPlan actionsDag) {
         List<LEdge> edges = actionsDag.edgeSet().stream().map(e -> {

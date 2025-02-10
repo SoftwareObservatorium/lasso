@@ -1,7 +1,6 @@
 package de.uni_mannheim.swt.lasso.srm.olap;
 
 import de.uni_mannheim.swt.lasso.srm.JDBC;
-import de.uni_mannheim.swt.lasso.srm.SRHRepository;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 
@@ -9,6 +8,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 /**
@@ -17,26 +17,74 @@ import java.sql.SQLException;
  */
 public class Warehouse {
 
+    public static String sqlAllTypes = "SELECT CONCAT(SHEETID,'@',X, ',', Y) as statement, CONCAT(SYSTEMID,'_',ADAPTERID, '_', VARIANTID) as SYSTEMID, VALUE FROM srm.cellvalue where executionid = ?";
+
     public static void writeSrm(String executionId, String type, File path) throws SQLException {
         JDBC jdbc = new JDBC();
         ArrowOlap olap = new ArrowOlap();
 
-        String sql = "SELECT CONCAT(REGEXP_REPLACE(SHEETID, '_[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}',''),'@',X, ',', Y) as statement, CONCAT(SYSTEMID,'_',ADAPTERID) as SYSTEMID, VALUE FROM srm.cellvalue where executionid = ? and arenaid = ? and type = ? order by sheetid";
-        Object[] args = {executionId, SRHRepository.ARENA_DEFAULT, type};
+        String sql = sqlAllTypes + " and type = ? order by sheetid";
 
-        olap.writeParquet(jdbc.getJdbcTemplate(), sql, path.getAbsolutePath(), args);
+        try (PreparedStatement preparedStatement = jdbc.createPreparedStatement(sql)) {
+            preparedStatement.setString(1, executionId);
+            preparedStatement.setString(2, type);
+
+            olap.writeParquet(preparedStatement, path.getAbsolutePath());
+        }
     }
 
     public static Resource writeSrmResource(String executionId, String type) throws SQLException, IOException {
         JDBC jdbc = new JDBC();
         ArrowOlap olap = new ArrowOlap();
 
-        String sql = "SELECT CONCAT(REGEXP_REPLACE(SHEETID, '_[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}',''),'@',X, ',', Y) as statement, CONCAT(SYSTEMID,'_',ADAPTERID) as SYSTEMID, VALUE FROM srm.cellvalue where executionid = ? and arenaid = ? and type = ? order by sheetid";
-        Object[] args = {executionId, SRHRepository.ARENA_DEFAULT, type};
+        Path tmpFile = Files.createTempFile(executionId, ".parquet");
+
+        String sql = sqlAllTypes + " and type = ? order by sheetid";
+
+        try (PreparedStatement preparedStatement = jdbc.createPreparedStatement(sql)) {
+            preparedStatement.setString(1, executionId);
+            preparedStatement.setString(2, type);
+
+            olap.writeParquet(preparedStatement, tmpFile.toFile().getAbsolutePath());
+        }
+
+        Resource resource = new UrlResource(tmpFile.toUri());
+
+        return resource;
+    }
+
+    public static Resource writeSrmResource(String executionId) throws SQLException, IOException {
+        JDBC jdbc = new JDBC();
+        ArrowOlap olap = new ArrowOlap();
+
+        String sql = sqlAllTypes + " order by sheetid";
 
         Path tmpFile = Files.createTempFile(executionId, ".parquet");
 
-        olap.writeParquet(jdbc.getJdbcTemplate(), sql, tmpFile.toFile().getAbsolutePath(), args);
+        try (PreparedStatement preparedStatement = jdbc.createPreparedStatement(sql)) {
+            preparedStatement.setString(1, executionId);
+
+            olap.writeParquet(preparedStatement, tmpFile.toFile().getAbsolutePath());
+        }
+
+        Resource resource = new UrlResource(tmpFile.toUri());
+
+        return resource;
+    }
+
+    public static Resource writeRawSrmResource(String executionId) throws SQLException, IOException {
+        JDBC jdbc = new JDBC();
+        ArrowOlap olap = new ArrowOlap();
+
+        String sql = "SELECT * FROM srm.cellvalue where executionid = ?";
+
+        Path tmpFile = Files.createTempFile(executionId, ".parquet");
+
+        try (PreparedStatement preparedStatement = jdbc.createPreparedStatement(sql)) {
+            preparedStatement.setString(1, executionId);
+
+            olap.sqlToParquet(preparedStatement, tmpFile.toFile().getAbsolutePath());
+        }
 
         Resource resource = new UrlResource(tmpFile.toUri());
 

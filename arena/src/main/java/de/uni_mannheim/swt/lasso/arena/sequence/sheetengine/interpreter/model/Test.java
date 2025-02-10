@@ -1,6 +1,7 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model;
 
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.ParsedSheet;
+import de.uni_mannheim.swt.lasso.arena.search.InterfaceSpecification;
+import de.uni_mannheim.swt.lasso.ssn.ParsedSheet;
 
 /**
  * A test in an SRM
@@ -9,12 +10,22 @@ import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.ParsedSheet;
  */
 public class Test {
 
-    private String name;
-    private ParsedSheet parsedSheet;
+    private final String name;
+    private final ParsedSheet parsedSheet;
 
-    public Test(String name, ParsedSheet parsedSheet) {
+    private final SheetSignature signature;
+    private InterfaceSpecification interfaceSpecification;
+
+    public Test(String name, ParsedSheet parsedSheet, SheetSignature signature) {
         this.name = name;
         this.parsedSheet = parsedSheet;
+        this.signature = signature;
+    }
+
+    public Test(String name, Test test) {
+        this(name, test.getParsedSheet(), test.getSignature());
+
+        this.interfaceSpecification = test.getInterfaceSpecification();
     }
 
     public String getName() {
@@ -23,5 +34,17 @@ public class Test {
 
     public ParsedSheet getParsedSheet() {
         return parsedSheet;
+    }
+
+    public SheetSignature getSignature() {
+        return signature;
+    }
+
+    public InterfaceSpecification getInterfaceSpecification() {
+        return interfaceSpecification;
+    }
+
+    public void setInterfaceSpecification(InterfaceSpecification interfaceSpecification) {
+        this.interfaceSpecification = interfaceSpecification;
     }
 }

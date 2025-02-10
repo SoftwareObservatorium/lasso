@@ -22,11 +22,13 @@ package de.uni_mannheim.swt.lasso.lsl.spec
 import de.uni_mannheim.swt.lasso.core.model.Abstraction
 import de.uni_mannheim.swt.lasso.core.model.ActionConfiguration
 import de.uni_mannheim.swt.lasso.core.model.Behaviour
+import de.uni_mannheim.swt.lasso.core.model.CodeUnit
 import de.uni_mannheim.swt.lasso.core.model.Specification
 import de.uni_mannheim.swt.lasso.core.model.System
 import de.uni_mannheim.swt.lasso.core.model.Sequence
 import de.uni_mannheim.swt.lasso.core.srm.SRM
 import de.uni_mannheim.swt.lasso.lsl.srmpath.SRMPathSpec
+import org.apache.commons.lang3.StringUtils
 import tech.tablesaw.api.Table
 
 /**
@@ -131,6 +133,12 @@ class ActionSpec extends LassoSpec {
         abstractionContainerSpec.abstractions
     }
     /**
+     * @return Abstractions registered for this action
+     */
+    def getStimulusMatrices() {
+        abstractionContainerSpec.abstractions
+    }
+    /**
      * @return Actions that this action depends on
      */
     def getActions() {
@@ -150,6 +158,12 @@ class ActionSpec extends LassoSpec {
      */
     def propertyMissing(String name, value) {
         unknownSettings.put(name, value)
+    }
+
+    def methodMissing(String name, args) {
+        println("Missing method " + name + " / " + args)
+
+        unknownSettings.put(name, args)
     }
 
     /**
@@ -226,6 +240,15 @@ class ActionSpec extends LassoSpec {
     }
 
     /**
+     * Synonym to includeAbstractions(..).
+     *
+     * @param abstractions
+     */
+    void include(String abstractions) {
+        includeAbstractions(abstractions)
+    }
+
+    /**
      * DSL command
      *
      * <code>includeTests 'XXX'</code>
@@ -255,7 +278,7 @@ class ActionSpec extends LassoSpec {
      * @param name
      * @param closure
      */
-    void abstraction(String name, Closure<AbstractionSpec> closure) {
+    AbstractionSpec abstraction(String name, Closure<AbstractionSpec> closure) {
         // apply closure to action
         Map<String, ?> aMap = [:]
         aMap.put("name", name)
@@ -266,6 +289,33 @@ class ActionSpec extends LassoSpec {
         abstractionSpecs << abstractionSpec
         // set to scope
         //abstractionContainerSpec.abstractions.put(abstractionSpec.name, abstractionSpec)
+
+        return abstractionSpec
+    }
+
+    System implementation(String id, String className) {
+        // FIXME use some placeholder artifact
+        String EXAMPLES_LASSO_EXAMPLES_1_0_0_SNAPSHOT = "commons-codec:commons-codec:1.15";
+
+        return implementation(id, className, EXAMPLES_LASSO_EXAMPLES_1_0_0_SNAPSHOT)
+    }
+
+    System implementation(String id, String className, String mavenCoordinate) {
+        String[] uriParts = StringUtils.split(mavenCoordinate, ":");
+
+        CodeUnit codeUnit = new CodeUnit()
+        codeUnit.setUnitType(CodeUnit.CodeUnitType.CLASS)
+        codeUnit.setName(StringUtils.substringAfterLast(className, "."))
+        codeUnit.setPackagename(StringUtils.substringBeforeLast(className, "."))
+        codeUnit.setId(id)
+        codeUnit.setGroupId(uriParts[0])
+        codeUnit.setArtifactId(uriParts[1])
+        codeUnit.setVersion(uriParts[2])
+        codeUnit.setMetaData(new HashMap<String, Object>())
+        codeUnit.setMeasures(new HashMap<String, Double>())
+        System system = new System(codeUnit)
+
+        return system
     }
 
      /**
@@ -278,7 +328,7 @@ class ActionSpec extends LassoSpec {
      * @param lql
      * @param closure
      */
-    void abstraction(String name, String lql, Closure<AbstractionSpec> closure) {
+    AbstractionSpec abstraction(String name, String lql, Closure<AbstractionSpec> closure) {
         // apply closure to action
         Map<String, ?> aMap = [:]
         aMap.put("name", name)
@@ -292,6 +342,8 @@ class ActionSpec extends LassoSpec {
         abstractionSpecs << abstractionSpec
         // set to scope
         //abstractionContainerSpec.abstractions.put(abstractionSpec.name, abstractionSpec)
+
+        return abstractionSpec
     }
 
     /**
@@ -304,7 +356,7 @@ class ActionSpec extends LassoSpec {
      * @param lql
      * @param closure
      */
-    void abstraction(String name, List<String> implementationIds, String lql, Closure<AbstractionSpec> closure) {
+    AbstractionSpec abstraction(String name, List<String> implementationIds, String lql, Closure<AbstractionSpec> closure) {
         // apply closure to action
         Map<String, ?> aMap = [:]
         aMap.put("name", name)
@@ -321,6 +373,8 @@ class ActionSpec extends LassoSpec {
         abstractionSpecs << abstractionSpec
         // set to scope
         //abstractionContainerSpec.abstractions.put(abstractionSpec.name, abstractionSpec)
+
+        return abstractionSpec
     }
 
     /**
@@ -331,8 +385,8 @@ class ActionSpec extends LassoSpec {
      * @param system
      * @param closure
      */
-    void abstraction(System system, Closure<AbstractionSpec> closure) {
-        abstraction(system.id, closure)
+    AbstractionSpec abstraction(System system, Closure<AbstractionSpec> closure) {
+        return abstraction(system.id, closure)
     }
 
     /**
@@ -352,6 +406,7 @@ class ActionSpec extends LassoSpec {
 
         Abstraction merged = new Abstraction()
         merged.setName(name)
+
         List all = []
         specs.each {
             if(it.implementations) {
@@ -371,15 +426,64 @@ class ActionSpec extends LassoSpec {
     }
 
     /**
+     * DSL command: Create a stimulus matrix
+     *
+     * <code>stimulusMatrix([System], [SheetSpec], name, interfaceSpecification) {closure}</code>
+     *
+     * @param name
+     * @param lql
+     * @param implementations
+     * @param tests
+     * @return
+     */
+    AbstractionSpec stimulusMatrix(String name, String lql, List<System> implementations, List tests) {
+        AbstractionSpec abSpec = abstraction(implementations, name, lql)
+        abSpec.tests = tests
+
+        return abSpec
+    }
+
+    /**
+     * DSL command: Create a stimulus matrix
+     *
+     * <code>stimulusMatrix([System], [SheetSpec], name, interfaceSpecification) {closure}</code>
+     *
+     * @param name
+     * @param lql
+     * @param implementations
+     * @param tests
+     * @param dependencies
+     * @return
+     */
+    AbstractionSpec stimulusMatrix(String name, String lql, List<System> implementations, List tests, List dependencies) {
+        AbstractionSpec abSpec = stimulusMatrix(name, lql, implementations, tests)
+        abSpec.dependencies = dependencies
+
+        return abSpec
+    }
+
+    AbstractionSpec stimulusMatrix(String name, String lql, Closure<AbstractionSpec> closure) {
+        return abstraction(name, lql, closure)
+    }
+
+    AbstractionSpec stimulusMatrix(String name, String lql, Closure<AbstractionSpec> closure, List tests) {
+        AbstractionSpec abSpec = abstraction(name, lql, closure)
+        abSpec.tests = tests
+
+        return abSpec
+    }
+
+                                   /**
      * DSL command: Create an abstraction container from a list of System.
      *
-     * <code>abstraction([System],name) {closure}</code>
+     * <code>abstraction([System],name, interfaceSpecification) {closure}</code>
      *
      * @param implementations
      * @param name
+     * @param lql
      * @return
      */
-    AbstractionSpec abstraction(List<System> implementations, String name) {
+    AbstractionSpec abstraction(List<System> implementations, String name, String lql) {
         // apply closure to action
         Map<String, ?> aMap = [:]
         aMap.put("name", name)
@@ -388,6 +492,11 @@ class ActionSpec extends LassoSpec {
 
         Abstraction merged = new Abstraction()
         merged.setName(name)
+
+        if(lql) {
+            abstractionSpec.lql = lql
+        }
+
         List all = []
         if(implementations) {
             all.addAll(implementations)
@@ -498,6 +607,17 @@ class ActionSpec extends LassoSpec {
     }
 
     /**
+     * Action lifecycle method: analyze (same as whenAbstractionsReady)
+     *
+     * <code>analyze() {closure}</code>
+     *
+     * @param closure
+     */
+    void analyze(Closure closure) {
+        whenAbstractionsReadyClosure = closure
+    }
+
+    /**
      * Filter a list of systems.
      *
      * old syntax:
@@ -559,6 +679,10 @@ class ActionSpec extends LassoSpec {
             actionConfiguration.setDependsOnActions(dependsOn)
             actionConfiguration.setIncludeTestsPattern(includeTests)
         }
+    }
+
+    Object applyCustomCommand(Closure customClosure, Object model, args) {
+        callRehydrate(customClosure, model, this, args)
     }
 
     /**
@@ -725,6 +849,50 @@ class ActionSpec extends LassoSpec {
      * @return
      */
     def sheet(Map<String, ?> map) {
+        String sheetName = map.name
+
+        SheetSpec sheetSpec = sheetSpecs.find { it.inputParameters.name == sheetName}
+
+        SheetSpec copy = new SheetSpec(inputParameters: map)
+        copy.rows = new ArrayList<>(sheetSpec.rows)
+
+        sheetSpecs << copy
+
+        return copy
+    }
+
+    /**
+     * Create new sequence sheet
+     *
+     * @param map
+     * @param closure
+     * @return
+     */
+    def test(Map<String, ?> map, Closure closure) {
+        String sheetName = map.name
+
+        SheetSpec sheetSpec = new SheetSpec(inputParameters: map, closure: closure)
+        lasso.register(sheetSpec)
+
+        // apply
+        sheetSpec.apply()
+
+        sheetSpecs << sheetSpec
+
+        return sheetSpec
+    }
+
+    /**
+     * reuse existing sheet with different parameters
+     *
+     * <code>
+     *  'sheet2': sheet(name: 'pushPop', p1:'Stack', p2:5)
+     * </code>
+     *
+     * @param map
+     * @return
+     */
+    def test(Map<String, ?> map) {
         String sheetName = map.name
 
         SheetSpec sheetSpec = sheetSpecs.find { it.inputParameters.name == sheetName}

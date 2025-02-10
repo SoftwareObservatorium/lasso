@@ -48,6 +48,10 @@ public class ProjectHelper {
             .getLogger(ProjectHelper.class);
 
     public static void copyTestsFromRemote(LSLExecutionContext context, ActionConfiguration actionConfiguration, System executable, System existingExecutable) throws IOException {
+        if(existingExecutable.getProject() == null) {
+            return;
+        }
+
         LassoFileSystem fileSystem = context.getLassoFileSystem();
 
         File srcTestPath = existingExecutable.getProject().getSrcTest();
@@ -77,6 +81,10 @@ public class ProjectHelper {
     }
 
     public static void copyTestsFromRemoteWithPostfix(LSLExecutionContext context, ActionConfiguration actionConfiguration, System executable, System existingExecutable) throws IOException {
+        if(existingExecutable.getProject() == null) {
+            return;
+        }
+
         LassoFileSystem fileSystem = context.getLassoFileSystem();
 
         File srcTestPath = existingExecutable.getProject().getSrcTest();

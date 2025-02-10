@@ -205,12 +205,12 @@ public class LassoEngine {
      */
     @Deprecated
     protected void runExecutionPlan_deprecated(ExecutionPlan actionsDag, LSLExecutionContext lslExecutionContext) throws IOException {
-        // XXX DEBUG create image for debugging purposes
-        try {
-            DAG.writeGraph(actionsDag, lslExecutionContext.getWorkspace());
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
+//        // XXX DEBUG create image for debugging purposes
+//        try {
+//            DAG.writeGraph(actionsDag, lslExecutionContext.getWorkspace());
+//        } catch (Throwable e) {
+//            e.printStackTrace();
+//        }
 
         //
         Iterator<ActionNode> actionSpecIterator = actionsDag.iterator();

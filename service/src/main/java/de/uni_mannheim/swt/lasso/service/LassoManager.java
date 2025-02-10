@@ -19,6 +19,7 @@
  */
 package de.uni_mannheim.swt.lasso.service;
 
+import de.uni_mannheim.swt.lasso.benchmark.BenchmarkManager;
 import de.uni_mannheim.swt.lasso.cluster.ClusterEngine;
 import de.uni_mannheim.swt.lasso.cluster.rest.Auth;
 import de.uni_mannheim.swt.lasso.cluster.rest.LassoWorkerClient;
@@ -38,6 +39,7 @@ import de.uni_mannheim.swt.lasso.engine.workspace.WorkspaceManager;
 import de.uni_mannheim.swt.lasso.engine.workspace.WorkspaceNotFoundException;
 import de.uni_mannheim.swt.lasso.lsl.LSLDelegatingScript;
 import de.uni_mannheim.swt.lasso.lsl.LSLRunner;
+import de.uni_mannheim.swt.lasso.lsl.LassoContext;
 import de.uni_mannheim.swt.lasso.lsl.SimpleLogger;
 import de.uni_mannheim.swt.lasso.service.dto.UserInfo;
 import de.uni_mannheim.swt.lasso.service.notification.Notification;
@@ -196,6 +198,11 @@ public class LassoManager {
     public LGraph graph(LSLRequest lassoRequest, UserInfo userInfo) throws IOException {
         LSLRunner runner = new LSLRunner();
         LSLDelegatingScript script = runner.runScript(lassoRequest.getScript(), new SimpleLogger());
+        LassoContext lassoContext = script.getLasso();
+        // create LSL execution context so that script does not fail
+        LSLExecutionContext lslExecutionContext = new LSLExecutionContext();
+        lslExecutionContext.setBenchmarkManager(lassoConfiguration.getService(BenchmarkManager.class));
+        lassoContext.setExecutionContext(lslExecutionContext);
 
         ExecutionPlan executionPlan = LassoEngine.createActionExecutionPlan(script.getLasso());
 

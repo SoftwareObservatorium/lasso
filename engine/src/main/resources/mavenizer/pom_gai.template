@@ -29,6 +29,8 @@
 
 	<dependencies>
 
+	${codeDependencies}
+
 	</dependencies>
 
 	<build>

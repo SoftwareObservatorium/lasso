@@ -22,17 +22,11 @@ package de.uni_mannheim.swt.lasso.arena.classloader.graph;
 import de.uni_mannheim.swt.lasso.arena.classloader.Container;
 import de.uni_mannheim.swt.lasso.arena.classloader.Containers;
 
-import de.uni_mannheim.swt.lasso.arena.event.ArenaExecutionListener;
-
-import de.uni_mannheim.swt.lasso.arena.event.DefaultExecutionListener;
-import de.uni_mannheim.swt.lasso.arena.sequence.SequenceExecutionRecord;
-import de.uni_mannheim.swt.lasso.arena.sequence.SequenceExecutionRecords;
 import javassist.*;
 import org.apache.commons.collections4.Bag;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import randoop.sequence.ExecutableSequence;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.ByteArrayInputStream;
@@ -131,51 +125,51 @@ public class DCGContainer extends Container {
         }
     }
 
-    /**
-     * Default behavior is to start measurement before sequence execution and to end it after sequence execution.
-     *
-     * @return
-     */
-    @Override
-    public ArenaExecutionListener getArenaExecutionListener() {
-        return new DefaultExecutionListener(this) {
-
-            @Override
-            public void onBeforeExecution(SequenceExecutionRecords results) {
-                super.onBeforeExecution(results);
-
-                // register
-                Invocations.register(DCGContainer.this);
-            }
-
-            @Override
-            public void onAfterExecution(SequenceExecutionRecords results) {
-                super.onAfterExecution(results);
-
-                Bag<String> calls = Invocations.calls.get(getId());
-                Invocations.remove(DCGContainer.this);
-
-                //
-                DCGObservation observation = new DCGObservation(calls);
-                results.addObservation("dcg", observation);
-            }
-
-            @Override
-            public void onAfterStatement(SequenceExecutionRecord result, ExecutableSequence executableSequence, int i) {
-                super.onAfterStatement(result, executableSequence, i);
-            }
-
-            @Override
-            public void onBeforeSequence(SequenceExecutionRecord result, ExecutableSequence executableSequence) {
-                super.onBeforeSequence(result, executableSequence);
-            }
-
-            @Override
-            public void onAfterSequence(SequenceExecutionRecord result, ExecutableSequence executableSequence) {
-                super.onAfterSequence(result, executableSequence);
-            }
-        };
-    }
+//    /**
+//     * Default behavior is to start measurement before sequence execution and to end it after sequence execution.
+//     *
+//     * @return
+//     */
+//    @Override
+//    public ArenaExecutionListener getArenaExecutionListener() {
+//        return new DefaultExecutionListener(this) {
+//
+//            @Override
+//            public void onBeforeExecution(SequenceExecutionRecords results) {
+//                super.onBeforeExecution(results);
+//
+//                // register
+//                Invocations.register(DCGContainer.this);
+//            }
+//
+//            @Override
+//            public void onAfterExecution(SequenceExecutionRecords results) {
+//                super.onAfterExecution(results);
+//
+//                Bag<String> calls = Invocations.calls.get(getId());
+//                Invocations.remove(DCGContainer.this);
+//
+//                //
+//                DCGObservation observation = new DCGObservation(calls);
+//                results.addObservation("dcg", observation);
+//            }
+//
+//            @Override
+//            public void onAfterStatement(SequenceExecutionRecord result, ExecutableSequence executableSequence, int i) {
+//                super.onAfterStatement(result, executableSequence, i);
+//            }
+//
+//            @Override
+//            public void onBeforeSequence(SequenceExecutionRecord result, ExecutableSequence executableSequence) {
+//                super.onBeforeSequence(result, executableSequence);
+//            }
+//
+//            @Override
+//            public void onAfterSequence(SequenceExecutionRecord result, ExecutableSequence executableSequence) {
+//                super.onAfterSequence(result, executableSequence);
+//            }
+//        };
+//    }
 
     private void doInstrumentBehavior(String className, CtBehavior behavior)
             throws NotFoundException, CannotCompileException {

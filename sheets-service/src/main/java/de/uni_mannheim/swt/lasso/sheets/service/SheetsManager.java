@@ -2,7 +2,6 @@ package de.uni_mannheim.swt.lasso.sheets.service;
 
 import de.uni_mannheim.swt.lasso.arena.search.InterfaceSpecification;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.SSNTestDriver;
-import de.uni_mannheim.swt.lasso.sheets.service.driver.LocalSimpleTestDriver;
 import de.uni_mannheim.swt.lasso.sheets.service.driver.TestDriver;
 import de.uni_mannheim.swt.lasso.sheets.service.dto.*;
 import org.slf4j.Logger;
@@ -26,6 +25,19 @@ public class SheetsManager {
         // FIXME decide which driver
         try {
             SheetResponse sheetResponse = testDriver.execute(request);
+
+            return sheetResponse;
+        } catch (Throwable e) {
+            LOG.warn("execution failed", e);
+
+            throw new RuntimeException(e);
+        }
+    }
+
+    public SheetGenerationResponse generateSheets(SheetGenerationRequest request, UserInfo userInfo) {
+        // FIXME decide which driver
+        try {
+            SheetGenerationResponse sheetResponse = testDriver.generateSheets(request);
 
             return sheetResponse;
         } catch (Throwable e) {

@@ -33,9 +33,12 @@ public class SheetSpec {
     private String body;
 
     // FIXME add implementation details
-    private String implementation;
+    private String implementationId;
 
     private List<String> invocations;
+
+    private List<String> columnLabels;
+    private List<String> rowLabels;
 
     public String getInterfaceSpecification() {
         return interfaceSpecification;
@@ -53,14 +56,6 @@ public class SheetSpec {
         this.body = body;
     }
 
-    public String getImplementation() {
-        return implementation;
-    }
-
-    public void setImplementation(String implementation) {
-        this.implementation = implementation;
-    }
-
     public String getSignature() {
         return signature;
     }
@@ -75,5 +70,29 @@ public class SheetSpec {
 
     public void setInvocations(List<String> invocations) {
         this.invocations = invocations;
+    }
+
+    public List<String> getRowLabels() {
+        return rowLabels;
+    }
+
+    public void setRowLabels(List<String> rowLabels) {
+        this.rowLabels = rowLabels;
+    }
+
+    public List<String> getColumnLabels() {
+        return columnLabels;
+    }
+
+    public void setColumnLabels(List<String> columnLabels) {
+        this.columnLabels = columnLabels;
+    }
+
+    public String getImplementationId() {
+        return implementationId;
+    }
+
+    public void setImplementationId(String implementationId) {
+        this.implementationId = implementationId;
     }
 }

@@ -46,6 +46,6 @@ public class ClasspathBenchmarkLoaderTest {
         Benchmark benchmark = loader.load("mbpp-java-reworded");
 
         assertEquals("mbpp-java-reworded", benchmark.getName());
-        assertEquals(350, benchmark.getAbstractions().size());
+        assertEquals(355, benchmark.getAbstractions().size());
     }
 }

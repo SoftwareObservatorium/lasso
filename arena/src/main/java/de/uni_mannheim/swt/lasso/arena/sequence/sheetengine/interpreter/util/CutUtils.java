@@ -73,8 +73,46 @@ public class CutUtils {
         return classUnderTest;
     }
 
+    public static ClassUnderTest createExample(CodeUnit codeUnit) {
+        String[] uriParts = StringUtils.split(EXAMPLES_LASSO_EXAMPLES_1_0_0_SNAPSHOT, ":");
+
+        codeUnit.setGroupId(uriParts[0]);
+        codeUnit.setArtifactId(uriParts[1]);
+        codeUnit.setVersion(uriParts[2]);
+        ClassUnderTest classUnderTest = new ClassUnderTest(new de.uni_mannheim.swt.lasso.core.model.System(codeUnit));
+        //classUnderTest.setPseudo(true);
+
+        // one workaround to avoid resolution of artifacts
+        classUnderTest.getProject().setDependencyResult(new DependencyResult(new DependencyRequest()));
+
+        return classUnderTest;
+    }
+
+    public static ClassUnderTest resolve(String clazz, String artifactUri) {
+        String name = StringUtils.substringAfterLast(clazz, ".");
+        String pkg = StringUtils.substringBeforeLast(clazz, ".");
+
+        if(StringUtils.isBlank(artifactUri)) {
+            artifactUri = EXAMPLES_LASSO_EXAMPLES_1_0_0_SNAPSHOT;
+        }
+
+        String[] uriParts = StringUtils.split(artifactUri, ":");
+
+        CodeUnit implementation = new CodeUnit();
+        implementation.setId(UUID.randomUUID().toString());
+        implementation.setName(name);
+        implementation.setPackagename(pkg);
+        implementation.setGroupId(uriParts[0]);
+        implementation.setArtifactId(uriParts[1]);
+        implementation.setVersion(uriParts[2]);
+        ClassUnderTest classUnderTest = new ClassUnderTest(new de.uni_mannheim.swt.lasso.core.model.System(implementation));
+        //classUnderTest.setPseudo(true);
+
+        return classUnderTest;
+    }
+
     public static boolean isFaCut(Invocations invocations, Class targetClass) {
-        return invocations.getParsedSheet().getInterfaceSpecification().getClassName().equals(targetClass.getCanonicalName());
+        return invocations.getInterfaceSpecification().getClassName().equals(targetClass.getCanonicalName());
     }
 
     public static boolean isCut(ClassUnderTest classUnderTest, Class targetClass) throws ClassNotFoundException {

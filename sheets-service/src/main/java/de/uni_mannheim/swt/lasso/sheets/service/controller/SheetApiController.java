@@ -116,6 +116,66 @@ public class SheetApiController extends BaseApi {
     }
 
     /**
+     *
+     *
+     * @param request
+     *            {@link SheetGenerationRequest} instance
+     * @param httpServletRequest
+     *            {@link HttpServletRequest} instance
+     * @return {@link ResponseEntity} having a status and in case of success a
+     *         {@link SheetGenerationResponse} body set
+     */
+    @Operation(summary = "Generate Sheets", description = "\"Generate Sheets")
+    @RequestMapping(value = "/generate", method = RequestMethod.POST, consumes = "application/json;charset=UTF-8", produces = "application/json;charset=UTF-8")
+    public ResponseEntity<SheetGenerationResponse> execute(
+            @RequestBody SheetGenerationRequest request,
+            /*@ApiIgnore*/ @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletRequest httpServletRequest) {
+        // get user details
+        UserInfo userInfo = getUserInfo(httpServletRequest, userDetails);
+
+        if (LOG.isInfoEnabled()) {
+            LOG.info("Received sheet generation request from '{}':\n{}",
+                    userInfo.getRemoteIpAddress(),
+                    ToStringBuilder
+                            .reflectionToString(request));
+        }
+
+        // do something
+        try {
+            // response
+            SheetGenerationResponse response = sheetsManager.generateSheets(request, userInfo);
+
+            if (LOG.isInfoEnabled()) {
+                LOG.info("Returning sheet generation response to '{}':\n{}",
+                        userInfo.getRemoteIpAddress(),
+                        ToStringBuilder
+                                .reflectionToString(response));
+            }
+
+            // return 200
+            return ResponseEntity.ok(response);
+        } catch (Throwable e) {
+            // warn
+            if (LOG.isWarnEnabled()) {
+                LOG.warn(String.format(
+                                "sheet generation failed for '%s':\n %s",
+                                userInfo.getRemoteIpAddress(),
+                                ToStringBuilder
+                                        .reflectionToString(request)),
+                        e);
+            }
+
+            throw new RuntimeException("sheet generation failed for '"
+                    + userInfo.getRemoteIpAddress()
+                    + "' "
+                    + ToStringBuilder
+                    .reflectionToString(request),
+                    e);
+        }
+    }
+
+    /**
      * Get interface specification in LQL for a CUT based on given {@link ClassUnderTestSpec}
      *
      * @param request

@@ -4,33 +4,38 @@ import com.google.common.collect.Table;
 import com.google.common.collect.TreeBasedTable;
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonWriter;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.SheetResolver;
+import de.uni_mannheim.swt.lasso.ssn.SheetResolver;
 import org.apache.commons.io.output.StringBuilderWriter;
-import org.apache.commons.lang3.math.NumberUtils;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * A sheet based on {@link Table}.
  *
  * @author Marcus Kessel
  */
+// FIXME different imlementations (e.g., backed by SQL table etc.)
 public class Sheet<R extends Comparable, C extends Comparable, V> {
 
     private Table<R, C, V> table = TreeBasedTable.create();
 
-    // FIXME add name?
-    // FIXME add signature -- name and input parameters
     public Sheet() {
     }
 
-    public Sheet(Sheet<R, C, V> sheet) {
-        this.table = TreeBasedTable.create((TreeBasedTable) sheet.getTable());
+    public Sheet(Table<R, C, V> table) {
+        this.table = table;
     }
 
-    public Table<R, C, V> getTable() {
-        return table;
+    public Sheet(Sheet<R, C, V> sheet) {
+        this(TreeBasedTable.create((TreeBasedTable) sheet.table));
     }
+
+//    public Table<R, C, V> getTable() {
+//        return table;
+//    }
 
     public void put(R r, C c, V v) {
         table.put(r, c, v);
@@ -38,6 +43,50 @@ public class Sheet<R extends Comparable, C extends Comparable, V> {
 
     public V get(R r, C c) {
         return table.get(r, c);
+    }
+
+    public Set<C> getColumns() {
+        return table.columnKeySet();
+    }
+
+    public Set<R> getRows() {
+        return table.rowKeySet();
+    }
+
+    public Set<Table.Cell<R, C, V>> getCells() {
+        return table.cellSet();
+    }
+
+    public Sheet<R, C, V> getColumnAsSheet(C from, C to) {
+        Map<R, V> column = table.column(from);
+        Table<R, C, V> sub = TreeBasedTable.create();
+        for(Map.Entry<R,V> entry: column.entrySet()) {
+            sub.put(entry.getKey(), to, entry.getValue());
+        }
+
+        return new Sheet<>(sub);
+    }
+
+    public boolean isEquivalentColumn(Sheet<R, C, V> otherSheet, C c) {
+        Map<R, V> column = table.column(c);
+        Map<R, V> otherColumn = otherSheet.table.column(c);
+
+        return Objects.equals(column, otherColumn);
+    }
+
+    public void addColumn(Sheet<R, C, V> otherSheet, C from, C to) {
+        Map<R, V> column = otherSheet.table.column(from);
+        for(Map.Entry<R,V> entry: column.entrySet()) {
+            table.put(entry.getKey(), to, entry.getValue());
+        }
+    }
+
+    public int getNumberOfRows() {
+        return table.rowKeySet().size();
+    }
+
+    public int getNumberOfColumns() {
+        return table.columnKeySet().size();
     }
 
     public void debug() {
@@ -59,6 +108,13 @@ public class Sheet<R extends Comparable, C extends Comparable, V> {
         return sb.toString().trim();
     }
 
+    @Override
+    public boolean equals(Object other) {
+        Sheet otherSheet = (Sheet) other;
+
+        return table.equals(otherSheet.table);
+    }
+
     public String toJsonl() throws IOException {
         Gson gson = new Gson();
 
@@ -68,7 +124,7 @@ public class Sheet<R extends Comparable, C extends Comparable, V> {
         for(R row : table.rowKeySet()) {
             StringBuilderWriter sbWriter = new StringBuilderWriter();
             JsonWriter writer = gson.newJsonWriter(sbWriter);
-            writer.beginObject().name("sheet").value("FIXME").name("header").value("row " + c)
+            writer.beginObject()//.name("sheet").value("FIXME").name("header").value("row " + c)
                     .name("cells").beginObject();
 
             for(C col : table.columnKeySet()) {
@@ -91,6 +147,9 @@ public class Sheet<R extends Comparable, C extends Comparable, V> {
                 }
 
                 // FIXME other types?
+                if(value instanceof Boolean) {
+                    writer.name(cLbl + rLbl).value((boolean) value);
+                }
             }
 
             writer.endObject().endObject();

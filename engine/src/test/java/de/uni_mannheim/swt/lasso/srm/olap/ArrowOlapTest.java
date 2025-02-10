@@ -22,10 +22,10 @@ package de.uni_mannheim.swt.lasso.srm.olap;
 import de.uni_mannheim.swt.lasso.srm.JDBC;
 import de.uni_mannheim.swt.lasso.srm.SRHRepository;
 import joinery.DataFrame;
-import org.apache.arrow.vector.VectorSchemaRoot;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 /**
@@ -33,80 +33,77 @@ import java.sql.SQLException;
  */
 public class ArrowOlapTest {
 
-    String executionId = "087c4964-87a1-4dd4-a9d3-18f7ffbd11b2";
+    String executionId = "aeb524b9-cfe7-4d2b-afa4-503ef9079f45";
 
-    @Test
-    public void testQueryArrow() throws SQLException {
-        JDBC jdbc = new JDBC();
-
-        ArrowOlap olap = new ArrowOlap();
-
-        String sql = "SELECT CONCAT(REGEXP_REPLACE(SHEETID, '_[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}',''),'@',X, ',', Y) as statement, CONCAT(SYSTEMID,'_',ADAPTERID) as SYSTEMID, VALUE FROM srm.cellvalue where executionid = ? and arenaid = ? and type = ? order by sheetid";
-        Object[] args = {executionId, SRHRepository.ARENA_DEFAULT, SRHRepository.TYPE_VALUE};
-
-        VectorSchemaRoot root = olap.queryArrow(jdbc.getJdbcTemplate(), sql, args);
-    }
+    String sqlAllTypes = "SELECT CONCAT(SHEETID,'@',X, ',', Y) as statement, CONCAT(SYSTEMID,'_',ADAPTERID, '_', VARIANTID) as SYSTEMID, VALUE FROM srm.cellvalue where executionid = ?";
+    String sqlByType = sqlAllTypes + " and type = ?";
 
     @Test
     public void testQueryDuckDB() throws SQLException {
         JDBC jdbc = new JDBC();
-
         ArrowOlap olap = new ArrowOlap();
 
-        String sql = "SELECT CONCAT(REGEXP_REPLACE(SHEETID, '_[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}',''),'@',X, ',', Y) as statement, CONCAT(SYSTEMID,'_',ADAPTERID) as SYSTEMID, VALUE FROM srm.cellvalue where executionid = ? and arenaid = ? and type = ?";
-        Object[] args = {executionId, SRHRepository.ARENA_DEFAULT, SRHRepository.TYPE_VALUE};
+        try (PreparedStatement preparedStatement = jdbc.createPreparedStatement(sqlByType)) {
+            preparedStatement.setString(1, executionId);
+            preparedStatement.setString(2, SRHRepository.TYPE_VALUE);
 
-        olap.queryDuckDB(jdbc.getJdbcTemplate(), sql, args);
+            DataFrame dataFrame = olap.queryDuckDB(preparedStatement, false);
+            System.out.println(dataFrame.toString());
+        }
     }
 
     @Test
-    public void testQueryDuckDBAllTypes() throws SQLException {
+    public void testQueryDuckDBAllTypes_prepared() throws SQLException {
         JDBC jdbc = new JDBC();
-
         ArrowOlap olap = new ArrowOlap();
 
-        String sql = "SELECT CONCAT(REGEXP_REPLACE(SHEETID, '_[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}',''),'@',X, ',', Y) as statement, CONCAT(SYSTEMID,'_',ADAPTERID) as SYSTEMID, VALUE, TYPE FROM srm.cellvalue where executionid = ? and arenaid = ?";
-        Object[] args = {executionId, SRHRepository.ARENA_DEFAULT};
+        try (PreparedStatement preparedStatement = jdbc.createPreparedStatement(sqlAllTypes)) {
+            preparedStatement.setString(1, executionId);
 
-        olap.queryDuckDBAllTypes(jdbc.getJdbcTemplate(), sql, args);
+            DataFrame dataFrame = olap.queryDuckDB(preparedStatement, false);
+            System.out.println(dataFrame.toString());
+        }
     }
 
     @Test
     public void testWriteDuckDB() throws SQLException {
         JDBC jdbc = new JDBC();
-
         ArrowOlap olap = new ArrowOlap();
 
-        String sql = "SELECT CONCAT(REGEXP_REPLACE(SHEETID, '_[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}',''),'@',X, ',', Y) as statement, CONCAT(SYSTEMID,'_',ADAPTERID) as SYSTEMID, VALUE FROM srm.cellvalue where executionid = ? and arenaid = ? and type = ? order by sheetid";
-        Object[] args = {executionId, SRHRepository.ARENA_DEFAULT, SRHRepository.TYPE_VALUE};
+        String sql = sqlByType + "order by sheetid";
+        String path = "/tmp/blub_type.parquet";
 
-        String path = "/tmp/blub.parquet";
+        try (PreparedStatement preparedStatement = jdbc.createPreparedStatement(sql)) {
+            preparedStatement.setString(1, executionId);
+            preparedStatement.setString(2, SRHRepository.TYPE_VALUE);
 
-        olap.writeParquet(jdbc.getJdbcTemplate(), sql, path, args);
+            olap.writeParquet(preparedStatement, path);
+        }
     }
 
     @Test
     @Disabled
     public void testWriteAll() throws SQLException {
-        String executionId = "c6704dee-9954-4087-87b7-dd06a3695d81";
-
-        JDBC.JDBC_URL = "jdbc:ignite:thin://lassohp1.informatik.uni-mannheim.de";
+        //JDBC.JDBC_URL = "jdbc:ignite:thin://lassohp1.informatik.uni-mannheim.de";
         JDBC jdbc = new JDBC();
 
         ArrowOlap olap = new ArrowOlap();
 
         String sql = "SELECT * FROM srm.cellvalue where executionid = ?";
-        Object[] args = {executionId};
 
-        String path = "/tmp/blub.parquet";
+        String path = "/tmp/blub_all.parquet";
 
-        olap.sqlToParquet(jdbc.getJdbcTemplate(), sql, path, args);
+        try (PreparedStatement preparedStatement = jdbc.createPreparedStatement(sql)) {
+            preparedStatement.setString(1, executionId);
+
+            olap.sqlToParquet(preparedStatement, path);
+        }
     }
 
     @Test
     public void testReadDuckDB() throws SQLException {
         ArrowOlap olap = new ArrowOlap();
-        String path = "/tmp/blub.parquet";
+        String path = "/tmp/blub_all.parquet";
         DataFrame dataFrame = olap.readParquetAsDataFrame(path);
         System.out.println(dataFrame);
     }
