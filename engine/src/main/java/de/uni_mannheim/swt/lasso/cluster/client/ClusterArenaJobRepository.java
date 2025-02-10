@@ -58,6 +58,8 @@ public class ClusterArenaJobRepository implements ArenaJobRepository {
 
     @Override
     public void put(String id, ArenaJob job) {
+        LOG.debug("Putting Job {}", id);
+
         jobsCache.put(id, job);
     }
 

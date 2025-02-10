@@ -19,6 +19,8 @@
  */
 package de.uni_mannheim.swt.lasso.llm.test;
 
+import de.uni_mannheim.swt.lasso.core.dto.srm.Sheet;
+
 import java.util.List;
 import java.util.Map;
 
@@ -32,11 +34,15 @@ public class FunctionalAbstraction {
     private String lql;
     private List<Sequence> sequences;
 
+    private List<Sheet> stimulusSheets;
+
     private String description;
 
     private String prompt;
 
     private Map meta;
+
+    private List<String> dependencies;
 
     public String getId() {
         return id;
@@ -84,5 +90,21 @@ public class FunctionalAbstraction {
 
     public void setPrompt(String prompt) {
         this.prompt = prompt;
+    }
+
+    public List<Sheet> getStimulusSheets() {
+        return stimulusSheets;
+    }
+
+    public void setStimulusSheets(List<Sheet> stimulusSheets) {
+        this.stimulusSheets = stimulusSheets;
+    }
+
+    public List<String> getDependencies() {
+        return dependencies;
+    }
+
+    public void setDependencies(List<String> dependencies) {
+        this.dependencies = dependencies;
     }
 }

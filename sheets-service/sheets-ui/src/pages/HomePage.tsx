@@ -8,7 +8,7 @@ function HomePage() {
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
         <p>
-          Sheet Editor
+          SRH Explorer
         </p>
         
       </header>

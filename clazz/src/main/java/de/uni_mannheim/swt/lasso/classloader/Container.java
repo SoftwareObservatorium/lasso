@@ -93,7 +93,7 @@ public abstract class Container extends ClassRealm {
      */
     @Override
     protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-        LOG.debug("loading class '{}'", name);
+        LOG.debug("loading class '{}' for classloader id '{}'", name, getId());
 
         // do not load
         if (!isSupportedClass(name)) {
@@ -135,6 +135,8 @@ public abstract class Container extends ClassRealm {
 
                 classes.put(name, clazz);
 
+                LOG.debug("Loaded clazz with classloader " + clazz.getClassLoader());
+
                 return clazz;
             } catch (Throwable e) {
                 e.printStackTrace();
@@ -143,9 +145,45 @@ public abstract class Container extends ClassRealm {
             }
         }
 
+        // first try to load from this container
+        try {
+            byte[] bytes = loadClassBytes(name);
+
+            if(bytes != null) {
+                Class<?> clazz = defineClass(name, bytes, 0, bytes.length);
+
+                if (clazz == null) {
+                    return null;
+                }
+
+                if (clazz.getPackage() == null) {
+                    int lastDotIndex = name.lastIndexOf('.');
+                    String packageName = (lastDotIndex >= 0) ? name.substring(0, lastDotIndex) : "";
+                    definePackage(packageName, null, null, null, null, null, null, null);
+                }
+
+                if (resolve) {
+                    resolveClass(clazz);
+                }
+
+                LOG.debug("Loaded class from container '{}'", clazz.getName());
+
+                classes.put(name, clazz);
+
+                LOG.debug("Loaded clazz with classloader " + clazz.getClassLoader());
+
+                return clazz;
+            }
+        } catch (Throwable e) {
+
+        }
+
+        // resolve in hierarchy
         Class<?> clazz = super.loadClass(name, resolve);
 
         classes.put(name, clazz);
+
+        LOG.debug("Loaded clazz with classloader " + clazz.getClassLoader());
 
         return clazz;
     }

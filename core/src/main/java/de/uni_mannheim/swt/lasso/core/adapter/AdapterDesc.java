@@ -30,6 +30,7 @@ public class AdapterDesc {
     private String systemId;
     private String className;
     private String adapterId;
+    private String variantId;
     private List<MethodDesc> initializers;
     private List<MethodDesc> methods;
 
@@ -71,5 +72,13 @@ public class AdapterDesc {
 
     public void setClassName(String className) {
         this.className = className;
+    }
+
+    public String getVariantId() {
+        return variantId;
+    }
+
+    public void setVariantId(String variantId) {
+        this.variantId = variantId;
     }
 }

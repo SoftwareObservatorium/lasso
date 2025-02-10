@@ -31,4 +31,6 @@ public class NexusInstance {
     public static final String LASSOHP12_URL = "http://lassohp12.informatik.uni-mannheim.de:8081/repository/maven-public/";
 
     public static final String LOCAL_URL = "http://localhost:8081/repository/maven-public/";
+
+    public static final String MAVEN_CENTRAL = "https://repo1.maven.org/maven2/";
 }

@@ -57,7 +57,7 @@ public class MultiPLE {
             .getLogger(MultiPLE.class);
 
     // FIXME change and make configurable
-    String mavenRepoUrl = "https://swtweb.informatik.uni-mannheim.de/nexus/repository/maven-public/";
+    String mavenRepoUrl = "https://repo1.maven.org/maven2/";
     File localRepo = new File("/tmp/lalalamvn/local-repo");
 
     DependencyResolver resolver = new DependencyResolver(mavenRepoUrl, localRepo.getAbsolutePath());

@@ -27,6 +27,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import tech.tablesaw.api.Table;
 
 import java.io.IOException;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 /**
@@ -64,6 +65,10 @@ public class JDBC {
 
             return jdbcTemplate;
         }
+    }
+
+    public PreparedStatement createPreparedStatement(String sql) throws SQLException {
+        return getJdbcTemplate().getDataSource().getConnection().prepareStatement(sql);
     }
 
     public Table sqlToTable(String sql, Object ... args) throws IOException {

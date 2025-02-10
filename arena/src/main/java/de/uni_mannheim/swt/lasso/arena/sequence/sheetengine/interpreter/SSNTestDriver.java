@@ -14,6 +14,7 @@ import de.uni_mannheim.swt.lasso.arena.search.InterfaceSpecification;
 import de.uni_mannheim.swt.lasso.arena.sequence.parser.unit.ReflectionConstructorSignature;
 import de.uni_mannheim.swt.lasso.arena.sequence.parser.unit.ReflectionMethodSignature;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.adapter.PassThroughAdaptationStrategy;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.SheetSignature;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.TestInvocation;
 import de.uni_mannheim.swt.lasso.core.dto.srm.StimulusResponseMatrix;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test;
@@ -22,8 +23,8 @@ import de.uni_mannheim.swt.lasso.core.dto.srm.SheetInvocation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.CutUtils;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.HierarchyMemberResolver;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.LQLUtils;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.ParsedSheet;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.SSNParser;
+import de.uni_mannheim.swt.lasso.ssn.ParsedSheet;
+import de.uni_mannheim.swt.lasso.ssn.SSNParser;
 
 import de.uni_mannheim.swt.lasso.core.model.CodeUnit;
 import de.uni_mannheim.swt.lasso.core.model.Scope;
@@ -58,6 +59,8 @@ public class SSNTestDriver {
 
     private boolean enableJaCoCoCoverage;
 
+    private File buildWorkingDirectory;
+
     public MavenRepository getMavenRepository() {
         // FIXME update
         if (mavenRepository == null) {
@@ -75,23 +78,34 @@ public class SSNTestDriver {
         this.mavenRepository = mavenRepository;
     }
 
-    public static List<ParsedSheet> parseAll(List<Sheet> sheets) throws IOException {
+    public static List<Test> parseAll(List<Sheet> sheets) throws IOException {
         SSNParser ssnParser = new SSNParser();
 
-        List<ParsedSheet> parsedSheets = new ArrayList<>(sheets.size());
+        List<Test> parsedTests = new ArrayList<>(sheets.size());
         for (Sheet sheet : sheets) {
-            LOG.debug("JSONL body\n {}", sheet.getBody());
+            LOG.debug("SHEET body\n {}", sheet.getBody());
 
-            ParsedSheet parsedSheet = ssnParser.parseJsonl(sheet.getBody(), sheet.getSignature(), sheet.getInterfaceSpecification());
-            parsedSheets.add(parsedSheet);
+            try {
+                // parse body
+                ParsedSheet parsedSheet = ssnParser.parseJsonl(sheet);
+                // parse signature
+                SheetSignature signature = LQLUtils.lqlToSheetSignature(sheet.getSignature());
+
+                LOG.debug("SHEET signature\n {}", signature.toLQL());
+
+                Test test = new Test(signature.getName(), parsedSheet, signature);
+                parsedTests.add(test);
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
         }
 
-        return parsedSheets;
+        return parsedTests;
     }
 
     public static StimulusResponseMatrix<Test, ClassUnderTest, TestInvocation> parseStimulusMatrix(List<Sheet> sheets, List<ClassUnderTest> classesUnderTest, List<SheetInvocation> sheetInvocations) throws IOException {
         // parse sheets
-        List<ParsedSheet> parsedSheets = parseAll(sheets);
+        List<Test> parsedSheets = parseAll(sheets);
 
         String interfaceLql = sheets.get(0).getInterfaceSpecification();
 
@@ -105,7 +119,7 @@ public class SSNTestDriver {
 
         StimulusResponseMatrix<Test, ClassUnderTest, TestInvocation> stimulusMatrix = new StimulusResponseMatrix<>();
 
-        for(ParsedSheet parsedSheet : parsedSheets) {
+        for(Test parsedSheet : parsedSheets) {
             List<SheetInvocation> filtered = sheetInvocations.stream().filter(i -> StringUtils.equals(parsedSheet.getName(), i.getName())).toList();
 
             String baseName = parsedSheet.getName();
@@ -129,8 +143,11 @@ public class SSNTestDriver {
 
     public StimulusResponseMatrix<Test, AdaptedImplementation, ExecutedInvocations> runSheets(StimulusResponseMatrix<Test, ClassUnderTest, TestInvocation> stimulusMatrix, int limitAdapters, InvocationVisitor executionListener) throws IOException {
         // classes under test
-        Set<ClassUnderTest> classesUnderTest = stimulusMatrix.getTable().columnKeySet();
+        Set<ClassUnderTest> classesUnderTest = stimulusMatrix.getColumns();
         CandidatePool pool = new CandidatePool(getMavenRepository(), new ArrayList<>(classesUnderTest));
+        if(buildWorkingDirectory != null) {
+            pool.setWorkingDirectory(buildWorkingDirectory);
+        }
 
         if (isEnableJaCoCoCoverage()) {
             // set scope
@@ -152,36 +169,76 @@ public class SSNTestDriver {
         // SRM
         StimulusResponseMatrix<Test, AdaptedImplementation, ExecutedInvocations> stimulusResponseMatrix = new StimulusResponseMatrix<>();
 
+        Set<Test> tests = stimulusMatrix.getRows();
+        // take some random test to obtain interface
+        Test randomTest = tests.iterator().next();
+        // get interface
+        InterfaceSpecification interfaceSpecification = randomTest.getInterfaceSpecification();
+
         for(ClassUnderTest classUnderTest : classesUnderTest) {
-            Map<Test, TestInvocation> testInvocationMap = stimulusMatrix.getTable().column(classUnderTest);
-            // take some random test to get interface
-            Test randomTest = testInvocationMap.keySet().iterator().next();
+            if(!classUnderTest.getProject().isResolved()) {
+                LOG.warn("Not testing {}, since it has unresolved dependencies", classUnderTest.getFullId());
 
-            // get interface
-            ParsedSheet randomSheet = randomTest.getParsedSheet();
-            InterfaceSpecification interfaceSpecification = randomSheet.getInterfaceSpecification();
+                // FIXME signal in SRM
 
-            List<AdaptedImplementation> adaptedImplementations = adaptationStrategy.adapt(interfaceSpecification, classUnderTest, limitAdapters);
+                // skip
+                continue;
+            }
 
-            for(Map.Entry<Test, TestInvocation> testInvocation : testInvocationMap.entrySet()) {
-                // prepare executable sheet
-                Test test = testInvocation.getKey();
-                ParsedSheet parsedSheet = test.getParsedSheet();
+            List<AdaptedImplementation> adaptedImplementations;
+            try {
+                adaptedImplementations = adaptationStrategy.adapt(interfaceSpecification, classUnderTest, limitAdapters);
+            } catch (Throwable e) {
+                LOG.warn("Not testing {}, since no adapters could be identified", classUnderTest.getFullId());
+                LOG.warn("Trace", e);
 
-                for (AdaptedImplementation adaptedImplementation : adaptedImplementations) {
+                // skip
+                continue;
+            }
+
+            for (AdaptedImplementation adaptedImplementation : adaptedImplementations) {
+
+                executionListener.visitBeforeExecution(adaptedImplementation);
+
+                // run all tests for each impl.
+                for(Test test : tests) {
+                    // prepare executable sheet
+                    ParsedSheet parsedSheet = test.getParsedSheet();
+
+                    // test invocation
+                    TestInvocation testInvocation = stimulusMatrix.get(test, classUnderTest);
+
                     // prepare invocations
-                    Invocations invocations = interpreter.interpret(parsedSheet, classUnderTest, testInvocation.getValue());
+                    Invocations invocations;
+                    try {
+                        invocations = interpreter.interpret(test, classUnderTest, testInvocation);
+                    } catch (Throwable e) {
+                        LOG.warn("SSN Interpreter failed for {}", classUnderTest.getFullId());
+                        LOG.warn("Stack", e);
 
-                    executionListener.visitBeforeExecution(adaptedImplementation);
+                        // FIXME add result stimulusResponseMatrix
+
+                        continue;
+                    }
 
                     // run
-                    ExecutedInvocations executedInvocations = interpreter.run(invocations, adaptedImplementation, executionListener);
+                    ExecutedInvocations executedInvocations;
+                    try {
+                        executedInvocations = interpreter.run(invocations, adaptedImplementation, executionListener);
+                    } catch (Throwable e) {
+                        LOG.warn("SSN Test Run failed for {}", classUnderTest.getFullId());
+                        LOG.warn("Stack", e);
 
-                    executionListener.visitAfterExecution(adaptedImplementation);
+                        // FIXME add result stimulusResponseMatrix
+
+                        continue;
+                    }
 
                     // add to SRM
                     stimulusResponseMatrix.put(test, adaptedImplementation, executedInvocations);
                 }
+
+                executionListener.visitAfterExecution(adaptedImplementation);
             }
         }
 
@@ -197,9 +254,15 @@ public class SSNTestDriver {
      * @throws IOException
      */
     public StimulusResponseMatrix<Test, AdaptedImplementation, ExecutedInvocations> mutateAndRunSheets(StimulusResponseMatrix<Test, ClassUnderTest, TestInvocation> stimulusMatrix, int limitAdapters, InvocationVisitor executionListener) throws IOException {
+        // avoid concurrent modifications ...
         // classes under test
-        Set<ClassUnderTest> classesUnderTest = stimulusMatrix.getTable().columnKeySet();
+        List<ClassUnderTest> classesUnderTest = new ArrayList<>(stimulusMatrix.getColumns());
+        // all tests
+        List<Test> tests = new ArrayList<>(stimulusMatrix.getRows());
         CandidatePool pool = new CandidatePool(getMavenRepository(), new ArrayList<>(classesUnderTest));
+        if(buildWorkingDirectory != null) {
+            pool.setWorkingDirectory(buildWorkingDirectory);
+        }
         pool.initProjects();
 
         // create mutants -- simply expand Stimulus Matrix
@@ -210,8 +273,9 @@ public class SSNTestDriver {
 
             // add to stimulus matrix as well -- to keep it consistent with the resulting SRM
             for(ClassUnderTest mutant : mutants.keySet()) {
-                Map<Test, TestInvocation> map = stimulusMatrix.getTable().column(classUnderTest);
-                map.entrySet().forEach(e -> stimulusMatrix.put(e.getKey(), mutant, e.getValue()));
+                for(Test test : tests) {
+                    stimulusMatrix.put(test, mutant, stimulusMatrix.get(test, classUnderTest));
+                }
             }
 
             // automatically resolves project-related artifacts
@@ -276,6 +340,9 @@ public class SSNTestDriver {
         try {
             ClassUnderTest classUnderTest = CutUtils.createExample(className, artifact);
             CandidatePool pool = new CandidatePool(getMavenRepository(), Collections.singletonList(classUnderTest));
+            if(buildWorkingDirectory != null) {
+                pool.setWorkingDirectory(buildWorkingDirectory);
+            }
             // automatically resolves project-related artifacts
             pool.initProjects();
 
@@ -318,5 +385,13 @@ public class SSNTestDriver {
 
     public void setEnableJaCoCoCoverage(boolean enableJaCoCoCoverage) {
         this.enableJaCoCoCoverage = enableJaCoCoCoverage;
+    }
+
+    public File getBuildWorkingDirectory() {
+        return buildWorkingDirectory;
+    }
+
+    public void setBuildWorkingDirectory(File buildWorkingDirectory) {
+        this.buildWorkingDirectory = buildWorkingDirectory;
     }
 }

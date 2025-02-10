@@ -31,11 +31,16 @@ public class TestResult {
     private String executionId;
     private String status;
 
-    private ClassUnderTestSpec classUnderTestSpec;
+    private List<ClassUnderTestSpec> executedImplementations;
+    private List<SheetSpec> executedTests;
 
     private List<SheetSpec> actuationSheets;
     private List<SheetSpec> adaptedActuationSheets;
     private List<SheetSpec> metricSheets;
+
+    private List<SheetSpec> oracleSheets;
+
+    private List<SheetSpec> srmViews;
 
     public String getExecutionId() {
         return executionId;
@@ -69,19 +74,43 @@ public class TestResult {
         this.adaptedActuationSheets = adaptedActuationSheets;
     }
 
-    public ClassUnderTestSpec getClassUnderTestSpec() {
-        return classUnderTestSpec;
-    }
-
-    public void setClassUnderTestSpec(ClassUnderTestSpec classUnderTestSpec) {
-        this.classUnderTestSpec = classUnderTestSpec;
-    }
-
     public List<SheetSpec> getMetricSheets() {
         return metricSheets;
     }
 
     public void setMetricSheets(List<SheetSpec> metricSheets) {
         this.metricSheets = metricSheets;
+    }
+
+    public List<SheetSpec> getSrmViews() {
+        return srmViews;
+    }
+
+    public void setSrmViews(List<SheetSpec> srmViews) {
+        this.srmViews = srmViews;
+    }
+
+    public List<SheetSpec> getOracleSheets() {
+        return oracleSheets;
+    }
+
+    public void setOracleSheets(List<SheetSpec> oracleSheets) {
+        this.oracleSheets = oracleSheets;
+    }
+
+    public List<ClassUnderTestSpec> getExecutedImplementations() {
+        return executedImplementations;
+    }
+
+    public void setExecutedImplementations(List<ClassUnderTestSpec> executedImplementations) {
+        this.executedImplementations = executedImplementations;
+    }
+
+    public List<SheetSpec> getExecutedTests() {
+        return executedTests;
+    }
+
+    public void setExecutedTests(List<SheetSpec> executedTests) {
+        this.executedTests = executedTests;
     }
 }

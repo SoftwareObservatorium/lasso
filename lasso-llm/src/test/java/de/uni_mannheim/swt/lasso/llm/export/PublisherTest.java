@@ -30,8 +30,7 @@ import de.uni_mannheim.swt.lasso.llm.problem.Problem;
 
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.junit.Test;
-//import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;

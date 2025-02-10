@@ -20,9 +20,6 @@
 package de.uni_mannheim.swt.lasso.arena.classloader.graph;
 
 import de.uni_mannheim.swt.lasso.arena.ArenaUtils;
-import de.uni_mannheim.swt.lasso.arena.Observation;
-import de.uni_mannheim.swt.lasso.arena.sequence.SequenceExecutionRecord;
-import de.uni_mannheim.swt.lasso.arena.sequence.SequenceExecutionRecords;
 import de.uni_mannheim.swt.lasso.srm.CellId;
 import de.uni_mannheim.swt.lasso.srm.CellValue;
 import org.apache.commons.collections4.Bag;
@@ -35,54 +32,54 @@ import java.util.Map;
  *
  * @author Marcus Kessel
  */
-public class DCGObservation extends Observation {
+public class DCGObservation {
 
-    private final Bag<String> calls;
-
-    public DCGObservation(Bag<String> calls) {
-        this.calls = calls;
-    }
-
-    @Override
-    public String getType() {
-        return null;
-    }
-
-    @Override
-    public Map<CellId, CellValue> toCells(SequenceExecutionRecord record) {
+//    private final Bag<String> calls;
+//
+//    public DCGObservation(Bag<String> calls) {
+//        this.calls = calls;
+//    }
+//
+//    @Override
+//    public String getType() {
+//        return null;
+//    }
+//
+//    @Override
+//    public Map<CellId, CellValue> toCells(SequenceExecutionRecord record) {
+////        Map<CellId, CellValue> cells = new LinkedHashMap<>();
+////        cells.put(ArenaUtils.cellIdOf(String.valueOf(executionResult.getSheet().getName()),
+////                        -1,
+////                        -1,
+////                        String.format("dcg.calls_total"),
+////                        executionResult.getImplementation()),
+////                CellValue.of(calls.size()));
+////        cells.put(ArenaUtils.cellIdOf(String.valueOf(executionResult.getSheet().getName()),
+////                        -1,
+////                        -1,
+////                        String.format("dcg.uniquecalls_total"),
+////                        executionResult.getImplementation()),
+////                CellValue.of(calls.uniqueSet().size()));
+//
+//        return new LinkedHashMap<>();
+//    }
+//
+//    @Override
+//    public Map<CellId, CellValue> toCells(SequenceExecutionRecords records) {
 //        Map<CellId, CellValue> cells = new LinkedHashMap<>();
-//        cells.put(ArenaUtils.cellIdOf(String.valueOf(executionResult.getSheet().getName()),
+//        cells.put(ArenaUtils.cellIdOf("all",
 //                        -1,
 //                        -1,
 //                        String.format("dcg.calls_total"),
-//                        executionResult.getImplementation()),
+//                        records.getImplementation()),
 //                CellValue.of(calls.size()));
-//        cells.put(ArenaUtils.cellIdOf(String.valueOf(executionResult.getSheet().getName()),
+//        cells.put(ArenaUtils.cellIdOf("all",
 //                        -1,
 //                        -1,
 //                        String.format("dcg.uniquecalls_total"),
-//                        executionResult.getImplementation()),
+//                        records.getImplementation()),
 //                CellValue.of(calls.uniqueSet().size()));
-
-        return new LinkedHashMap<>();
-    }
-
-    @Override
-    public Map<CellId, CellValue> toCells(SequenceExecutionRecords records) {
-        Map<CellId, CellValue> cells = new LinkedHashMap<>();
-        cells.put(ArenaUtils.cellIdOf("all",
-                        -1,
-                        -1,
-                        String.format("dcg.calls_total"),
-                        records.getImplementation()),
-                CellValue.of(calls.size()));
-        cells.put(ArenaUtils.cellIdOf("all",
-                        -1,
-                        -1,
-                        String.format("dcg.uniquecalls_total"),
-                        records.getImplementation()),
-                CellValue.of(calls.uniqueSet().size()));
-
-        return cells;
-    }
+//
+//        return cells;
+//    }
 }

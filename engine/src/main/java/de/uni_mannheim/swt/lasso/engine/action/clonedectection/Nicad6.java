@@ -20,8 +20,8 @@
 package de.uni_mannheim.swt.lasso.engine.action.clonedectection;
 
 import de.uni_mannheim.swt.lasso.cluster.data.repository.ExecKey;
-import de.uni_mannheim.swt.lasso.core.model.*;
 import de.uni_mannheim.swt.lasso.core.model.System;
+import de.uni_mannheim.swt.lasso.core.model.*;
 import de.uni_mannheim.swt.lasso.engine.LSLExecutionContext;
 import de.uni_mannheim.swt.lasso.engine.LassoUtils;
 import de.uni_mannheim.swt.lasso.engine.action.DefaultAction;
@@ -53,7 +53,7 @@ import java.util.*;
  *
  * @author Marcus Kessel
  *
- * <a href="https://www.txl.ca/txl-nicaddownload.html">Nicad 5 Website</a>
+ * <a href="https://www.txl.ca/txl-nicaddownload.html">Nicad 6 Website</a>
  */
 @LassoAction(desc = "Nicad 6 Code Clone Detection")
 @Stable
@@ -64,9 +64,6 @@ public class Nicad6 extends DefaultAction {
             .getLogger(Nicad6.class);
 
     protected static final String CLASS_SKELETON = "public class %s {\n%s\n}";
-
-    @Deprecated
-    protected static final String METHOD_SKELETON = "void callgraph() {\n%s\n}";
 
     protected static final String NICAD_REPORT_ROOT = "modules_files-*";
     protected static final String NICAD_REPORT = "modules_files-*clones-*-classes.xml";
@@ -84,9 +81,6 @@ public class Nicad6 extends DefaultAction {
 
     @LassoInput(desc = "Include reference implementation from the following action", optional = true)
     public String refActionRef;
-
-    @LassoInput(desc = "Do clone detection on Call Graph comparisons", optional = true)
-    public boolean callGraph = false;
 
     protected File getReportXml(File root) throws IOException {
         // determine directory
@@ -135,15 +129,6 @@ public class Nicad6 extends DefaultAction {
         // create project folders
         List<System> impls = actionConfiguration.getAbstraction().getImplementations();
         impls.forEach(implementation -> {
-//            if(callGraph) {
-//                // attempt to retrieve last report
-//                ReportKey key = ReportKey.of((String) null, actionConfiguration.getAbstraction().getName(), implementation);
-//
-//                StaticCallGraphReport staticCallGraphReport = context.getReportOperations().getLast(context.getExecutionId(), key, StaticCallGraphReport.class);
-//                createProject(submoduleRoot, implementation, staticCallGraphReport);
-//            } else {
-//                createProject(submoduleRoot, implementation);
-//            }
             createProject(submoduleRoot, implementation.getCode());
         });
 
@@ -169,7 +154,7 @@ public class Nicad6 extends DefaultAction {
         // set default commands
         Environment environment;
         if(actionConfiguration.getProfile() != null) {
-            environment = actionConfiguration.getProfile().getEnvironment();
+            environment = actionConfiguration.getProfile().getEnvironment().copy();
         } else {
             environment = new Environment();
             environment.setImage(NICAD_6_2);
@@ -218,50 +203,6 @@ public class Nicad6 extends DefaultAction {
         // group/collapse by detected clones
         group(cloneMap, context, actionConfiguration);
     }
-
-//    protected void createProject(File submoduleRoot, CodeUnit implementation, StaticCallGraphReport staticCallGraphReport) {
-//        if(staticCallGraphReport == null || CollectionUtils.isEmpty(staticCallGraphReport.getCalls())) {
-//            if(LOG.isWarnEnabled()) {
-//                LOG.warn("No calls found for '{}'", implementation.getId());
-//            }
-//
-//            return;
-//        }
-//
-//        try {
-//            String source = "";
-//            if(implementation.getImplementationUnit() == CodeUnit.CodeUnitType.METHOD) {
-//                List<String> calls = staticCallGraphReport.getCalls();
-//
-//                String callChain = calls.stream()
-//                        .map(s -> StringUtils.substringBeforeLast(s, ":"))
-//                        .map(s -> StringUtils.replace(s, "::", ".") + ";")
-//                        .map(s -> StringUtils.replaceEach(s, new String[]{".<init>", ".<clinit>"}, new String[]{"", ""}))
-//                        .collect(Collectors.joining("\n"));
-//
-//                String methodSource = String.format(METHOD_SKELETON, callChain);
-//
-//                source = String.format(CLASS_SKELETON, implementation.getName(), methodSource);
-//            } else {
-//                throw new UnsupportedOperationException("not implemented");
-//            }
-//
-//            // create project
-//            MavenProject mavenProject = new MavenProject(new File(submoduleRoot, implementation.getId()), false);
-//            mavenProject.getSrcMain().mkdirs();
-//
-//            CompilationUnit cu = new CompilationUnit();
-//            cu.setName(implementation.getName());
-//            cu.setPkg(implementation.getPackagename());
-//            cu.setSourceCode(source);
-//
-//            mavenProject.writeCompilationUnit(cu, false);
-//        } catch(Throwable e) {
-//            if(LOG.isWarnEnabled()) {
-//                LOG.warn("Implementation '{}' failed", implementation.getId());
-//            }
-//        }
-//    }
 
     protected void createProject(File submoduleRoot, CodeUnit implementation) {
         try {

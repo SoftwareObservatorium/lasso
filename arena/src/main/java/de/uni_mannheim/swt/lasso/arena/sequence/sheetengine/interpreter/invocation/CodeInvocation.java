@@ -5,8 +5,8 @@ import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Executed
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.ExecutedInvocations;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Invocation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Obj;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.eval.Eval;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.eval.EvalException;
+import de.uni_mannheim.swt.lasso.ssn.eval.Eval;
+import de.uni_mannheim.swt.lasso.ssn.eval.EvalException;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.run.ExecutionResult;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.run.Runner;
 

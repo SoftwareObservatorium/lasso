@@ -1,7 +1,6 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter;
 
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
-import de.uni_mannheim.swt.lasso.arena.sequence.SequenceExecutionRecords;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

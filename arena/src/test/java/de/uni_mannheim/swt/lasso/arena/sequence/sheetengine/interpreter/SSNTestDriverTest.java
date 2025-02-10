@@ -11,8 +11,6 @@ import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.event.Co
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.event.JaCoCoListener;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.TestInvocation;
 import de.uni_mannheim.swt.lasso.core.dto.srm.Sheet;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize.GsonMapper;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize.ObjectMapperVisitor;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.CutUtils;
 import de.uni_mannheim.swt.lasso.core.dto.srm.SheetInvocation;
 import de.uni_mannheim.swt.lasso.core.dto.srm.StimulusResponseMatrix;
@@ -25,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -93,7 +92,7 @@ public class SSNTestDriverTest {
                     size()->int
                 }
                 """;
-        ObjectMapperVisitor visitor = createVisitor();
+        CompositeInvocationVisitor visitor = new CompositeInvocationVisitor(Arrays.asList());
 
         Class cutClass = StackEmptyConstructorExample.class;
 
@@ -110,8 +109,13 @@ public class SSNTestDriverTest {
             ExecutedInvocations executedInvocations = cell.getValue();
 
             LOG.debug("executed invocations for '{}' \n{}", cell.getColumnKey().getAdaptee().getVariantId(), executedInvocations);
-            visitor.getActuationSheet().debug();
-            visitor.getAdaptedActuationSheet().debug();
+
+            List<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String>> sheets = TestUtils.createSheets(cell.getColumnKey(), executedInvocations);
+            de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> actuationSheetData = sheets.get(0);
+            actuationSheetData.debug();
+            de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> adaptedActuationSheetData = sheets.get(1);
+            adaptedActuationSheetData.debug();
+
             Invocations invocations = executedInvocations.getInvocations();
 
             assertEquals(4, invocations.getSequence().size());
@@ -160,7 +164,7 @@ public class SSNTestDriverTest {
                     size()->int
                 }
                 """;
-        ObjectMapperVisitor visitor = createVisitor();
+        CompositeInvocationVisitor visitor = new CompositeInvocationVisitor(Arrays.asList());
 
         Class cutClass = StackNonEmptyConstructorExample.class;
 
@@ -177,8 +181,12 @@ public class SSNTestDriverTest {
             ExecutedInvocations executedInvocations = cell.getValue();
 
             LOG.debug("executed invocations for '{}' \n{}", cell.getColumnKey().getAdaptee().getVariantId(), executedInvocations);
-            visitor.getActuationSheet().debug();
-            visitor.getAdaptedActuationSheet().debug();
+            List<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String>> sheets = TestUtils.createSheets(cell.getColumnKey(), executedInvocations);
+            de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> actuationSheetData = sheets.get(0);
+            actuationSheetData.debug();
+            de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> adaptedActuationSheetData = sheets.get(1);
+            adaptedActuationSheetData.debug();
+
             Invocations invocations = executedInvocations.getInvocations();
 
             assertEquals(4, invocations.getSequence().size());
@@ -221,7 +229,7 @@ public class SSNTestDriverTest {
                     size()->int
                 }
                 """;
-        ObjectMapperVisitor visitor = createVisitor();
+        CompositeInvocationVisitor visitor = new CompositeInvocationVisitor(Arrays.asList());
 
         Class cutClass = StackEmptyConstructorExample.class;
 
@@ -237,8 +245,12 @@ public class SSNTestDriverTest {
             ExecutedInvocations executedInvocations = cell.getValue();
 
             LOG.debug("executed invocations for '{}' \n{}", cell.getColumnKey().getAdaptee().getVariantId(), executedInvocations);
-            visitor.getActuationSheet().debug();
-            visitor.getAdaptedActuationSheet().debug();
+            List<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String>> sheets = TestUtils.createSheets(cell.getColumnKey(), executedInvocations);
+            de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> actuationSheetData = sheets.get(0);
+            actuationSheetData.debug();
+            de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> adaptedActuationSheetData = sheets.get(1);
+            adaptedActuationSheetData.debug();
+
             Invocations invocations = executedInvocations.getInvocations();
 
             assertEquals(4, invocations.getSequence().size());
@@ -274,7 +286,7 @@ public class SSNTestDriverTest {
                     sum(int,int)->int
                 }
                 """;
-        ObjectMapperVisitor visitor = createVisitor();
+        CompositeInvocationVisitor visitor = new CompositeInvocationVisitor(Arrays.asList());
 
         Class cutClass = StaticMethodExample.class;
 
@@ -290,8 +302,12 @@ public class SSNTestDriverTest {
             ExecutedInvocations executedInvocations = cell.getValue();
 
             LOG.debug("executed invocations for '{}' \n{}", cell.getColumnKey().getAdaptee().getVariantId(), executedInvocations);
-            visitor.getActuationSheet().debug();
-            visitor.getAdaptedActuationSheet().debug();
+            List<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String>> sheets = TestUtils.createSheets(cell.getColumnKey(), executedInvocations);
+            de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> actuationSheetData = sheets.get(0);
+            actuationSheetData.debug();
+            de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> adaptedActuationSheetData = sheets.get(1);
+            adaptedActuationSheetData.debug();
+
             Invocations invocations = executedInvocations.getInvocations();
 
             assertEquals(2, invocations.getSequence().size());
@@ -302,6 +318,54 @@ public class SSNTestDriverTest {
             assertEquals(2, executedInvocations.getSequence().size());
         }
     }
+
+//    /**
+//     * A CUT class with a static method.
+//     *
+//     * @throws IOException
+//     * @throws ClassNotFoundException
+//     */
+//    @Test
+//    public void test_static_nocreate() throws IOException, ClassNotFoundException {
+//        @Language("jsonl")
+//        String ssnJsonlStr = """
+//                {"sheet": "Sheet 1", "header": "Row 2", "cells": {"A2": {}, "B2": "sum", "C2": "Singleton", "D2": 2, "E2": 3}}
+//                """;
+//
+//        String lql = """
+//                Singleton {
+//                    sum(int,int)->int
+//                }
+//                """;
+//        CompositeInvocationVisitor visitor = new CompositeInvocationVisitor(Arrays.asList());
+//
+//        Class cutClass = StaticMethodExample.class;
+//
+//        SSNTestDriver testDriver = new SSNTestDriver();
+//        // SM
+//        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, ClassUnderTest, TestInvocation> stimulusMatrix = SSNTestDriver.parseStimulusMatrix(
+//                Arrays.asList(new Sheet("test1()", ssnJsonlStr, lql)), Arrays.asList(CutUtils.createExample(cutClass)), Arrays.asList(new SheetInvocation("test1", "")));
+//
+//        // SRM
+//        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> stimulusResponseMatrix = testDriver.runSheets(stimulusMatrix, 1, visitor);
+//
+//        for(Table.Cell<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> cell : stimulusResponseMatrix.getTable().cellSet()) {
+//            ExecutedInvocations executedInvocations = cell.getValue();
+//
+//            LOG.debug("executed invocations for '{}' \n{}", cell.getColumnKey().getAdaptee().getVariantId(), executedInvocations);
+//            List<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String>> sheets = TestUtils.createSheets(cell.getColumnKey(), executedInvocations);
+//            de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> actuationSheetData = sheets.get(0);
+//            actuationSheetData.debug();
+//            de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> adaptedActuationSheetData = sheets.get(1);
+//            adaptedActuationSheetData.debug();
+//
+//            Invocations invocations = executedInvocations.getInvocations();
+//
+//            assertEquals(1, invocations.getSequence().size());
+//
+//            assertEquals(1, executedInvocations.getSequence().size());
+//        }
+//    }
 
     /**
      * A CUT class with a static method and non-visible constructor.
@@ -322,7 +386,7 @@ public class SSNTestDriverTest {
                     sum(int,int)->int
                 }
                 """;
-        ObjectMapperVisitor visitor = createVisitor();
+        CompositeInvocationVisitor visitor = new CompositeInvocationVisitor(Arrays.asList());
 
         Class cutClass = InvisibleStaticMethodExample.class;
 
@@ -338,8 +402,12 @@ public class SSNTestDriverTest {
             ExecutedInvocations executedInvocations = cell.getValue();
 
             LOG.debug("executed invocations for '{}' \n{}", cell.getColumnKey().getAdaptee().getVariantId(), executedInvocations);
-            visitor.getActuationSheet().debug();
-            visitor.getAdaptedActuationSheet().debug();
+            List<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String>> sheets = TestUtils.createSheets(cell.getColumnKey(), executedInvocations);
+            de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> actuationSheetData = sheets.get(0);
+            actuationSheetData.debug();
+            de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> adaptedActuationSheetData = sheets.get(1);
+            adaptedActuationSheetData.debug();
+
             Invocations invocations = executedInvocations.getInvocations();
 
             assertEquals(2, invocations.getSequence().size());
@@ -368,7 +436,7 @@ public class SSNTestDriverTest {
                     getParent()->Node
                 }
                 """;
-        ObjectMapperVisitor visitor = createVisitor();
+        CompositeInvocationVisitor visitor = new CompositeInvocationVisitor(Arrays.asList());
 
         Class cutClass = CompositeNodeExample.class;
 
@@ -384,8 +452,12 @@ public class SSNTestDriverTest {
             ExecutedInvocations executedInvocations = cell.getValue();
 
             LOG.debug("executed invocations for '{}' \n{}", cell.getColumnKey().getAdaptee().getVariantId(), executedInvocations);
-            visitor.getActuationSheet().debug();
-            visitor.getAdaptedActuationSheet().debug();
+            List<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String>> sheets = TestUtils.createSheets(cell.getColumnKey(), executedInvocations);
+            de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> actuationSheetData = sheets.get(0);
+            actuationSheetData.debug();
+            de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> adaptedActuationSheetData = sheets.get(1);
+            adaptedActuationSheetData.debug();
+
             Invocations invocations = executedInvocations.getInvocations();
 
             assertEquals(4, invocations.getSequence().size());
@@ -424,7 +496,7 @@ public class SSNTestDriverTest {
                     getParent()->Node
                 }
                 """;
-        ObjectMapperVisitor visitor = createVisitor();
+        CompositeInvocationVisitor visitor = new CompositeInvocationVisitor(Arrays.asList());
 
         Class cutClass = CompositeNodeExample.class;
 
@@ -440,8 +512,12 @@ public class SSNTestDriverTest {
             ExecutedInvocations executedInvocations = cell.getValue();
 
             LOG.debug("executed invocations for '{}' \n{}", cell.getColumnKey().getAdaptee().getVariantId(), executedInvocations);
-            visitor.getActuationSheet().debug();
-            visitor.getAdaptedActuationSheet().debug();
+            List<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String>> sheets = TestUtils.createSheets(cell.getColumnKey(), executedInvocations);
+            de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> actuationSheetData = sheets.get(0);
+            actuationSheetData.debug();
+            de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> adaptedActuationSheetData = sheets.get(1);
+            adaptedActuationSheetData.debug();
+
             Invocations invocations = executedInvocations.getInvocations();
 
             assertEquals(3, invocations.getSequence().size());
@@ -488,11 +564,9 @@ public class SSNTestDriverTest {
                     isFull()->boolean
                 }
                 """;
-        //ObjectMapperVisitor visitor = createVisitor();
-
-        ObjectMapperVisitor visitor = new ObjectMapperVisitor(new GsonMapper());
-        InvocationVisitor invocationVisitor = new CompositeInvocationVisitor(
-                Arrays.asList(visitor, new JaCoCoListener())); // add jacoco listener
+        JaCoCoListener jaCoCoListener = new JaCoCoListener();
+        InvocationVisitor visitor = new CompositeInvocationVisitor(
+                Arrays.asList(jaCoCoListener)); // add jacoco listener
 
         Class cutClass = BoundedQueue.class;
 
@@ -504,83 +578,21 @@ public class SSNTestDriverTest {
                 Arrays.asList(new Sheet("test1()", ssnJsonlStr, lql)), Arrays.asList(CutUtils.createExample(cutClass)), Arrays.asList(new SheetInvocation("test1", "")));
 
         // SRM
-        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> stimulusResponseMatrix = testDriver.runSheets(stimulusMatrix, 1, invocationVisitor);
-
-        for(Table.Cell<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> cell : stimulusResponseMatrix.getTable().cellSet()) {
-            ExecutedInvocations executedInvocations = cell.getValue();
-
-            LOG.debug("executed invocations for '{}' \n{}", cell.getColumnKey().getAdaptee().getVariantId(), executedInvocations);
-            visitor.getActuationSheet().debug();
-            visitor.getAdaptedActuationSheet().debug();
-            Invocations invocations = executedInvocations.getInvocations();
-        }
-    }
-
-    @Test
-    public void test_Base64_remote_string() throws IOException, ClassNotFoundException {
-//        Gson gson = new Gson();
-//        String input = gson.toJson("Hello World!".getBytes());
-//
-//        System.out.println(input); [72,101,108,108,111,32,87,111,114,108,100,33]
-
-        @Language("jsonl")
-        String ssnJsonlStr = """
-                {"sheet": "Sheet 1", "header": "Row 1", "cells": {"A1": {}, "B1": "create", "C1": "Base64"}}
-                {"sheet": "Sheet 1", "header": "Row 2", "cells": {"A2": {}, "B2": "encode", "C2": "A1", "D2": "\\"Hello World!\\".getBytes()"}}
-                """;
-
-        String lql = """
-                Base64{
-                    encode(byte[])->byte[]
-                }
-                """;
-        ObjectMapperVisitor visitor = createVisitor();
-
-        SSNTestDriver testDriver = new SSNTestDriver();
-        String mavenRepoUrl = NexusInstance.LASSOHP12_URL;
-        File localRepo = new File("/tmp/my_repo/local-repo");
-        DependencyResolver resolver = new DependencyResolver(mavenRepoUrl, localRepo.getAbsolutePath());
-        testDriver.setMavenRepository(new MavenRepository(resolver));
-
-        // commons-codec:commons-codec:1.15
-        ClassUnderTest classUnderTest = CutUtils.createExample("org.apache.commons.codec.binary.Base64", "commons-codec:commons-codec:1.15");
-
-        // SM
-        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, ClassUnderTest, TestInvocation> stimulusMatrix = SSNTestDriver.parseStimulusMatrix(
-                Arrays.asList(new Sheet("test1()", ssnJsonlStr, lql)), Arrays.asList(classUnderTest), Arrays.asList(new SheetInvocation("test1", "")));
-
-        // SRM
         StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> stimulusResponseMatrix = testDriver.runSheets(stimulusMatrix, 1, visitor);
 
         for(Table.Cell<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> cell : stimulusResponseMatrix.getTable().cellSet()) {
             ExecutedInvocations executedInvocations = cell.getValue();
 
             LOG.debug("executed invocations for '{}' \n{}", cell.getColumnKey().getAdaptee().getVariantId(), executedInvocations);
-            visitor.getActuationSheet().debug();
-            visitor.getAdaptedActuationSheet().debug();
+            List<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String>> sheets = TestUtils.createSheets(cell.getColumnKey(), executedInvocations);
+            de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> actuationSheetData = sheets.get(0);
+            actuationSheetData.debug();
+            de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> adaptedActuationSheetData = sheets.get(1);
+            adaptedActuationSheetData.debug();
+
             Invocations invocations = executedInvocations.getInvocations();
-
-            assertEquals(2, invocations.getSequence().size());
-
-            System.out.println(new String((byte[]) executedInvocations.getExecutedInvocation(1).getOutput().getValue()));
-
-            assertEquals(invocations.getEval().resolveClass("Base64"), invocations.getInvocation(0).getTargetClass());
-            assertEquals(0, invocations.getInvocation(0).getParameters().size());
-            assertEquals(invocations.getEval().resolveClass("Base64"), invocations.getInvocation(1).getTargetClass());
-            assertEquals(1, invocations.getInvocation(1).getParameters().size());
-            // test oracle values (first column)
-            assertTrue(invocations.getInvocation(0).getExpectedOutput().isUndefined());
-            assertTrue(invocations.getInvocation(1).getExpectedOutput().isUndefined());
-
-            assertEquals("SGVsbG8gV29ybGQh", new String((byte[]) executedInvocations.getExecutedInvocation(1).getOutput().getValue()));
         }
-    }
 
-    private ObjectMapperVisitor createVisitor() {
-        ObjectMapperVisitor visitor = new ObjectMapperVisitor(new GsonMapper());
-//        InvocationVisitor invocationVisitor = new CompositeInvocationVisitor(
-//                Arrays.asList(visitor));
-
-        return visitor;
+        jaCoCoListener.getStimulusResponseMatrix().debug();
     }
 }

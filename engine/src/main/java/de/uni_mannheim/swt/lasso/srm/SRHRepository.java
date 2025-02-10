@@ -20,6 +20,7 @@
 package de.uni_mannheim.swt.lasso.srm;
 
 import de.uni_mannheim.swt.lasso.cluster.ClusterEngine;
+import de.uni_mannheim.swt.lasso.srm.olap.ArrowOlap;
 import de.uni_mannheim.swt.lasso.srm.operators.FunctionalCorrectness;
 import joinery.DataFrame;
 import org.apache.commons.collections4.MapUtils;
@@ -28,7 +29,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -45,11 +47,14 @@ public class SRHRepository {
     public static final String ARENA_DEFAULT = "execute";
     public static final String TYPE_VALUE = "value";
 
-    private final ClusterEngine clusterEngine;
+    //private final ClusterEngine clusterEngine;
     private final FunctionalCorrectness correctness;
 
+    JDBC jdbc = new JDBC();
+    ArrowOlap olap = new ArrowOlap();
+
     public SRHRepository(ClusterEngine clusterEngine, FunctionalCorrectness correctness) {
-        this.clusterEngine = clusterEngine;
+        //this.clusterEngine = clusterEngine;
         this.correctness = correctness;
     }
 
@@ -68,9 +73,21 @@ public class SRHRepository {
             type = TYPE_VALUE;
         }
 
-        DataFrame df = clusterEngine.getClusterSRMRepository().sqlToDataFrame("SELECT CONCAT(REGEXP_REPLACE(SHEETID, '_[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}',''),'@',X, ',', Y) as statement, CONCAT(SYSTEMID,'_',ADAPTERID) as SYSTEMID, VALUE FROM srm.cellvalue where executionid = ? and arenaid = ? and type = ? order by sheetid", executionId, arenaId, type);
+//        DataFrame df = clusterEngine.getClusterSRMRepository().sqlToDataFrame("SELECT CONCAT(SHEETID,'@',X, ',', Y) as statement, CONCAT(SYSTEMID,'_',ADAPTERID, '_', VARIANTID) as SYSTEMID, VALUE FROM srm.cellvalue where executionid = ? and type = ? order by sheetid", executionId, type);
+//
+//        DataFrame wide = df.pivot("STATEMENT", "SYSTEMID", "VALUE").sortBy("STATEMENT");
 
-        DataFrame wide = df.pivot("STATEMENT", "SYSTEMID", "VALUE").sortBy("STATEMENT");
+        String sql = "SELECT CONCAT(SHEETID,'@',X, ',', Y) as statement, CONCAT(SYSTEMID,'_',ADAPTERID, '_', VARIANTID) as SYSTEMID, VALUE FROM srm.cellvalue where executionid = ? and type = ? order by sheetid";
+
+        DataFrame wide;
+        try (PreparedStatement preparedStatement = jdbc.createPreparedStatement(sql)) {
+            preparedStatement.setString(1, executionId);
+            preparedStatement.setString(2, type);
+
+            wide = olap.queryDuckDB(preparedStatement, false);
+        } catch (SQLException e) {
+            throw new IOException(e);
+        }
 
         // filter by oracle
         wide = this.filterByOracleValues(wide, oracleFilters);
@@ -93,7 +110,10 @@ public class SRHRepository {
                 if(!StringUtils.equalsAnyIgnoreCase(colName, "STATEMENT", "VALUE")) {
                     boolean equivalent = true;
                     for(String stmt : oracleFilters.keySet()) {
-                        String actual = (String) wide.get(stmt, colName);
+                        // get row index
+                        int rowIndex = wide.col("STATEMENT").indexOf(stmt);
+
+                        String actual = (String) wide.get(rowIndex, colName);
                         String expected = oracleFilters.get(stmt);
                         equivalent = correctness.assertStringEquals(stmt, actual, expected);
 
@@ -131,8 +151,19 @@ public class SRHRepository {
         // FIXME unsafe
         String typesIn = Arrays.stream(types).map(t -> StringUtils.wrap(t, "'")).collect(Collectors.joining(","));
 
-        DataFrame df = clusterEngine.getClusterSRMRepository().sqlToDataFrame("SELECT CONCAT(REGEXP_REPLACE(SHEETID, '_[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}',''),'@',X, ',', Y) as statement, CONCAT(SYSTEMID,'_',ADAPTERID) as SYSTEMID, VALUE FROM srm.cellvalue where executionid = ? and arenaid = ? and type in ("+typesIn+") order by sheetid", executionId, arenaId);
-        DataFrame wide = df.pivot("STATEMENT", "SYSTEMID", "VALUE").sortBy("STATEMENT");
+//        DataFrame df = clusterEngine.getClusterSRMRepository().sqlToDataFrame("SELECT CONCAT(REGEXP_REPLACE(SHEETID, '_[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}',''),'@',X, ',', Y) as statement, CONCAT(SYSTEMID,'_',ADAPTERID) as SYSTEMID, VALUE FROM srm.cellvalue where executionid = ? and arenaid = ? and type in ("+typesIn+") order by sheetid", executionId, arenaId);
+//        DataFrame wide = df.pivot("STATEMENT", "SYSTEMID", "VALUE").sortBy("STATEMENT");
+
+        String sql = "SELECT CONCAT(SHEETID,'@',X, ',', Y) as statement, CONCAT(SYSTEMID,'_',ADAPTERID, '_', VARIANTID) as SYSTEMID, VALUE FROM srm.cellvalue where executionid = ? and type in (" + typesIn + ") order by sheetid";
+
+        DataFrame wide;
+        try (PreparedStatement preparedStatement = jdbc.createPreparedStatement(sql)) {
+            preparedStatement.setString(1, executionId);
+
+            wide = olap.queryDuckDB(preparedStatement, false);
+        } catch (SQLException e) {
+            throw new IOException(e);
+        }
 
         return wide;
     }
@@ -142,8 +173,21 @@ public class SRHRepository {
             type = "value";
         }
 
-        DataFrame df = clusterEngine.getClusterSRMRepository().sqlToDataFrame("SELECT CONCAT(REGEXP_REPLACE(SHEETID, '_[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}',''),'@',X, ',', Y) as statement, CONCAT(SYSTEMID,'_',ADAPTERID) as SYSTEMID, VALUE FROM srm.cellvalue where executionid = ? and arenaid = ? and systemid = ? and type = ? order by sheetid", executionId, arenaId, systemId, type);
-        DataFrame wide = df.pivot("STATEMENT", "SYSTEMID", "VALUE").sortBy("STATEMENT");
+//        DataFrame df = clusterEngine.getClusterSRMRepository().sqlToDataFrame("SELECT CONCAT(REGEXP_REPLACE(SHEETID, '_[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}',''),'@',X, ',', Y) as statement, CONCAT(SYSTEMID,'_',ADAPTERID) as SYSTEMID, VALUE FROM srm.cellvalue where executionid = ? and arenaid = ? and systemid = ? and type = ? order by sheetid", executionId, arenaId, systemId, type);
+//        DataFrame wide = df.pivot("STATEMENT", "SYSTEMID", "VALUE").sortBy("STATEMENT");
+
+        String sql = "SELECT CONCAT(SHEETID,'@',X, ',', Y) as statement, CONCAT(SYSTEMID,'_',ADAPTERID, '_', VARIANTID) as SYSTEMID, VALUE FROM srm.cellvalue where executionid = ? and type = ? and systemid = ? order by sheetid";
+
+        DataFrame wide;
+        try (PreparedStatement preparedStatement = jdbc.createPreparedStatement(sql)) {
+            preparedStatement.setString(1, executionId);
+            preparedStatement.setString(2, type);
+            preparedStatement.setString(3, systemId);
+
+            wide = olap.queryDuckDB(preparedStatement, false);
+        } catch (SQLException e) {
+            throw new IOException(e);
+        }
 
         return wide;
     }

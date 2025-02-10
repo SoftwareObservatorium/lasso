@@ -109,7 +109,7 @@ public class ExecutedInvocation {
         // FIXME adapt delegate
         MethodSignature constructorSig = executedInvocations.getInvocations().resolve(instanceInvocation.getAsConstructor());
         InterfaceSpecification interfaceSpecification = executedInvocations.getInvocations()
-                .getParsedSheet().getInterfaceSpecification();
+                .getInterfaceSpecification();
 
         // FIXME dangerous cast
         if(adaptedImplementation instanceof PermutatorAdaptedImplementation) {
@@ -131,13 +131,13 @@ public class ExecutedInvocation {
         MethodInvocation methodInvocation = (MethodInvocation) invocation;
         MethodSignature methodSig = executedInvocations.getInvocations().resolve(methodInvocation.getMethod());
         InterfaceSpecification interfaceSpecification = executedInvocations.getInvocations()
-                .getParsedSheet().getInterfaceSpecification();
+                .getInterfaceSpecification();
 
         // FIXME dangerous cast
         if(adaptedImplementation instanceof PermutatorAdaptedImplementation) {
             PermutatorAdaptedImplementation pImpl = (PermutatorAdaptedImplementation) adaptedImplementation;
             AdaptedMethod adaptedMethod = pImpl.resolveAdaptedMethod(
-                    executedInvocations.getInvocations().getParsedSheet().getInterfaceSpecification(),
+                    executedInvocations.getInvocations().getInterfaceSpecification(),
                     methodSig);
 
             return adaptedMethod;

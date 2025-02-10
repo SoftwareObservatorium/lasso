@@ -17,7 +17,6 @@
     <description>lasso engine</description>
 
     <properties>
-        <commons.csv.version>1.6</commons.csv.version>
         <jgrapht.version>1.3.0</jgrapht.version>
     </properties>
 
@@ -51,6 +50,27 @@
     </dependencyManagement>
 
     <dependencies>
+
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j</artifactId>
+            <version>${langchain.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-ollama</artifactId>
+            <version>${langchain.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-open-ai</artifactId>
+            <version>${langchain.version}</version>
+        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>dev.langchain4j</groupId>-->
+<!--            <artifactId>langchain4j-easy-rag</artifactId>-->
+<!--            <version>${langchain.version}</version>-->
+<!--        </dependency>-->
 
         <dependency>
             <groupId>com.github.javaparser</groupId>
@@ -188,27 +208,6 @@
             <version>${groovy.version}</version>
         </dependency>
 
-
-        <!-- Spring RESTtemplate -->
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-web</artifactId>
-            <version>${spring.version}</version>
-        </dependency>
-
-        <!-- https://mvnrepository.com/artifact/org.jeasy/easy-random-randomizers -->
-        <dependency>
-            <groupId>org.jeasy</groupId>
-            <artifactId>easy-random-randomizers</artifactId>
-            <version>4.0.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.squareup</groupId>
-            <artifactId>javapoet</artifactId>
-            <version>1.11.1</version>
-        </dependency>
-
         <dependency>
             <groupId>org.jgrapht</groupId>
             <artifactId>jgrapht-core</artifactId>
@@ -243,28 +242,15 @@
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-csv</artifactId>
-            <version>${commons.csv.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jacoco</groupId>
-            <artifactId>org.jacoco.core</artifactId>
-            <version>${jacoco.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jacoco</groupId>
-            <artifactId>org.jacoco.report</artifactId>
-            <version>${jacoco.version}</version>
-        </dependency>
-
         <!-- Lasso -->
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>ssn</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

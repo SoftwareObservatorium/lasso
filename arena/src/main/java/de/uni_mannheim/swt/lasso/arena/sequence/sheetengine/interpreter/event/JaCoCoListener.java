@@ -6,9 +6,12 @@ import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Invocati
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet;
 import de.uni_mannheim.swt.lasso.core.dto.srm.StimulusResponseMatrix;
 
+import de.uni_mannheim.swt.lasso.core.model.Scope;
+import org.apache.commons.lang3.StringUtils;
 import org.jacoco.core.analysis.CoverageBuilder;
 import org.jacoco.core.analysis.IClassCoverage;
 import org.jacoco.core.analysis.ICounter;
+import org.jacoco.core.analysis.ICoverageNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,8 +26,7 @@ public class JaCoCoListener extends InvocationVisitor {
     private static final Logger LOG = LoggerFactory
             .getLogger(JaCoCoListener.class);
 
-    // XXX should be really the test suite: List<Test>
-    private StimulusResponseMatrix<String, AdaptedImplementation, Sheet> stimulusResponseMatrix = new StimulusResponseMatrix<>();
+    private StimulusResponseMatrix<String, AdaptedImplementation, Sheet<Integer, Integer, Object>> stimulusResponseMatrix = new StimulusResponseMatrix<>();
 
     @Override
     public void visitBeforeExecution(AdaptedImplementation adaptedImplementation) {
@@ -52,15 +54,23 @@ public class JaCoCoListener extends InvocationVisitor {
         try {
             CoverageBuilder coverageBuilder = jaCoCoContainer.stop();
 
-            // FIXME
-            Optional<IClassCoverage> cutClassOp = coverageBuilder.getClasses().stream().findFirst();
+            // determine scope
+            // FIXME apply here?
+            Scope scope = jaCoCoContainer.getScope();
+
+            // identify class under test
+            String byteCodeClassNotation = StringUtils.replaceChars(adaptedImplementation.getAdaptee().getClassName(), '.', '/');
+            Optional<IClassCoverage> cutClassOp = coverageBuilder.getClasses().stream().filter(s -> StringUtils.equals(byteCodeClassNotation, s.getName())).findFirst();
+
+//            for(IClassCoverage classCoverage : coverageBuilder.getClasses()) {
+//                LOG.debug("JACOCO CLASS {} vs {}, {}", adaptedImplementation.getAdaptee().getClassName(), classCoverage.getName(), classCoverage.getComplexityCounter().getCoveredRatio());
+//            }
+
             if(cutClassOp.isPresent()) {
                 IClassCoverage cutClass = cutClassOp.get();
-                stimulusResponseMatrix.put("jacoco_complexity", adaptedImplementation, createMetricSheet(cutClass.getComplexityCounter()));
-                stimulusResponseMatrix.put("jacoco_branch", adaptedImplementation, createMetricSheet(cutClass.getBranchCounter()));
-                stimulusResponseMatrix.put("jacoco_instruction", adaptedImplementation, createMetricSheet(cutClass.getInstructionCounter()));
-                stimulusResponseMatrix.put("jacoco_line", adaptedImplementation, createMetricSheet(cutClass.getLineCounter()));
-                stimulusResponseMatrix.put("jacoco_method", adaptedImplementation, createMetricSheet(cutClass.getMethodCounter()));
+                LOG.debug("Identified CUT class for JaCoCo measurements '{}'", cutClass.getName());
+
+                stimulusResponseMatrix.put("JACOCO", adaptedImplementation, createMetricSheet(cutClass));
 
 //            for (int i = cutClass.getFirstLine(); i <= cutClass.getLastLine(); i++) {
 //                System.out.printf("Line %s: %s%n", Integer.valueOf(i),
@@ -69,7 +79,7 @@ public class JaCoCoListener extends InvocationVisitor {
             }
 
         } catch (Throwable e) {
-            e.printStackTrace();
+            LOG.warn("code coverage failed", e);
         }
     }
 
@@ -86,16 +96,23 @@ public class JaCoCoListener extends InvocationVisitor {
 //        return "";
 //    }
 
-    private Sheet<Integer, Integer, Double> createMetricSheet(ICounter counter) {
-        Sheet<Integer, Integer, Double> metricSheet = new Sheet<>();
-        metricSheet.put(0,0, (double) counter.getMissedCount());
-        metricSheet.put(0,1, (double) counter.getTotalCount());
-        metricSheet.put(0,2, (double) counter.getCoveredRatio());
+    private Sheet<Integer, Integer, Object> createMetricSheet(IClassCoverage cutClass) {
+        Sheet<Integer, Integer, Object> metricSheet = new Sheet<>();
+        int r = 0;
+        for(ICoverageNode.CounterEntity counter : ICoverageNode.CounterEntity.values()) {
+            for(ICounter.CounterValue counterValue : ICounter.CounterValue.values()) {
+                metricSheet.put(r,0, cutClass.getCounter(counter).getValue(counterValue));
+                // add name (same column as op)
+                metricSheet.put(r,1, counter.toString() + "_" + counterValue.toString());
+
+                r++;
+            }
+        }
 
         return metricSheet;
     }
 
-    public StimulusResponseMatrix<String, AdaptedImplementation, Sheet> getStimulusResponseMatrix() {
+    public StimulusResponseMatrix<String, AdaptedImplementation, Sheet<Integer, Integer, Object>> getStimulusResponseMatrix() {
         return stimulusResponseMatrix;
     }
 }

@@ -222,7 +222,15 @@ public class GitImport extends DefaultAction {
             List<String> args = defaultArgs("maven_analyze_store.txt");
 
             // metadata=key1,value1|key2,value2 etc.
-            String metadata = "\"executionId," + context.getExecutionId() + "|" + "action," + getName() + "\"";
+            //String metadata = "\"executionId," + context.getExecutionId() + "|" + "action," + getName() + "\"";
+
+            // FIXME add more metadata
+            // metadata=key1,value1|key2,value2 etc.
+            String metadata = "\"executionId," + context.getExecutionId()
+                    + "|" + "action," + getName()
+                    + "|" + "abstractionId," + actionConfiguration.getAbstraction().getName()
+                    // FIXME git repo + "|" + "gitRepo," + prompt.getSampleId()
+                    + "\"";
 
             ExecutableCorpus executableCorpus = context.getConfiguration().getExecutableCorpus();
             // FIXME select default ds
@@ -262,7 +270,7 @@ public class GitImport extends DefaultAction {
         ExecutionEnvironmentManager executionEnvironmentManager = context.getExecutionEnvironmentManager();
 
         // set default commands
-        Environment environment = actionConfiguration.getProfile().getEnvironment();
+        Environment environment = actionConfiguration.getProfile().getEnvironment().copy();;
         if(CollectionUtils.isEmpty(environment.getCommandArgsList())) {
             environment.setCommandArgsList(new LinkedList<>());
         }

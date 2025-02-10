@@ -33,4 +33,12 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface Local {
 
+    /**
+     * Number of threads for processing stimulus matrices in Java Actions.
+     *
+     * If < 0, default is set by "master.threadsPerAbstraction" (application.properties).
+     *
+     * @return
+     */
+    int numberOfParallelStimulusMatrices() default -1;
 }

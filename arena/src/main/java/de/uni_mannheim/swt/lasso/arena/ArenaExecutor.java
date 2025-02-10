@@ -21,8 +21,7 @@ package de.uni_mannheim.swt.lasso.arena;
 
 import de.uni_mannheim.swt.lasso.arena.repository.DependencyResolver;
 import de.uni_mannheim.swt.lasso.arena.repository.NexusInstance;
-import de.uni_mannheim.swt.lasso.arena.task.Amplify;
-import de.uni_mannheim.swt.lasso.arena.task.Execute;
+import de.uni_mannheim.swt.lasso.arena.task.SSNExecute;
 import de.uni_mannheim.swt.lasso.cluster.LassoClusterClient;
 import de.uni_mannheim.swt.lasso.cluster.client.ArenaJob;
 import de.uni_mannheim.swt.lasso.cluster.client.ClientArenaJobRepository;
@@ -128,9 +127,9 @@ public class ArenaExecutor {
                 if (StringUtils.isNotBlank(task)) {
                     System.out.println(String.format("Task activated '%s'", task));
 
-                    if (StringUtils.equals(Amplify.class.getSimpleName(), task)) {
+                    if (StringUtils.equals(SSNExecute.class.getSimpleName(), task)) {
                         try {
-                            Amplify.execute(cmd, resolver, arenaJob, clusterClient);
+                            SSNExecute.execute(cmd, resolver, arenaJob, clusterClient);
                             arenaJob.setStatus(JobStatus.FINISHED);
                         } catch (Throwable e) {
                             e.printStackTrace();
@@ -140,22 +139,8 @@ public class ArenaExecutor {
 
                         jobRepository.put(arenaJob.getId(), arenaJob);
 
-                        //
-                        return;
-                    } else if (StringUtils.equals(Execute.class.getSimpleName(), task)) {
-                        try {
-                            Execute.execute(cmd, resolver, arenaJob, clusterClient);
-                            arenaJob.setStatus(JobStatus.FINISHED);
-                        } catch (Throwable e) {
-                            e.printStackTrace();
-
-                            arenaJob.setStatus(JobStatus.FAILED);
-                        }
-
-                        jobRepository.put(arenaJob.getId(), arenaJob);
-
-                        //
-                        return;
+//                        //
+//                        return;
                     } else {
                         throw new Exception("Unknown task");
                     }
@@ -165,13 +150,13 @@ public class ArenaExecutor {
             } catch (Throwable e) {
                 System.err.println("Arena Job failed with error.");
                 e.printStackTrace();
+            } finally {
+                // force all (foreign) threads to close (?)
+                // FIXME better use custom SecurityManager to also catch "foreign" exit() calls?
+                System.out.println("Terminating JVM.");
+                System.exit(0);
             }
         }
-
-        // force all (foreign) threads to close (?)
-        // FIXME better use custom SecurityManager to also catch "foreign" exit() calls?
-        System.out.println("Terminating JVM.");
-        System.exit(0);
     }
 
     private static Options createOptions() {

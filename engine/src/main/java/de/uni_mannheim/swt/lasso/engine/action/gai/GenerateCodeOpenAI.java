@@ -1,0 +1,51 @@
+package de.uni_mannheim.swt.lasso.engine.action.gai;
+
+import de.uni_mannheim.swt.lasso.engine.action.annotations.LassoAction;
+import de.uni_mannheim.swt.lasso.engine.action.annotations.LassoInput;
+import de.uni_mannheim.swt.lasso.engine.action.annotations.Local;
+import de.uni_mannheim.swt.lasso.engine.action.annotations.Stable;
+import de.uni_mannheim.swt.lasso.gai.openai.Prompt;
+import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.openai.OpenAiChatModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+//import dev.langchain4j.model.openai.OpenAiChatRequestParameters;
+
+/**
+ * Generate Code with OpenAI.
+ *
+ * Based on langchain4j.
+ *
+ * @author Marcus Kessel
+ */
+@LassoAction(desc = "Generate Code with OpenAI")
+@Stable
+@Local(numberOfParallelStimulusMatrices = 1) // limit to one stimulus matrix at a time
+public class GenerateCodeOpenAI extends GenerateCodeOllama {
+
+    private static final Logger LOG = LoggerFactory
+            .getLogger(GenerateCodeOpenAI.class);
+
+    @LassoInput(desc = "OpenAI API key", optional = true)
+    public String apiKey = "demo"; // see https://docs.langchain4j.dev/integrations/language-models/open-ai/
+
+    @Override
+    protected String generate(Prompt prompt, String endpoint) {
+        ChatLanguageModel chatModel = OpenAiChatModel.builder()
+                .apiKey(apiKey)
+//                .defaultRequestParameters(ChatRequestParameters.builder()
+//                        .modelName("gpt-4o-mini")
+//                        .temperature(0.7)
+//                        .build())
+                .modelName(prompt.getModel())
+                //.temperature(0.7) // FIXME
+
+                .build();
+
+        LOG.info("Prompting '{}', '{}'", endpoint, prompt.getModel());
+
+        String chatResponse = chatModel.generate(prompt.getPromptContent());
+
+        return chatResponse;
+    }
+}

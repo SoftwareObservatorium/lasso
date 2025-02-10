@@ -158,7 +158,7 @@ public class Mavenizer {
         return pomSource;
     }
 
-    private String toDependencyDeclaration(MavenArtifact mavenArtifact) {
+    public String toDependencyDeclaration(MavenArtifact mavenArtifact) {
         String exclusions = DependencyAnalyzer.EXCLUDE_GROUPIDS_EXACT.stream()
                 .map(this::createExclusion).collect(Collectors.joining());
 
@@ -169,6 +169,13 @@ public class Mavenizer {
                 "<exclusions>" +
                 exclusions +
                 "</exclusions>" +
+                "</dependency>";
+    }
+
+    public String toSingleDependencyDeclaration(MavenArtifact mavenArtifact) {
+        return "<dependency><groupId>" + mavenArtifact.getGroupId() + "</groupId><artifactId>"
+                + mavenArtifact.getArtifactId() + "</artifactId><version>" + mavenArtifact.getVersion()
+                + "</version>" +
                 "</dependency>";
     }
 

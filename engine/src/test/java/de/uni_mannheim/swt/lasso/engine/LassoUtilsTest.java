@@ -40,12 +40,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 public class LassoUtilsTest {
 
-    @Test
-    public void test_bc2JavaSignature() {
-        String bc = "org/glassfish/tyrus/core/Base64Utils.decode([B)[B";
-
-        System.out.println(LassoUtils.bc2JavaSignature(bc));
-    }
+//    @Test
+//    public void test_bc2JavaSignature() {
+//        String bc = "org/glassfish/tyrus/core/Base64Utils.decode([B)[B";
+//
+//        System.out.println(LassoUtils.bc2JavaSignature(bc));
+//    }
 
     @Test
     public void test_compactUUID() {

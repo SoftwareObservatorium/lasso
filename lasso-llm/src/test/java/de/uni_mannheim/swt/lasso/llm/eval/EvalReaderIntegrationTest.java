@@ -20,9 +20,8 @@
 package de.uni_mannheim.swt.lasso.llm.eval;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.junit.Test;
 //import org.junit.jupiter.api.Disabled;
-//import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;

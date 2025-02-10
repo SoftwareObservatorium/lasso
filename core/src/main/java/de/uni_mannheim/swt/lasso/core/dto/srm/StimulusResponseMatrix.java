@@ -3,6 +3,8 @@ package de.uni_mannheim.swt.lasso.core.dto.srm;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 
+import java.util.Set;
+
 /**
  * A stimulus response matrix based on {@link Table}.
  *
@@ -16,9 +18,10 @@ public class StimulusResponseMatrix<R, C, V> {
     }
 
     public StimulusResponseMatrix(StimulusResponseMatrix<R, C, V> srm) {
-        this.table = HashBasedTable.create((HashBasedTable) srm.getTable());
+        this.table = HashBasedTable.create((HashBasedTable) srm.table);
     }
 
+    // FIXME make internal (private)
     public Table<R, C, V> getTable() {
         return table;
     }
@@ -29,6 +32,14 @@ public class StimulusResponseMatrix<R, C, V> {
 
     public V get(R r, C c) {
         return table.get(r, c);
+    }
+
+    public Set<C> getColumns() {
+        return table.columnKeySet();
+    }
+
+    public Set<R> getRows() {
+        return table.rowKeySet();
     }
 
     public void debug() {

@@ -28,7 +28,7 @@ import de.uni_mannheim.swt.lasso.engine.workspace.Workspace;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.objectweb.asm.Type;
+//import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -236,45 +236,45 @@ public final class LassoUtils {
         return abstraction.getImplementations().get(0).getCode().getDataSource();
     }
 
-    public static String bc2JavaSignature(String bytecodeSignature) {
-        String className = StringUtils.replace(StringUtils.substringBeforeLast(bytecodeSignature, "."), "/", ".");
-        String methodName = StringUtils.substringBetween(bytecodeSignature, ".", "(");
-        String methodDescriptor = "(" + StringUtils.substringAfter(bytecodeSignature, "(");
-        Type method = Type.getMethodType(methodDescriptor);
-
-        StringBuilder sb = new StringBuilder();
-        sb.append(className);
-        sb.append("::");
-        sb.append(methodName);
-        sb.append("(");
-
-        Class[] inputTypes = new Class[0];
-        try {
-            inputTypes = Arrays.stream(method.getArgumentTypes()).map(p -> {
-                try {
-                    return ClassUtils.getClass(p.getClassName());
-                } catch (ClassNotFoundException e) {
-                    throw new IllegalArgumentException(e);
-                }
-            }).toArray(Class[]::new);
-
-            sb.append(Arrays.stream(inputTypes).map(Class::getCanonicalName).collect(Collectors.joining(",")));
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
-
-        sb.append("):");
-
-        try {
-            Class clazz = ClassUtils.getClass(method.getReturnType().getClassName());
-
-            sb.append(clazz.getCanonicalName());
-        } catch (ClassNotFoundException e) {
-            throw new IllegalArgumentException(e);
-        }
-
-        return sb.toString();
-    }
+//    public static String bc2JavaSignature(String bytecodeSignature) {
+//        String className = StringUtils.replace(StringUtils.substringBeforeLast(bytecodeSignature, "."), "/", ".");
+//        String methodName = StringUtils.substringBetween(bytecodeSignature, ".", "(");
+//        String methodDescriptor = "(" + StringUtils.substringAfter(bytecodeSignature, "(");
+//        Type method = Type.getMethodType(methodDescriptor);
+//
+//        StringBuilder sb = new StringBuilder();
+//        sb.append(className);
+//        sb.append("::");
+//        sb.append(methodName);
+//        sb.append("(");
+//
+//        Class[] inputTypes = new Class[0];
+//        try {
+//            inputTypes = Arrays.stream(method.getArgumentTypes()).map(p -> {
+//                try {
+//                    return ClassUtils.getClass(p.getClassName());
+//                } catch (ClassNotFoundException e) {
+//                    throw new IllegalArgumentException(e);
+//                }
+//            }).toArray(Class[]::new);
+//
+//            sb.append(Arrays.stream(inputTypes).map(Class::getCanonicalName).collect(Collectors.joining(",")));
+//        } catch (Throwable e) {
+//            e.printStackTrace();
+//        }
+//
+//        sb.append("):");
+//
+//        try {
+//            Class clazz = ClassUtils.getClass(method.getReturnType().getClassName());
+//
+//            sb.append(clazz.getCanonicalName());
+//        } catch (ClassNotFoundException e) {
+//            throw new IllegalArgumentException(e);
+//        }
+//
+//        return sb.toString();
+//    }
 
     /**
      * Simple way to shorten fully qualified byte code names.

@@ -20,6 +20,9 @@
 package de.uni_mannheim.swt.lasso.llm.test;
 
 import de.uni_mannheim.swt.lasso.arena.classloader.Container;
+import de.uni_mannheim.swt.lasso.core.dto.srm.Sheet;
+import de.uni_mannheim.swt.lasso.core.model.Specification;
+import de.uni_mannheim.swt.lasso.engine.action.utils.SequenceUtils;
 import de.uni_mannheim.swt.lasso.llm.problem.MultiPLE;
 import de.uni_mannheim.swt.lasso.llm.problem.Problem;
 import org.apache.commons.io.FileUtils;
@@ -30,6 +33,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -48,8 +52,8 @@ public class ProblemExporter {
         Container container = multiple.createContainer();
         ProblemToSheetParser parse = new ProblemToSheetParser(container);
 
-        //String problems = "humaneval-java-reworded";
-        String problems = "mbpp-java-reworded";
+        String problems = "humaneval-java-reworded";
+        //String problems = "mbpp-java-reworded";
         String path = "/tmp/mybenchmarks/" + problems;
         File baseDir = new File(path);
         baseDir.mkdirs();
@@ -70,6 +74,13 @@ public class ProblemExporter {
                 fa.setDescription(parse.parseDescription(problem));
                 fa.setSequences(ss);
                 fa.setPrompt(problem.getPrompt());
+                fa.setDependencies(Arrays.asList("org.javatuples:javatuples:1.2"));
+
+                Specification specification = SequenceUtils.parseSpecificationFromLQL(fa.getLql());
+
+                List<Sheet> stimulusSheets = parse.sequences2SheetsJSONL(ss, specification, true);
+                //stimulusSheets.forEach(s -> System.out.println("\n" + s.getBody()));
+                fa.setStimulusSheets(stimulusSheets);
 
                 // store FA somewhere
                 FileUtils.writeStringToFile(new File(baseDir, problem.getName() + ".json"),

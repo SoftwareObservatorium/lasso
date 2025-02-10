@@ -7,7 +7,6 @@ import { Route, Routes } from 'react-router-dom';
 import RegisterPage from './pages/RegisterPage';
 import LoginPage from './pages/LoginPage';
 import ProfilePage from './pages/ProfilePage';
-import SheetEditorPage from './pages/SheetEditorPage';
 import MenuAppBar from './components/navigation/MenuAppBar';
 import { User } from './model/models';
 import AuthService from './services/AuthService';
@@ -15,6 +14,8 @@ import PrivateRoute from './components/navigation/PrivateRoute';
 import DocumentationPage from './pages/DocumentationPage';
 import AboutPage from './pages/AboutPage';
 import SrmPage from './pages/SrmPage';
+import ExamplePage from './pages/ExamplePage';
+import StimulusMatrixEditorPage from './pages/Editor';
 
 function App() {
   const [currentUser, setCurrentUser] = useState<User>()
@@ -53,10 +54,14 @@ function App() {
           
           <Route path="/srm" element={<SrmPage/>} />
 
+          <Route path="/examples" element={<ExamplePage/>} />
+
+          <Route path="/srh" element={<ExamplePage/>} />
+
           <Route path="/login" element={<LoginPage/>} />
           <Route path="/register" element={<RegisterPage/>} />
           <Route path="/profile" element={wrapPrivateRoute(<ProfilePage />, currentUser, 'profile')} />
-          <Route path="/editor" element={wrapPrivateRoute(<SheetEditorPage />, currentUser, 'editor')} />
+          <Route path="/editor" element={wrapPrivateRoute(<StimulusMatrixEditorPage />, currentUser, 'editor')} />
           
         </Routes>
       </div>

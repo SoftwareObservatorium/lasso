@@ -35,6 +35,9 @@ public class SheetRequest {
 
     private List<String> analyzers;
 
+    private String adaptationStrategy;
+    private int adapterLimit;
+
     // FIXME add configuration
 
     public List<SheetSpec> getSheets() {
@@ -59,5 +62,21 @@ public class SheetRequest {
 
     public void setAnalyzers(List<String> analyzers) {
         this.analyzers = analyzers;
+    }
+
+    public String getAdaptationStrategy() {
+        return adaptationStrategy;
+    }
+
+    public void setAdaptationStrategy(String adaptationStrategy) {
+        this.adaptationStrategy = adaptationStrategy;
+    }
+
+    public int getAdapterLimit() {
+        return adapterLimit;
+    }
+
+    public void setAdapterLimit(int adapterLimit) {
+        this.adapterLimit = adapterLimit;
     }
 }

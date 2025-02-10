@@ -1,7 +1,7 @@
 import axios from "axios";
 import { User } from "../model/models";
 
-const API_URL = "http://localhost:8877/api/v1/";
+const API_URL = process.env.REACT_APP_SHEETS_URL;
 
 // FIXME
 const register = (username: string, email: string, password: string) => {

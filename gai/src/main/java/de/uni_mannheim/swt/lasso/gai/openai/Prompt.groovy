@@ -31,6 +31,8 @@ class Prompt extends LassoSpec {
     String model = "gpt-3.5-turbo"
     String role = "user"
 
+    String id = "default_prompt"
+
     // model parameters
     int n = 1
     double temperature = 0.7

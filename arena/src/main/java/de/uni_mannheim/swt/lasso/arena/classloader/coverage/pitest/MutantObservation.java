@@ -21,9 +21,6 @@ package de.uni_mannheim.swt.lasso.arena.classloader.coverage.pitest;
 
 import de.uni_mannheim.swt.lasso.arena.ArenaUtils;
 
-import de.uni_mannheim.swt.lasso.arena.Observation;
-import de.uni_mannheim.swt.lasso.arena.sequence.SequenceExecutionRecord;
-import de.uni_mannheim.swt.lasso.arena.sequence.SequenceExecutionRecords;
 import de.uni_mannheim.swt.lasso.srm.CellId;
 import de.uni_mannheim.swt.lasso.srm.CellValue;
 import org.pitest.mutationtest.engine.MutationDetails;
@@ -36,84 +33,84 @@ import java.util.Map;
  *
  * @author Marcus Kessel
  */
-public class MutantObservation extends Observation {
+public class MutantObservation {
 
-    private final MutationDetails details;
-
-    public MutantObservation(MutationDetails details) {
-        this.details = details;
-    }
-
-    @Override
-    public String getType() {
-        return null;
-    }
-
-    @Override
-    public Map<CellId, CellValue> toCells(SequenceExecutionRecord record) {
+//    private final MutationDetails details;
+//
+//    public MutantObservation(MutationDetails details) {
+//        this.details = details;
+//    }
+//
+//    @Override
+//    public String getType() {
+//        return null;
+//    }
+//
+//    @Override
+//    public Map<CellId, CellValue> toCells(SequenceExecutionRecord record) {
+////        Map<CellId, CellValue> cells = new LinkedHashMap<>();
+////        cells.put(ArenaUtils.cellIdOf(String.valueOf(executionResult.getSheet().getName()),
+////                        -1,
+////                        -1,
+////                        String.format("mutation.id"),
+////                        executionResult.getImplementation()),
+////                CellValue.of(details.getId().toString()));
+//
+//        return new LinkedHashMap<>();
+//    }
+//
+//    @Override
+//    public Map<CellId, CellValue> toCells(SequenceExecutionRecords records) {
 //        Map<CellId, CellValue> cells = new LinkedHashMap<>();
-//        cells.put(ArenaUtils.cellIdOf(String.valueOf(executionResult.getSheet().getName()),
+//        cells.put(ArenaUtils.cellIdOf("all",
 //                        -1,
 //                        -1,
 //                        String.format("mutation.id"),
-//                        executionResult.getImplementation()),
+//                        records.getImplementation()),
 //                CellValue.of(details.getId().toString()));
-
-        return new LinkedHashMap<>();
-    }
-
-    @Override
-    public Map<CellId, CellValue> toCells(SequenceExecutionRecords records) {
-        Map<CellId, CellValue> cells = new LinkedHashMap<>();
-        cells.put(ArenaUtils.cellIdOf("all",
-                        -1,
-                        -1,
-                        String.format("mutation.id"),
-                        records.getImplementation()),
-                CellValue.of(details.getId().toString()));
-        cells.put(ArenaUtils.cellIdOf("all",
-                        -1,
-                        -1,
-                        String.format("mutation.mutator"),
-                        records.getImplementation()),
-                CellValue.of(details.getMutator()));
-        cells.put(ArenaUtils.cellIdOf("all",
-                        -1,
-                        -1,
-                        String.format("mutation.block"),
-                        records.getImplementation()),
-                CellValue.of(details.getBlock()));
-        cells.put(ArenaUtils.cellIdOf("all",
-                        -1,
-                        -1,
-                        String.format("mutation.linenumber"),
-                        records.getImplementation()),
-                CellValue.of(details.getClassLine().getLineNumber()));
-        cells.put(ArenaUtils.cellIdOf("all",
-                        -1,
-                        -1,
-                        String.format("mutation.linenumber_bc"),
-                        records.getImplementation()),
-                CellValue.of(details.getLineNumber()));
-        cells.put(ArenaUtils.cellIdOf("all",
-                        -1,
-                        -1,
-                        String.format("mutation.description"),
-                        records.getImplementation()),
-                CellValue.of(details.getDescription()));
-        cells.put(ArenaUtils.cellIdOf("all",
-                        -1,
-                        -1,
-                        String.format("mutation.method"),
-                        records.getImplementation()),
-                CellValue.of(details.getId().getLocation().getMethodName() + details.getId().getLocation().getMethodDesc()));
-        cells.put(ArenaUtils.cellIdOf("all",
-                        -1,
-                        -1,
-                        String.format("mutation.class"),
-                        records.getImplementation()),
-                CellValue.of(details.getClassName().asJavaName()));
-
-        return cells;
-    }
+//        cells.put(ArenaUtils.cellIdOf("all",
+//                        -1,
+//                        -1,
+//                        String.format("mutation.mutator"),
+//                        records.getImplementation()),
+//                CellValue.of(details.getMutator()));
+//        cells.put(ArenaUtils.cellIdOf("all",
+//                        -1,
+//                        -1,
+//                        String.format("mutation.block"),
+//                        records.getImplementation()),
+//                CellValue.of(details.getBlock()));
+//        cells.put(ArenaUtils.cellIdOf("all",
+//                        -1,
+//                        -1,
+//                        String.format("mutation.linenumber"),
+//                        records.getImplementation()),
+//                CellValue.of(details.getClassLine().getLineNumber()));
+//        cells.put(ArenaUtils.cellIdOf("all",
+//                        -1,
+//                        -1,
+//                        String.format("mutation.linenumber_bc"),
+//                        records.getImplementation()),
+//                CellValue.of(details.getLineNumber()));
+//        cells.put(ArenaUtils.cellIdOf("all",
+//                        -1,
+//                        -1,
+//                        String.format("mutation.description"),
+//                        records.getImplementation()),
+//                CellValue.of(details.getDescription()));
+//        cells.put(ArenaUtils.cellIdOf("all",
+//                        -1,
+//                        -1,
+//                        String.format("mutation.method"),
+//                        records.getImplementation()),
+//                CellValue.of(details.getId().getLocation().getMethodName() + details.getId().getLocation().getMethodDesc()));
+//        cells.put(ArenaUtils.cellIdOf("all",
+//                        -1,
+//                        -1,
+//                        String.format("mutation.class"),
+//                        records.getImplementation()),
+//                CellValue.of(details.getClassName().asJavaName()));
+//
+//        return cells;
+//    }
 }

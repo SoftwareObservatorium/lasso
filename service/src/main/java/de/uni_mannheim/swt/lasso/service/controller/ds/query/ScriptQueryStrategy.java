@@ -87,10 +87,12 @@ public class ScriptQueryStrategy extends QueryStrategy {
                 Set<String> filteredSystems = ((Set<String>) df.columns()).stream()
                         .filter(s -> !StringUtils.equalsAnyIgnoreCase(s, "statement"))
                         .filter(s -> !StringUtils.startsWithIgnoreCase(s, "oracle_"))
-                        .map(s -> StringUtils.substringBeforeLast(s, "_"))
+                        .map(s -> StringUtils.substringBefore(s, "_")) // FIXME
                         .collect(Collectors.toSet());
 
                 totalSystems = filteredSystems.size();
+
+                LOG.info("Systems '{}'", systemsTable.print());
 
                 systemsTable = systemsTable.where(systemsTable.stringColumn(0).isIn(filteredSystems));
 

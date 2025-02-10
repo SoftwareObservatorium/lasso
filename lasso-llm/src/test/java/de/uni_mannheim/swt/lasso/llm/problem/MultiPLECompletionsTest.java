@@ -19,8 +19,7 @@
  */
 package de.uni_mannheim.swt.lasso.llm.problem;
 
-import org.junit.Test;
-//import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;

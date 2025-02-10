@@ -117,7 +117,7 @@ public class CandidatePool {
             // setup working directory
             if(workingDirectory != null) {
                 File projectRoot = new File(workingDirectory, classUnderTest.getId());
-                MavenProject mavenProject = new MavenProject(projectRoot);
+                MavenProject mavenProject = new MavenProject(projectRoot, true);
                 classUnderTest.setLocalProject(mavenProject);
             }
         } catch (Throwable e) {

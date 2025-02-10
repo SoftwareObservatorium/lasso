@@ -44,7 +44,7 @@ public class InstanceInvocation extends MemberInvocation {
         // CUT: adapted constructor call
         if(cut) {
             // we need one interceptor for EACH instance
-            InvocationInterceptor invocationInterceptor = new InvocationInterceptor(executedInvocations, adaptedImplementation, invocations.getParsedSheet().getInterfaceSpecification());
+            InvocationInterceptor invocationInterceptor = new InvocationInterceptor(executedInvocations, adaptedImplementation, invocations.getInterfaceSpecification());
             Object proxyInstance = invocationInterceptor.create(executedInvocation, constructor, inputValues.toArray());
             executedInvocation.setInterceptor(invocationInterceptor);
             LOG.debug("created proxy {}", proxyInstance.getClass());

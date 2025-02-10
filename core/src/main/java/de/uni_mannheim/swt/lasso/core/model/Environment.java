@@ -46,4 +46,14 @@ public class Environment implements Serializable {
     public void setCommandArgsList(List<List<String>> commandArgsList) {
         this.commandArgsList = commandArgsList;
     }
+
+    public Environment copy() {
+        Environment env = new Environment();
+        env.image = image;
+        if(env.commandArgsList != null && !commandArgsList.isEmpty()) {
+            env.commandArgsList = List.copyOf(env.commandArgsList);
+        }
+
+        return env;
+    }
 }

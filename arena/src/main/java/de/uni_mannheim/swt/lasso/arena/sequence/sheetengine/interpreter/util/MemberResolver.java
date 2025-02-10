@@ -24,6 +24,8 @@ public abstract class MemberResolver {
     private Method method;
     private Constructor constructor;
 
+    private boolean ignoreMethodName;
+
     public MemberResolver(Class targetClass, String methodName, Class[] argumentClasses) {
         LOG.debug("resolve {},{},{}", targetClass, methodName, argumentClasses);
 
@@ -72,7 +74,7 @@ public abstract class MemberResolver {
         LOG.debug("methods {}", methods.size());
 
         for (int i = 0; i < methods.size(); i++) {
-            if (!methods.get(i).getName().equals(methodName)) {
+            if (!isIgnoreMethodName() && !methods.get(i).getName().equals(methodName)) {
                 continue;
             }
 
@@ -141,5 +143,13 @@ public abstract class MemberResolver {
     protected abstract List<Method> getMethods(Class<?> targetClass);
 
     protected abstract List<Constructor> getConstructors(Class<?> targetClass);
+
+    public boolean isIgnoreMethodName() {
+        return ignoreMethodName;
+    }
+
+    public void setIgnoreMethodName(boolean ignoreMethodName) {
+        this.ignoreMethodName = ignoreMethodName;
+    }
 }
 

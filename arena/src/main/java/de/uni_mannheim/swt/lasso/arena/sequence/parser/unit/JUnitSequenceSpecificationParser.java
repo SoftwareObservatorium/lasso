@@ -45,6 +45,7 @@ import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeS
 import de.uni_mannheim.swt.lasso.arena.ClassUnderTest;
 import de.uni_mannheim.swt.lasso.arena.MethodSignature;
 import de.uni_mannheim.swt.lasso.arena.search.InterfaceSpecification;
+import de.uni_mannheim.swt.lasso.arena.search.LQLMethodSignature;
 import de.uni_mannheim.swt.lasso.arena.sequence.*;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -106,7 +107,7 @@ public class JUnitSequenceSpecificationParser {
         // iterate over test methods
         List<MethodDeclaration> testMethods = tc.getMethods().stream().filter(m -> {
             return m.getAnnotationByName("Test").isPresent()
-                    || m.getAnnotationByName("org.junit.Test").isPresent();
+                    || m.getAnnotationByName("org.junit.Test").isPresent() || m.getAnnotationByName("org.junit.jupiter.api.Test").isPresent();
         }).collect(Collectors.toList());
 
 //        testMethods.forEach(testMethod -> {
@@ -708,6 +709,7 @@ public class JUnitSequenceSpecificationParser {
 
             Object arr = context.getEval().expr(arrayInitializerExpr.toString());
             ValueStatement valueStatement = new ValueStatement(arr != null ? arr.getClass() : null, arr);
+            valueStatement.setCode(arrayInitializerExpr.toString());
             context.getSequenceSpecification().addStatement(valueStatement, position);
         } else if (initExpr.isArrayCreationExpr()) {
             ArrayCreationExpr arrayCreationExpr = initExpr.asArrayCreationExpr();
@@ -730,8 +732,11 @@ public class JUnitSequenceSpecificationParser {
                 arr = context.getEval().expr(arrayCreationExpr.toString());
             }
 
+            String code = arrayCreationExpr.toString();
+
             //Object arr = context.getEval().expr(arrayCreationExpr.toString());
             ValueStatement valueStatement = new ValueStatement(arr != null ? arr.getClass() : null, arr);
+            valueStatement.setCode(code);
             context.getSequenceSpecification().addStatement(valueStatement, position);
         } else if (initExpr.isNameExpr()) {
             LOG.debug("Found var name in initializer '{}' of type '{}'", initExpr, initExpr.getClass());
@@ -949,11 +954,17 @@ public class JUnitSequenceSpecificationParser {
             // FIXME check if wrapped
             if (arg.isCastExpr()) {
                 CastExpr castExpr = arg.asCastExpr();
+
+                arg = castExpr.getExpression();
+                if(arg.isCastExpr()) {
+                    LOG.warn("FOUND CAST AGAIN");
+                    castExpr = arg.asCastExpr();
+                    arg = castExpr.getExpression();
+                }
+
                 type = castExpr.getType(); // FIXME use type information
 
                 LOG.debug("Found type info in method call '{}'", type);
-
-                arg = castExpr.getExpression();
             }
 
             // FIXME we may need to "evaluate" enclosed Expressions (like (1+1) etc.)
@@ -986,6 +997,7 @@ public class JUnitSequenceSpecificationParser {
                     valueStatement = processLiteral(context, literalExpr, type);
                     if(valueStatement.getType() == null && paramType != null) {
                         valueStatement = new ValueStatement(paramType, valueStatement.getValue()); // should be null
+                        valueStatement.setCode(valueStatement.getCode());
                     }
                 }
 
@@ -1007,6 +1019,8 @@ public class JUnitSequenceSpecificationParser {
 
                 if (valueStatement != null) {
                     statement.addInput(valueStatement);
+                } else {
+                    LOG.warn("Empty call statement for '{}'", valueStatement);
                 }
             }
 
@@ -1042,7 +1056,10 @@ public class JUnitSequenceSpecificationParser {
 
         value = context.getEval().expr(literalExpr.toString());
 
-        return new ValueStatement(typeClazz, value);
+        ValueStatement valueStatement = new ValueStatement(typeClazz, value);
+        valueStatement.setCode(literalExpr.toString());
+
+        return valueStatement;
     }
 
     private List<String> processArrayInitializerExpr(ArrayInitializerExpr arrayInitializerExpr, JUnitParseContext context) {
@@ -1101,7 +1118,10 @@ public class JUnitSequenceSpecificationParser {
 
         value = context.getEval().expr(unaryExpr.toString());
 
-        return new ValueStatement(typeClazz, value);
+        ValueStatement valueStatement = new ValueStatement(typeClazz, value);
+        valueStatement.setCode(unaryExpr.toString());
+
+        return valueStatement;
     }
 
     private ValueStatement processBinary(JUnitParseContext context, BinaryExpr binaryExpr, Type type) {
@@ -1124,7 +1144,10 @@ public class JUnitSequenceSpecificationParser {
 
         value = context.getEval().expr(binaryExpr.toString());
 
-        return new ValueStatement(typeClazz, value);
+        ValueStatement valueStatement = new ValueStatement(typeClazz, value);
+        valueStatement.setCode(binaryExpr.toString());
+
+        return valueStatement;
     }
 
     /**
@@ -1137,6 +1160,10 @@ public class JUnitSequenceSpecificationParser {
     private MethodSignature resolveMethod(JUnitParseContext context, MethodCallExpr methodCallExpr) {
         LOG.debug("Attempting to resolve method based on interface specification '{}'", methodCallExpr);
 
+        // FIXME assume that missing static method is cut
+        boolean assumeCut = true;
+
+        boolean isStatic = false;
         // check if it is CUT
         Optional<Expression> scopeOptional = methodCallExpr.getScope();
         if (scopeOptional.isPresent()) {
@@ -1146,8 +1173,16 @@ public class JUnitSequenceSpecificationParser {
                 String varName = scopeOptional.get().asNameExpr().getNameAsString();
 
                 if (!context.getLocalFields().contains(varName)) {
-                    //
-                    throw new IllegalArgumentException("unexpected static method");
+
+                    if(assumeCut || StringUtils.equals(varName, context.getSpecification().getClassName())) {
+                        isStatic = true;
+                    } else {
+                        //
+                        throw new IllegalArgumentException("unexpected static method");
+                    }
+
+
+
                 } else {
                     int rowNum = context.getLocalFields().lastIndexOf(varName);
 
@@ -1188,6 +1223,8 @@ public class JUnitSequenceSpecificationParser {
 
         MethodSignature m = methodSignatureOp
                 .orElseThrow(() -> new IllegalArgumentException("No CUT method defined like " + methodCallExpr));
+        m.setIsStatic(isStatic);
+
 
 //        sig.setName(m.getName());
 //        sig.setClassName(m.getClassName());

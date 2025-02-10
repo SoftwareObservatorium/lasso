@@ -26,6 +26,7 @@ import de.uni_mannheim.swt.lasso.arena.classloader.ContainerFactory;
 import de.uni_mannheim.swt.lasso.arena.classloader.Containers;
 
 import de.uni_mannheim.swt.lasso.arena.classloader.sandbox.Sandbox;
+import org.apache.commons.collections4.CollectionUtils;
 import org.eclipse.aether.resolution.DependencyResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -107,6 +108,11 @@ public class MavenRepository implements Repository {
             try {
                 Container container = containers.create(classUnderTest, factory);
                 project.setContainer(container);
+
+                // add optional urls
+                if(CollectionUtils.isNotEmpty(classUnderTest.getUrls())) {
+                    classUnderTest.getUrls().forEach(container::addURL);
+                }
             } catch (IllegalAccessException e) {
                 throw new IllegalArgumentException("Creating container failed", e);
             }

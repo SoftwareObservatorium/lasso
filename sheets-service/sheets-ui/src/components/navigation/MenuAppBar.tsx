@@ -13,7 +13,7 @@ import AuthService from '../../services/AuthService';
 import { Button, Container, Tooltip } from '@mui/material';
 import AdbIcon from '@mui/icons-material/Adb';
 
-const pages = ['Editor', 'Documentation', 'About'];
+const pages = ['Editor', 'Examples', 'Analytics', 'Documentation', 'About'];
 const userSettings = ['Profile', 'Logout'];
 const loginSettings = ['Login'];
 
@@ -39,6 +39,16 @@ export default function MenuAppBar() {
 
         if (page === "Editor") {
             navigate("/editor");
+            window.location.reload();
+        }
+
+        if (page === "Examples") {
+            navigate("/examples");
+            window.location.reload();
+        }
+
+        if (page === "Analytics") {
+            navigate("/srm");
             window.location.reload();
         }
 
@@ -96,7 +106,7 @@ export default function MenuAppBar() {
                             textDecoration: 'none',
                         }}
                     >
-                        Sheets
+                        SRH Explorer
                     </Typography>
 
                     <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>

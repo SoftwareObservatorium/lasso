@@ -21,19 +21,22 @@ package de.uni_mannheim.swt.lasso.sheets.service.config;
 
 import de.uni_mannheim.swt.lasso.arena.repository.DependencyResolver;
 import de.uni_mannheim.swt.lasso.arena.repository.MavenRepository;
-import de.uni_mannheim.swt.lasso.arena.repository.NexusInstance;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.SSNTestDriver;
+import de.uni_mannheim.swt.lasso.arena.search.CodeSearch;
+import de.uni_mannheim.swt.lasso.arena.search.SolrInstance;
 import de.uni_mannheim.swt.lasso.sheets.service.SheetsManager;
+import de.uni_mannheim.swt.lasso.sheets.service.cut.CodeGeneration;
+import de.uni_mannheim.swt.lasso.sheets.service.cut.InterfaceGeneration;
+import de.uni_mannheim.swt.lasso.sheets.service.cut.SheetGeneration;
+import de.uni_mannheim.swt.lasso.sheets.service.srh.InMemorySRH;
 import de.uni_mannheim.swt.lasso.sheets.service.driver.LocalSimpleTestDriver;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 
 import java.io.File;
+import java.sql.SQLException;
 
 /**
  * Basic engine config.
@@ -50,18 +53,53 @@ public class EngineConfig {
     private Environment env;
 
     @Bean
-    public SheetsManager sheetsManager(MavenRepository mavenRepository) {
-        SheetsManager sheetsManager = new SheetsManager(new LocalSimpleTestDriver(mavenRepository));
+    public SheetsManager sheetsManager(MavenRepository mavenRepository, InMemorySRH inMemorySRH, CodeGeneration codeGeneration, SheetGeneration sheetGeneration) {
+        SheetsManager sheetsManager = new SheetsManager(new LocalSimpleTestDriver(mavenRepository, inMemorySRH, codeGeneration, sheetGeneration));
 
         return sheetsManager;
     }
 
     @Bean
     public MavenRepository mavenRepository() {
-        // FIXME change maven repo
-        String mavenRepoUrl = NexusInstance.LASSOHP12_URL;
-        File localRepo = new File("/tmp/my_repo/local-repo");
-        DependencyResolver resolver = new DependencyResolver(mavenRepoUrl, localRepo.getAbsolutePath());
+        File localRepo = new File(env.getProperty("maven.repo.local"));
+        DependencyResolver resolver = new DependencyResolver(env.getProperty("maven.repo.url"), localRepo.getAbsolutePath());
         return new MavenRepository(resolver);
+    }
+
+    @Bean
+    public InMemorySRH inMemorySRH() throws SQLException {
+        InMemorySRH inMemorySRH = new InMemorySRH();
+        inMemorySRH.initialize();
+
+        return inMemorySRH;
+    }
+
+    @Bean
+    public CodeSearch codeSearch() {
+        SolrInstance solrInstance = new SolrInstance(env.getProperty("codesearch.solr.core"), env.getProperty("codesearch.solr.user"), env.getProperty("codesearch.solr.pass"), env.getProperty("codesearch.solr.url"));
+        CodeSearch codeSearch = new CodeSearch(solrInstance);
+
+        return codeSearch;
+    }
+
+    @Bean
+    public CodeGeneration codeGeneration(MavenRepository mavenRepository) {
+        CodeGeneration codeGeneration = new CodeGeneration(mavenRepository, env.getProperty("codegen.ollama.baseurl"));
+
+        return codeGeneration;
+    }
+
+    @Bean
+    public InterfaceGeneration interfaceGeneration() {
+        InterfaceGeneration interfaceGeneration = new InterfaceGeneration(env.getProperty("codegen.ollama.baseurl"));
+
+        return interfaceGeneration;
+    }
+
+    @Bean
+    public SheetGeneration sheetGeneration() {
+        SheetGeneration sheetGeneration = new SheetGeneration(env.getProperty("codegen.ollama.baseurl"));
+
+        return sheetGeneration;
     }
 }

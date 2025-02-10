@@ -2,12 +2,14 @@ package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter;
 
 import de.uni_mannheim.swt.lasso.arena.MethodSignature;
 import de.uni_mannheim.swt.lasso.arena.search.InterfaceSpecification;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.eval.Eval;
+import de.uni_mannheim.swt.lasso.ssn.eval.Eval;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocation.CodeInvocation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocation.InstanceInvocation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.invocation.MethodInvocation;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.SheetSignature;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.TestInvocation;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.resolve.ParsedSheet;
+import de.uni_mannheim.swt.lasso.ssn.ParsedSheet;
 
 import java.lang.reflect.Member;
 import java.util.ArrayList;
@@ -21,15 +23,15 @@ import java.util.Map;
  */
 public class Invocations {
 
-    private final ParsedSheet parsedSheet;
+    private final Test test;
     private final Eval eval;
     private final Map<Member, MethodSignature> resolvedMappings;
     private final TestInvocation testInvocation;
 
     private List<Invocation> sequence = new ArrayList<>();
 
-    public Invocations(ParsedSheet parsedSheet, TestInvocation testInvocation, Map<Member, MethodSignature> resolvedMappings, Eval eval) {
-        this.parsedSheet = parsedSheet;
+    public Invocations(Test test, TestInvocation testInvocation, Map<Member, MethodSignature> resolvedMappings, Eval eval) {
+        this.test = test;
         this.testInvocation = testInvocation;
         this.resolvedMappings = resolvedMappings;
         this.eval = eval;
@@ -88,10 +90,22 @@ public class Invocations {
     }
 
     public ParsedSheet getParsedSheet() {
-        return parsedSheet;
+        return test.getParsedSheet();
+    }
+
+    public InterfaceSpecification getInterfaceSpecification() {
+        return test.getInterfaceSpecification();
+    }
+
+    public SheetSignature getSheetSignature() {
+        return test.getSignature();
     }
 
     public TestInvocation getTestInvocation() {
         return testInvocation;
+    }
+
+    public Test getTest() {
+        return test;
     }
 }
