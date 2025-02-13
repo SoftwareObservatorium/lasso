@@ -252,14 +252,14 @@ const SrmPage = () => {
             <Button onClick={(event) => executeQuery("select count(*) as cluster_size, list(SYSTEMID) as cluster_implementations, * EXCLUDE (SYSTEMID) from (PIVOT (SELECT CONCAT(SHEETID,'@',X, ',', Y) as statement, CONCAT(SYSTEMID,'_',VARIANTID,'_',ADAPTERID) as SYSTEMID, value from tdse_srm.parquet where type = 'value' and y > 0) ON STATEMENT USING first(VALUE) ORDER BY SYSTEMID) as mypiv group by all order by cluster_size DESC")}>Cluster-based Voting (Ignore Create)</Button>
             
 
-            <Button onClick={(event) => executeQuery("from (PIVOT (SELECT CONCAT(SHEETID,'@',X, ',', Y) as statement, CONCAT(SYSTEMID,'_',VARIANTID,'_',ADAPTERID) as SYSTEMID, value from tdse_srm.parquet where type = 'value') ON STATEMENT USING first(VALUE) ORDER BY SYSTEMID) select mode(COLUMNS(*))")}>Test-based Voting</Button>
-            <Button onClick={(event) => executeQuery("from (PIVOT (SELECT CONCAT(SHEETID,'@',X, ',', Y) as statement, CONCAT(SYSTEMID,'_',VARIANTID,'_',ADAPTERID) as SYSTEMID, value from tdse_srm.parquet where type = 'value' and y > 0) ON STATEMENT USING first(VALUE) ORDER BY SYSTEMID) select mode(COLUMNS(*))")}>Test-based Voting (Ignore Create)</Button>
+            {/* <Button onClick={(event) => executeQuery("from (PIVOT (SELECT CONCAT(SHEETID,'@',X, ',', Y) as statement, CONCAT(SYSTEMID,'_',VARIANTID,'_',ADAPTERID) as SYSTEMID, value from tdse_srm.parquet where type = 'value') ON STATEMENT USING first(VALUE) ORDER BY SYSTEMID) select mode(COLUMNS(*))")}>Test-based Voting</Button>
+            <Button onClick={(event) => executeQuery("from (PIVOT (SELECT CONCAT(SHEETID,'@',X, ',', Y) as statement, CONCAT(SYSTEMID,'_',VARIANTID,'_',ADAPTERID) as SYSTEMID, value from tdse_srm.parquet where type = 'value' and y > 0) ON STATEMENT USING first(VALUE) ORDER BY SYSTEMID) select mode(COLUMNS(*))")}>Test-based Voting (Ignore Create)</Button> */}
           </ButtonGroup>
 
           <Divider />
 
           <ButtonGroup variant="contained" aria-label="Basic button group">
-            <Button onClick={(event) => executeQuery(`
+            {/* <Button onClick={(event) => executeQuery(`
 -- pick oracle based on clustering-based voting
 select ABSTRACTIONID, SHEETID, X, Y, VALUE as cluster_based_oracle from tdse_srm.parquet where type = 'value' and CONCAT(SYSTEMID,'_',VARIANTID,'_',ADAPTERID) = (
 select impl_match from 
@@ -269,7 +269,7 @@ select impl_match from
     * EXCLUDE (SYSTEMID)
 from (PIVOT (SELECT SHEETID, X, Y, CONCAT(SYSTEMID,'_',VARIANTID,'_',ADAPTERID) as SYSTEMID, value from tdse_srm.parquet where type = 'value') ON SHEETID, X, Y USING first(VALUE) ORDER BY SYSTEMID) as mypiv group by all order by cluster_size DESC limit 1)
 ) order by SHEETID, X, Y
-              `)}>Cluster-based Oracle</Button>
+              `)}>Cluster-based Oracle</Button> */}
             <Button onClick={(event) => executeQuery(`
 -- pick oracle based on test-based voting (based on mode; most frequent value per test statement)
 Select 
@@ -282,6 +282,18 @@ Select
     (select list(CONCAT(SYSTEMID, '_', VARIANTID, '_', ADAPTERID) ORDER BY SYSTEMID, VARIANTID, ADAPTERID) from tdse_srm.parquet where VALUE = test_based_oracle and TYPE = 'value' and ABSTRACTIONID = tbl1.ABSTRACTIONID and SHEETID = tbl1.SHEETID and X = tbl1.X and Y=tbl1.Y) as matches
 from tdse_srm.parquet as tbl1 where TYPE = 'value' and SYSTEMID != 'oracle' GROUP BY ABSTRACTIONID, SHEETID, X, Y ORDER BY SHEETID, X, Y
               `)}>Test-based Oracle</Button>
+            <Button onClick={(event) => executeQuery(`
+-- pick oracle based on test-based voting (based on mode; most frequent value per test statement)
+Select 
+    ABSTRACTIONID,
+    SHEETID,
+    X,
+    Y,
+    MODE(VALUE) as test_based_oracle,
+    list(DISTINCT VALUE) as distinct_values,
+    (select list(CONCAT(SYSTEMID, '_', VARIANTID, '_', ADAPTERID) ORDER BY SYSTEMID, VARIANTID, ADAPTERID) from tdse_srm.parquet where VALUE = test_based_oracle and TYPE = 'value' and ABSTRACTIONID = tbl1.ABSTRACTIONID and SHEETID = tbl1.SHEETID and X = tbl1.X and Y=tbl1.Y) as matches
+from tdse_srm.parquet as tbl1 where TYPE = 'value' and SYSTEMID != 'oracle' and Y > 0 GROUP BY ABSTRACTIONID, SHEETID, X, Y ORDER BY SHEETID, X, Y
+              `)}>Test-based Oracle (Ignore Create)</Button>
           </ButtonGroup>
 
 { parquetUrl.length > 0 &&
