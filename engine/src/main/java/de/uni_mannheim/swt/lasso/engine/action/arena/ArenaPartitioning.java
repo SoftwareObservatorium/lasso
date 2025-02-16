@@ -136,7 +136,7 @@ public class ArenaPartitioning extends DefaultAction {
     public boolean writeSequenceRecords = true;
 
     @LassoInput(desc = "Arena Container timeout in millis", optional = true)
-    public long containerTimeout = 5 * 60 * 60 * 1000L;
+    public long containerTimeout = 30 * 60 * 1000L; // half an hour
 
 //    @LassoInput(desc = "Maven Repository URL", optional = true)
 //    public String mavenRepository;
@@ -147,7 +147,8 @@ public class ArenaPartitioning extends DefaultAction {
     @LassoInput(desc = "adapt by sequence specification (true) or by all (false)", optional = true)
     private boolean adaptBySequenceSpecification = false;
 
-    //private ArenaExecutionEnvironment arenaExecutionEnvironment;
+    //@LassoInput(desc = "execution strategy has impact on unexpected execution behavior of  ('all' for all at once which is more efficient (but more error prone), 'one' for one by one which is less efficient but much more controllable)", optional = true)
+    //private String executionStrategy = "all";
 
     private List<Sheet> stimulusSheets = new LinkedList<>();
 

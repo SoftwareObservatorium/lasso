@@ -5,10 +5,7 @@ package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.run;
  *
  * @author Marcus Kessel
  */
-@Deprecated
-public class InvokeThread<T> extends Thread {
-
-    public static final String SHEETENGINE_RUNNER = "sheetengine-runner";
+public class InvokeRunnable<T> implements Runnable {
 
     private final Invoke<T> invoke;
     private final StopWatch stopWatch;
@@ -17,8 +14,7 @@ public class InvokeThread<T> extends Thread {
 
     private ExecutionResult<T> executionResult = new ExecutionResult<T>();
 
-    public InvokeThread(ThreadGroup threadGroup, Invoke<T> invoke, StopWatch stopWatch) {
-        super(threadGroup, SHEETENGINE_RUNNER);
+    public InvokeRunnable(Invoke<T> invoke, StopWatch stopWatch) {
         this.invoke = invoke;
         this.stopWatch = stopWatch;
     }

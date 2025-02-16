@@ -116,23 +116,6 @@ public class SSNExecute extends Task {
         execute.setWriteSequenceRecords(arenaJob.isWriteSequenceRecords());
         execute.setGenerateJUnitTests(arenaJob.isGenerateJUnitTests());
 
-//        List<String> referenceImpls;
-//        if (arenaJob.isReferenceImplementationOnly()) {
-//            // pick by abstraction id
-//            Optional<String> refIdOp = arenaJob.getImplementations().stream()
-//                    .map(System::getId)
-//                    .filter(id -> StringUtils.equals(id, arenaJob.getAbstractionId()))
-//                    .findFirst();
-//            referenceImpls = new ArrayList<>();
-//            referenceImpls.add(
-//                    refIdOp.orElseThrow(() -> new IllegalArgumentException("Cannot find reference implementation for abstraction " + arenaJob.getAbstractionId())));
-//        } else {
-//            // take all
-//            referenceImpls = arenaJob.getImplementations().stream()
-//                    .map(System::getId)
-//                    .collect(Collectors.toList());
-//        }
-
         execute.setBySequenceSpecification(arenaJob.isBySequenceSpecification());
 
         // options
@@ -156,44 +139,8 @@ public class SSNExecute extends Task {
             LOG.info("CC enabled '{}'", execute.measureJaCoCo);
         }
 
-//        DefaultSheetProvider provider = new DefaultSheetProvider(path, pool, arenaJob.getImplementations());
-//
-//        if(arenaJob.getThreads() > -1) {
-//            LOG.info("setting threads to '{}'", arenaJob.getThreads());
-//
-//            provider.setThreads(arenaJob.getThreads());
-//            execute.setThreads(arenaJob.getThreads());
-//        }
-
-//        // set specification if necessary
-//        if(StringUtils.isNotBlank(arenaJob.getSpecification())) {
-//            CodeSearch codeSearch = new CodeSearch();
-//            try {
-//                List<InterfaceSpecification> interfaceSpecifications = codeSearch.fromLQL(arenaJob.getSpecification());
-//                InterfaceSpecification interfaceSpecification = interfaceSpecifications.get(0);
-//                provider.setInterfaceSpecification(interfaceSpecification);
-//            } catch (Throwable e) {
-//                LOG.warn("Setting specification failed", e);
-//            }
-//        }
-
         // set scope for measurements
         execute.setScope(arenaJob.getScope());
-
-//        // make sure to retrieve all implementations (in case some implementations have no sheet)
-//        try {
-//            Set<String> allCuts = provider.findCuts();
-//            provider.resolveCuts(allCuts);
-//        } catch (Throwable e) {
-//            throw new RuntimeException(e);
-//        }
-//
-//        execute.execute(referenceImpls, provider,
-//                new DefaultAdaptationStrategy(),
-//                limitAdapters,
-//                writer);
-
-
 
         // test driver
         SSNTestDriver testDriver = execute.setUpTestDriver(arenaJob);
@@ -231,6 +178,7 @@ public class SSNExecute extends Task {
                     sheets.addAll(junitSheets);
                 }
             } catch (Throwable e) {
+                // ignore
                 e.printStackTrace();
             }
         }
@@ -242,6 +190,7 @@ public class SSNExecute extends Task {
                 sheets.addAll(translatedSheets);
             }
         } catch (Throwable e) {
+            // ignore
             e.printStackTrace();
         }
 
@@ -273,13 +222,6 @@ public class SSNExecute extends Task {
     }
 
     public static List<Sheet> resolveSheetsFromJUnit(SSNTestDriver ssnTestDriver, List<JUnitCodeUnit> jUnitCodeUnits, List<System> implementations, File path, ArenaJob arenaJob) throws IOException {
-//        // create CUTs
-//        List<ClassUnderTest> classesUnderTest = new LinkedList<>();
-//        for(System implementation : implementations) {
-//            ClassUnderTest classUnderTest = new ClassUnderTest(implementation);
-//            classesUnderTest.add(classUnderTest);
-//        }
-
         // use from FA spec
         InterfaceSpecification interfaceSpecification = LQLUtils.lqlToList(arenaJob.getSpecification()).get(0);
 
@@ -292,8 +234,6 @@ public class SSNExecute extends Task {
 
         // init
         pool.initProjects();
-
-        //Map<String, ClassUnderTest> implsMap = classesUnderTest.stream().collect(Collectors.toMap(i -> i.getId(), i -> i));
 
         List<Sheet> allStimulusSheets = new LinkedList<>();
         for(JUnitCodeUnit jUnitCodeUnit : jUnitCodeUnits) {
@@ -315,13 +255,12 @@ public class SSNExecute extends Task {
                         // set target specification
                         stimulusSheet.setInterfaceSpecification(arenaJob.getSpecification());
                         //stimulusSheet.setInvocations(new LinkedList<>());
-
-                        //java.lang.System.out.println("SPEC " + stimulusSheet.getInterfaceSpecification());
                     }
 
                     allStimulusSheets.addAll(stimulusSheets);
                 }
             } catch (Throwable e) {
+                // ignore
                 e.printStackTrace();
             }
         }
@@ -376,13 +315,12 @@ public class SSNExecute extends Task {
                         // set target specification
                         stimulusSheet.setInterfaceSpecification(arenaJob.getSpecification());
                         //stimulusSheet.setInvocations(new LinkedList<>());
-
-                        //java.lang.System.out.println("SPEC " + stimulusSheet.getInterfaceSpecification());
                     }
 
                     allStimulusSheets.addAll(stimulusSheets);
                 }
             } catch (Throwable e) {
+                // ignore
                 e.printStackTrace();
             }
         }
@@ -460,20 +398,20 @@ public class SSNExecute extends Task {
             }
         }
 
-        // FIXME print out results
+        //
         SRHWriter writer = new SRHWriter(clusterClient);
 
         // all tests
-        for (Test test : stimulusResponseMatrix.getRows()) {
-
-        }
+//        for (Test test : stimulusResponseMatrix.getRows()) {
+//            // something to do here?
+//        }
 
         // all implementations
         for (AdaptedImplementation adaptedImplementation : stimulusResponseMatrix.getColumns()) {
-            // add oracle
+            // add oracle?s
         }
 
-        // FIXME
+        // FIXME make configurable
         GsonMapper gsonMapper = new GsonMapper();
 
         // write
@@ -519,14 +457,14 @@ public class SSNExecute extends Task {
                 try {
                     List<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String>> sheets = SheetUtils.toSheets(adaptedImplementation, executedInvocations, gsonMapper);
 
-                    de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> actuationSheetData = sheets.get(0);
+                    //de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> actuationSheetData = sheets.get(0);
                     de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> adaptedActuationSheetData = sheets.get(1);
 
 //                    actuationSheetData.debug();
 //                    adaptedActuationSheetData.debug();
 
-//                    LOG.info("JSON actuationSheet\n{}", actuationSheetData.toJsonl());
-//                    LOG.info("JSON adaptedActuationSheet\n{}", adaptedActuationSheetData.toJsonl());
+//                    LOG.debug("JSON actuationSheet\n{}", actuationSheetData.toJsonl());
+//                    LOG.debug("JSON adaptedActuationSheet\n{}", adaptedActuationSheetData.toJsonl());
 
                     try {
                         LOG.info("Storing sheet in SRH for 'codeUnit {} adapter {} variant {}'", adaptedImplementation.getAdaptee().getId(), adaptedImplementation.getAdapterId(), adaptedImplementation.getAdaptee().getVariantId());
@@ -560,7 +498,7 @@ public class SSNExecute extends Task {
                     try {
                         LOG.info("Storing metric sheet in SRH");
 
-                        // FIXME store
+                        // store
                         writer.storeMetricActuationSheet(arenaJob, arenaId, adaptedImplementation, "jacoco", metricSheet);
                     } catch (Throwable e) {
                         LOG.warn("Storing metric sheet in SRH failed", e);

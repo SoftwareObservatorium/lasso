@@ -3,6 +3,9 @@ package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.run;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -35,7 +38,7 @@ public class Runner {
     public <T> ExecutionResult<T> run(Invoke<T> invoke) throws Throwable {
         ExecutionResult<T> executionResult;
 
-        if(isTimeoutEnabled()) {
+        if (isTimeoutEnabled()) {
             LOG.debug("Running with thread");
             try {
                 executionResult = runWithTimeout(invoke);
@@ -51,6 +54,7 @@ public class Runner {
         return executionResult;
     }
 
+    @Deprecated
     protected <T> ExecutionResult<T> runDirectly(Invoke<T> invoke) {
         ExecutionResult<T> executionResult = new ExecutionResult();
 
@@ -70,29 +74,51 @@ public class Runner {
     }
 
     protected <T> ExecutionResult<T> runWithTimeout(Invoke<T> invoke) throws TimeoutException {
-        InvokeThread<T> invokeThread = new InvokeThread(null, invoke, stopWatch);
+        //InvokeThread<T> invokeThread = new InvokeThread<T>(null, invoke, stopWatch);
+        InvokeRunnable<T> runnable = new InvokeRunnable<T>(invoke, stopWatch);
+        FutureTask<?> future = new FutureTask<>(runnable, null);
+        Thread thread = new Thread(future);
+        thread.setDaemon(true);
+        thread.setName("sheetengine-runner");
+        thread.start();
 
         try {
-            // start execution
-            invokeThread.start();
-
-            // wait for millis
-            invokeThread.join(timeoutInMillis);
-
-            if (!invokeThread.isFinished()) {
-                LOG.warn("Timeout");
-
-                // try to stop
-                invokeThread.stop();
-
-                throw new TimeoutException();
-            }
-
-        } catch (java.lang.InterruptedException e) {
-            throw new IllegalStateException();
+            future.get(timeoutInMillis, TimeUnit.MILLISECONDS);
+        } catch (Throwable ex) {
+            // don't care
+            ex.printStackTrace();
         }
 
-        return invokeThread.getExecutionResult();
+        if(!future.isDone()) {
+            throw new TimeoutException();
+        }
+
+        return runnable.getExecutionResult();
+
+//        // set as daemon thread
+//        invokeThread.setDaemon(true);
+//
+//        try {
+//            // start execution
+//            invokeThread.start();
+//
+//            // wait for millis
+//            invokeThread.join(timeoutInMillis);
+//
+//            if (!invokeThread.isFinished()) {
+//                LOG.warn("Timeout");
+//
+//                // try to stop
+//                invokeThread.stop();
+//
+//                throw new TimeoutException();
+//            }
+//
+//        } catch (java.lang.InterruptedException e) {
+//            throw new IllegalStateException();
+//        }
+//
+//        return invokeThread.getExecutionResult();
     }
 
     public StopWatch getStopWatch() {

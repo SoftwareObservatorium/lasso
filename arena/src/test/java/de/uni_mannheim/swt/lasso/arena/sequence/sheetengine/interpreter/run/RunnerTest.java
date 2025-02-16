@@ -3,6 +3,7 @@ package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.run;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  *
@@ -21,17 +22,16 @@ public class RunnerTest {
     }
 
     @Test
-    public void test_thread() throws Throwable {
-        Runner.CALL_TIMEOUT_MILLIS = 1 * 1000l;
+    public void test_timeout() throws Throwable {
+        Runner.CALL_TIMEOUT_MILLIS = 1 * 5000l;
         Runner runner = new Runner();
 
-        ExecutionResult<Integer> executionResult = runner.run(() -> {
-            Thread.sleep(10 * 1000l);
-            return 1;
+        assertThrows(RuntimeException.class, () -> {
+            ExecutionResult<Integer> executionResult = runner.run(() -> {
+                while(true) {
+                    // hang on purpose
+                }
+            });
         });
-
-        assertEquals(10, executionResult.getValue());
-
-        System.out.println(executionResult.getDurationNanos());
     }
 }
