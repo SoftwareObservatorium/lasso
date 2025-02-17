@@ -26,10 +26,14 @@ import de.uni_mannheim.swt.lasso.engine.LSLExecutionResult
 import de.uni_mannheim.swt.lasso.engine.LSLScript
 import de.uni_mannheim.swt.lasso.service.systemtests.util.LassoTestEngine
 import de.uni_mannheim.swt.lasso.srm.ClusterSRMRepository
+import de.uni_mannheim.swt.lasso.srm.olap.Warehouse
+import org.apache.commons.io.FileUtils
+import org.apache.commons.io.IOUtils
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.core.io.Resource
 import tech.tablesaw.api.Table
 
 /**
@@ -83,10 +87,10 @@ study(name: 'Base64encode') {
 
         query { stimulusMatrix ->
             def query = [:] // create query model
-            query.queryContent = "*:*"
+            query.queryContent = stimulusMatrix.lql
             query.rows = 1
             // pick known impl
-            query.filters = ['id:"4b824c04-1c9f-434f-907f-194f8b79a344"']
+            //query.filters = ['id:"4b824c04-1c9f-434f-907f-194f8b79a344"']
             return [query] // list of queries is expected
         }
     }
@@ -122,6 +126,8 @@ study(name: 'Base64encode') {
         ClusterSRMRepository srmRepository = clusterEngine.getClusterSRMRepository();
         Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
         System.out.println(table.printAll());
+
+        Warehouse.writeRawSrmToFile(lslExecutionContext.getExecutionId(), new File("/tmp/tds.parquet"));
     }
 
     @Test
@@ -191,6 +197,8 @@ study(name: 'Base64encode') {
         ClusterSRMRepository srmRepository = clusterEngine.getClusterSRMRepository();
         Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
         System.out.println(table.printAll());
+
+        Warehouse.writeRawSrmToFile(lslExecutionContext.getExecutionId(), new File("/tmp/base64_maven.parquet"));
     }
 
     @Test
@@ -198,43 +206,36 @@ study(name: 'Base64encode') {
         @Language("Groovy")
         String content = '''
 dataSource 'lasso_quickstart'
-study(name: 'Stack') {
+study(name: 'HelloWorld') {
 
-      profile('java17Profile') {
-        scope('class') { type = 'class' }
-        environment('java17') {
-          image = 'maven:3.9-eclipse-temurin-17' // docker image (JDK 17)
-        }
-      }
-
-    action(name: 'select') {
+    action(name: 'create') {
         execute {
             // from JDK classes
             stimulusMatrix('Stack', """Stack {
                     push(java.lang.String)->java.lang.String
-                    size()->int
-                }
-                """, 
-                [
-                    implementation("1", "java.util.Stack"),
-                    implementation("2", "java.util.ArrayDeque"),
-                    implementation("3", "java.util.LinkedList")
-                ], [
-                test(name: 'testPush()') {
-                    row '',    'create', 'Stack'
-                    row '',  'push',   'A1',     '"Hello World!"'
-                    row '',  'size',   'A1'
-                }])
+                    size()->int }""",
+                    [
+                            implementation("1", "java.util.Stack"),
+                            implementation("2", "java.util.ArrayDeque"),
+                            implementation("3", "java.util.LinkedList")
+                    ], [
+                    test(name: 'testPush()') {
+                        row '',    'create', 'Stack'
+                        row '',  'push',   'A1',     '"Hello World!"'
+                        row '',  'size',   'A1'
+                    }])
         }
     }
-    
-    /* filter candidates by two tests (test-driven code filtering) */
-    action(name: 'filter', type: 'Arena') { // filter by tests
-        maxAdaptations = 1 // how many adaptations to try
-
-        dependsOn 'select'
+    /* Execute stimulus matrix and obtain stimulus response matrix */
+    action(name: 'filter', type: 'Arena') {
+        dependsOn 'create'
         include 'Stack'
-        profile('java17Profile')
+        profile('java17Profile') {
+            scope('class') { type = 'class' }
+            environment('java17') {
+            image = 'maven:3.9-eclipse-temurin-17' // docker image (JDK 17)
+            }
+        }
     }
 }
         '''
@@ -259,6 +260,8 @@ study(name: 'Stack') {
         ClusterSRMRepository srmRepository = clusterEngine.getClusterSRMRepository();
         Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
         System.out.println(table.printAll());
+
+        Warehouse.writeRawSrmToFile(lslExecutionContext.getExecutionId(), new File("/tmp/helloworld.parquet"));
     }
 
     @Test
@@ -335,6 +338,8 @@ study(name: 'BoundedQueue') {
         ClusterSRMRepository srmRepository = clusterEngine.getClusterSRMRepository();
         Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
         System.out.println(table.printAll());
+
+        Warehouse.writeRawSrmToFile(lslExecutionContext.getExecutionId(), new File("/tmp/bounded_queue_mutation.parquet"));
     }
 
     @Test
@@ -822,6 +827,15 @@ study(name: 'Ollama-Parallel') {
             return [prompt] // list of prompts is expected
         }  
       }
+      
+    action(name: 'execute', type: 'Arena') { // run all collected stimulus sheets on all impls in arena
+        maxAdaptations = 1 // how many adaptations to try
+        //features = ["cc", "mutation"]
+
+        dependsOn 'generateTestsLlama'
+        include '*'
+        profile('java17Profile')
+    }
 }
         '''
 
@@ -845,6 +859,8 @@ study(name: 'Ollama-Parallel') {
         ClusterSRMRepository srmRepository = clusterEngine.getClusterSRMRepository();
         Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
         System.out.println(table.printAll());
+
+        Warehouse.writeRawSrmToFile(lslExecutionContext.getExecutionId(), new File("/tmp/OLLAMA_GEN.parquet"));
     }
 
     @Test
@@ -951,6 +967,8 @@ study(name: 'ChatGPT') {
         ClusterSRMRepository srmRepository = clusterEngine.getClusterSRMRepository();
         Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
         System.out.println(table.printAll());
+
+        Warehouse.writeRawSrmToFile(lslExecutionContext.getExecutionId(), new File("/tmp/OPENAI_GEN.parquet"));
     }
 
     // take prompt from benchmark, generate tests by presenting code

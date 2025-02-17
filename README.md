@@ -1,4 +1,11 @@
-# What is the LASSO Platform?
+# LASSO Platform
+
+Visit our official website https://softwareobservatorium.github.io/ for more details:
+
+* documentation: https://softwareobservatorium.github.io/web/docs/intro
+* LSL pipelines (test-driven search experiments): https://softwareobservatorium.github.io/web/hub
+
+## What is the LASSO Platform?
 
 _LASSO - an Observatorium for the Dynamic Selection, Analysis and Comparison of Software._
 
@@ -21,32 +28,11 @@ LASSO's core building blocks consist of several well-defined concepts and data s
 
 The platform is realized in Java using Spring Boot (https://spring.io/projects/spring-boot), while its architecture is realized on top of Apache Ignite (https://ignite.apache.org/). The platform's architecture, therefore, is distributed by design. It follows the manager/worker architecture style. The platform can be accessed via its website (RESTful API) and a webapp GUI.
 
-![quickstart_results.png](doc%2Fimg%2Fquickstart_results.png)
-![quickstart_results_filters.png](doc%2Fimg%2Fquickstart_results_filters.png)
-## Documentation
-
-There are ways to get started:
-
-* Get started with our quickstart guide (see [quickstart.md](doc%2Fquickstart.md))
-* Read details about LASSO's core concepts, data structures and platform in recent publications (further down)
-
-### Getting Started
-
-Read our [quickstart.md](doc%2Fquickstart.md) guide to get started with the LASSO platform.
-
 ### (Tool Demo) Test-driven Software Experimentation with LASSO: an LLM Benchmarking Example
 
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/tzY9oNTWXzw/0.jpg)](https://www.youtube.com/watch?v=tzY9oNTWXzw)
 
-The scripts of the tool demo can be found in [script_examples/benchmarking_llms](script_examples/benchmarking_llms)
-
 A preprint of the tool demo paper is available on [arxiv](https://arxiv.org/abs/2410.08911).
-
-### LASSO Scripting Language (LSL) - DSL Commands
-
-The (Groovy) DSL command documentation can be found [dsl](doc%2Fdsl) and examples of the DSL commands can be found in [LSLLanguageSystemTest.groovy](service%2Fsrc%2Ftest%2Fjava%2Fde%2Funi_mannheim%2Fswt%2Flasso%2Fservice%2Fsystemtests%2Fintegration%2FLSLLanguageSystemTest.groovy).
-
-Examples of the language are provided in [systemtests](service%2Fsrc%2Ftest%2Fjava%2Fde%2Funi_mannheim%2Fswt%2Flasso%2Fservice%2Fsystemtests).
 
 ### Publications
 
@@ -67,39 +53,6 @@ In this thesis a platform called LASSO (Large-Scale Software Observatorium) is i
              url = {https://madoc.bib.uni-mannheim.de/64107/}
 }
 ```
-
-See [publications.md](doc%2Fpublications.md) for more on LASSO and the platform.
-
-### LASSO Scripting Language - Analysis Pipelines
-
-See [pipelines.md](doc%2Fpipelines.md) for a few example LSL pipelines.
-
-### Software Analytics - Analyzing SRMs (Stimulus Response Matrices)
-
-A core design principle of the LASSO platform is to conduct extensive software analytics in external, popular data analytics tools. The platform, therefore, stores tracing data and reports in its distributed database using tabular representations.
-
-Use our _jupyterlab_ playground to explore and manipulate SRMs with Python pandas (https://pandas.pydata.org/)
-
-* https://softwareobservatorium.github.io/jupyterlab/lab/index.html
-
-
-See [analytics.md](doc%2Fanalytics.md) how resulting SRMs can be analyzed in Python and R.
-
-![quickstart_jupyterlab.png](doc%2Fimg%2Fquickstart_jupyterlab.png)
-
-### Distributed Mode - Large scale analysis
-
-The platform is designed to scale software code analysis and observation for _big code_.
-
-See [distributed.md](doc%2Fdistributed.md) for instructions how to set up a LASSO cluster.
-
-### Development of LASSO
-
-See [development.md](doc%2Fdevelopment.md) for developer details (extension points, system tests etc.).
-
-### Known Issues and Security Concerns
-
-See [known_issues.md](doc%2Fknown_issues.md) for know issues, and [security.md](doc%2Fsecurity.md) for security concerns. 
 
 ## LASSO Maven Modules
 
@@ -136,7 +89,7 @@ Any contributions, including tool/technique integrations, pipeline scripts, impr
 
 ## Contact us
 
-To reach out to us, contact Marcus Kessel from the Software Engineering Group @ University of Mannheim (https://www.wim.uni-mannheim.de/atkinson/).
+To reach out to us, contact Marcus Kessel from the Software Engineering Group @ University of Mannheim (https://www.wim.uni-mannheim.de/atkinson/team/dr-marcus-kessel/).
 
 ## License
 
@@ -162,7 +115,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 A few integrations in LASSO required minor code modifications. The original code is released under following licenses:
 
-* randoop (https://github.com/randoop/randoop) - MIT
 * EvoSuite (https://github.com/EvoSuite/evosuite) - LGPL-3.0
 * Maven plugin for EvoSuite (https://github.com/EvoSuite/evosuite) - LGPL-3.0
 * Maven plugin for randoop (https://github.com/zaplatynski/randoop-maven-plugin) - MIT

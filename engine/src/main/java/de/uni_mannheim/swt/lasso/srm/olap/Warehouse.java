@@ -90,4 +90,17 @@ public class Warehouse {
 
         return resource;
     }
+
+    public static void writeRawSrmToFile(String executionId, File file) throws SQLException, IOException {
+        JDBC jdbc = new JDBC();
+        ArrowOlap olap = new ArrowOlap();
+
+        String sql = "SELECT * FROM srm.cellvalue where executionid = ?";
+
+        try (PreparedStatement preparedStatement = jdbc.createPreparedStatement(sql)) {
+            preparedStatement.setString(1, executionId);
+
+            olap.sqlToParquet(preparedStatement, file.getAbsolutePath());
+        }
+    }
 }
