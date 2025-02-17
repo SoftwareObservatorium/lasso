@@ -5,6 +5,8 @@ Visit our official website https://softwareobservatorium.github.io/ for more det
 * documentation: https://softwareobservatorium.github.io/web/docs/intro
 * LSL pipelines (test-driven search experiments): https://softwareobservatorium.github.io/web/hub
 
+Note that support for additional programming languages (in addition to Java) is work in progress (see progress on our Arena Test Driver including our data structures for Python in https://github.com/SoftwareObservatorium/arena-python/).
+
 ## What is the LASSO Platform?
 
 _LASSO - an Observatorium for the Dynamic Selection, Analysis and Comparison of Software._
