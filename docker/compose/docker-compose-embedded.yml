@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+
+  # LASSO Embedded Service
+  lasso-service:
+    image: swtrepo.informatik.uni-mannheim.de:5050/docker/lasso/lasso-service-embedded:latest
+    container_name: lasso-service
+    network_mode: host  # using host network as specified by original command
+    environment:
+      - DIND_SUPPORT_LIBS=/opt/lasso/work/
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./lasso-work/:/opt/lasso/work/
+      - ./ignite/:/opt/lasso/ignite/
+    working_dir: /opt/lasso/work/
+    tty: true
+    stdin_open: true
+
+  # Artifact repository (Nexus)
+  nexus:
+    image: swtrepo.informatik.uni-mannheim.de:5050/docker/lasso/lasso-nexus-preconfigured:latest
+    container_name: lasso-nexus
+    ports:
+      - "8081:8081"
+
+  # Code search index (Solr)
+  solr:
+    image: swtrepo.informatik.uni-mannheim.de:5050/docker/lasso/lasso-solr-preconfigured:latest
+    container_name: lasso-solr
+    ports:
+      - "8983:8983"
