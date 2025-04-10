@@ -66,10 +66,14 @@ public class MavenRepository implements Repository {
         this.resolver = resolver;
         this.containers = containers;
 
-        // initialize sandbox
-        if(!Sandbox.isInitialized()) {
-            Sandbox.initialize(getRepositoryPath().toPath());
-        }
+//        // initialize sandbox
+//        if(!Sandbox.isInitialized()) {
+//            try {
+//                Sandbox.initialize(getRepositoryPath().toPath());
+//            } catch (Throwable e) {
+//                LOG.warn("Failed to set up sandbox properly", e);
+//            }
+//        }
     }
 
     public DependencyResolver getResolver() {

@@ -1,3 +1,5 @@
+import { v4 as uuid } from 'uuid'
+
 // examples
 export class Examples {
     static MAP = {
@@ -13,12 +15,12 @@ export class Examples {
 },
                 codeModules: [
                     {
-                        id: crypto.randomUUID(),
+                        id: uuid(),
                         className: "org.apache.commons.codec.binary.Base64",
                         artifacts: ["commons-codec:commons-codec:1.15"]
                     },
                     {
-                        id: crypto.randomUUID(),
+                        id: uuid(),
                         className: "org.apache.commons.codec.binary.Base64",
                         artifacts: ["commons-codec:commons-codec:1.17"]
                     }
@@ -55,17 +57,17 @@ export class Examples {
 },
                 codeModules: [
                     {
-                        id: crypto.randomUUID(),
+                        id: uuid(),
                         className: "java.util.Stack",
                         artifacts: [""]
                     },
                     {
-                        id: crypto.randomUUID(),
+                        id: uuid(),
                         className: "java.util.ArrayDeque",
                         artifacts: [""]
                     },
                     {
-                        id: crypto.randomUUID(),
+                        id: uuid(),
                         className: "java.util.LinkedList",
                         artifacts: [""]
                     }
@@ -99,7 +101,7 @@ export class Examples {
 },
                 codeModules: [
                     {
-                        id: crypto.randomUUID(),
+                        id: uuid(),
                         className: "demo_examples.BoundedQueue",
                         artifacts: [""]
                     }

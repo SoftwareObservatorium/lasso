@@ -68,7 +68,7 @@ public class Nicad6 extends DefaultAction {
     protected static final String NICAD_REPORT_ROOT = "modules_files-*";
     protected static final String NICAD_REPORT = "modules_files-*clones-*-classes.xml";
 
-    public static final String NICAD_6_2 = "nicad:6.2";
+    public static final String NICAD_6_2 = "swtrepo.informatik.uni-mannheim.de:5050/docker/lasso/nicad:6.2.1";
 
     @LassoInput(desc = "Clone Type", optional = true)
     public String cloneType = "type2";

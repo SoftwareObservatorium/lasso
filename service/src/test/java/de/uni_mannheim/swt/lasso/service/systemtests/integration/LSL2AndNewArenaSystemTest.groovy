@@ -430,6 +430,92 @@ study(name: 'Stack') {
         ClusterSRMRepository srmRepository = clusterEngine.getClusterSRMRepository();
         Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
         System.out.println(table.printAll());
+
+        Warehouse.writeRawSrmToFile(lslExecutionContext.getExecutionId(), new File("/tmp/STACK_PARAMETERIZED.parquet"));
+    }
+
+    @Test
+    void test_Stack_manualjdk_TYPEAWARE() throws IOException, DataSourceNotFoundException {
+        @Language("Groovy")
+        String content = '''
+dataSource 'lasso_quickstart'
+// interface in LQL notation
+def interfaceSpec = """Stack {
+    push(java.lang.String)->java.lang.String
+    size()->int
+}
+"""
+study(name: 'Stack') {
+
+      profile('java17Profile') {
+        scope('class') { type = 'class' }
+        environment('java17') {
+          image = 'maven:3.9-eclipse-temurin-17' // docker image (JDK 17)
+        }
+      }
+
+    action(name: 'select') {
+        stimulusMatrix('Stack', interfaceSpec, // abstraction details
+                [ // implementations
+                    implementation("1", "java.util.Stack"),
+                    implementation("2", "java.util.ArrayDeque"),
+                    implementation("3", "java.util.LinkedList")
+                ], 
+                [ // tests
+                    test(name: 'testPush()') {
+                        row '',  'create', 'Stack'
+                        row '',  'push',   'A1',     '"Hi"'
+                        row '',  'size',   'A1'
+                    },
+                    test(name: 'testPushParameterized(p1=java.lang.String)', p1: "Hello World!") {
+                        row '',  'create', 'Stack'
+                        row '',  'push',   'A1',     '?p1'
+                        row '',  'size',   'A1'
+                    },
+                    test(name: 'testPushParameterized(p1=java.lang.String)', p1: "Bla blub!") // e.g., parameterized
+                ]
+            )
+    }
+
+    action(name: 'typeAware', type: 'TypeAwareMutatorTestGen') { // add more tests
+        noOfTests = 1 // create one mutation per test
+    
+        dependsOn 'select'
+        include 'Stack'
+    }    
+
+    action(name: 'test', type: 'Arena') { // run all tests
+        maxAdaptations = 1 // how many adaptations to try
+
+        dependsOn 'typeAware'
+        include 'Stack'
+        profile('java17Profile')
+    }
+}
+        '''
+
+        //
+        LSLScript scriptUnderTest = createScript(content)
+
+
+        // DO EXECUTE
+        LSLExecutionResult lslExecutionResult = lassoEngine.execute(scriptUnderTest);
+        LSLExecutionContext lslExecutionContext = lassoEngine.getLastContext();
+
+        // assertions
+        //verifyAbstraction(lslExecutionContext, 'select', 'Base64', 1)
+        //verifyAbstraction(lslExecutionContext, 'execute', 'Base64', 1)
+
+        // TODO verify SRM
+        // put
+        ClusterEngine clusterEngine = lslExecutionContext.getConfiguration().getService(ClusterEngine.class);
+
+        // also make sure that the SRM is initialized (otherwise the client has no way to put cells)
+        ClusterSRMRepository srmRepository = clusterEngine.getClusterSRMRepository();
+        Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
+        System.out.println(table.printAll());
+
+        Warehouse.writeRawSrmToFile(lslExecutionContext.getExecutionId(), new File("/tmp/STACK_TYPEAWARE.parquet"));
     }
 
     // Evosuite needs to be deployed in nexus
@@ -563,7 +649,7 @@ study(name: 'Evosuite-Models') {
         profile('java11Profile')
     }
     
-    action(name: 'filter', type: 'Arena') { // run all collected stimulus sheets on all impls in arena
+    action(name: 'test', type: 'Arena') { // run all collected stimulus sheets on all impls in arena
         maxAdaptations = 1 // how many adaptations to try
         //features = ["cc", "mutation"]
         
@@ -596,14 +682,17 @@ study(name: 'Evosuite-Models') {
         ClusterSRMRepository srmRepository = clusterEngine.getClusterSRMRepository();
         Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
         System.out.println(table.printAll());
+
+        Warehouse.writeRawSrmToFile(lslExecutionContext.getExecutionId(), new File("/tmp/EVOSUITE_DGAI.parquet"));
     }
 
+    // Evosuite needs to be deployed in nexus
     @Test
-    void test_codeclone() throws IOException, DataSourceNotFoundException {
+    void test_evosuite_humaneval() throws IOException, DataSourceNotFoundException {
         @Language("Groovy")
         String content = '''
 dataSource 'lasso_quickstart'
-study(name: 'CodeClone') {
+study(name: 'Evosuite-LLM') {
 
     // profile for execution
     profile('java17Profile') {
@@ -612,52 +701,86 @@ study(name: 'CodeClone') {
             image = 'maven:3.9-eclipse-temurin-17'
         }
     }
+    
+    // profile for execution
+    profile('java11Profile') {
+        scope('class') { type = 'class' }
+        environment('java17') {
+            image = 'maven:3.6.3-openjdk-11' // EvoSuite won't run in > JDK 11
+        }
+    }
 
-    // load benchmark: better benchmark.problems?
+    // load benchmark
     def humanEval = loadBenchmark("humaneval-java-reworded")
 
     action(name: "createStimulusMatrices") {
-        // FIXME problem.lql -> problem.interface
-        // FIXME stimulusMatrix.lql -> stimulusMatrix.interface
         execute {
             // create stimulus matrices for given problems
             def myProblems = [humanEval.abstractions['HumanEval_13_greatest_common_divisor']]
             myProblems.each { problem ->
                 stimulusMatrix(problem.id, problem.lql, [/*impls*/], problem.tests, problem.dependencies) // id, interface, impls, tests, dependencies
             }
-            
-            // add more
         }
     }
 
-    action(name: 'generateCodeLlama', type: 'GenerateCodeOllama') {
+      action(name: 'generateCodeLlama', type: 'GenerateCodeOllama') {
         // pipeline specific
         dependsOn 'createStimulusMatrices'
         include '*'
-        profile('java17Profile') // evosuite 11
+        profile('java11Profile') // evosuite 11
 
         // action configuration block 
         servers = ["http://bagdana.informatik.uni-mannheim.de:11434"]
         model = "llama3.1:latest"
-        samples = 5 // FIXME how many to sample
-        
-        // custom DSL command offered by the action (for each stimulus matrix, create one prompt to obtain impls)
+        samples = 3 // how many to sample
+        javaVersion = "11" // because of EvoSuite ..
+
         prompt { stimulusMatrix ->
-            // can by for any prompts: FA, impls, models etc.
             def prompt = [:] // create prompt model
             prompt.promptContent = """implement a java class with the following interface specification, but do not inherit a java interface: ```${stimulusMatrix.lql}```. Only output the java class and nothing else."""
             prompt.id = "lql_prompt"
-            //prompt.model = "llama3.1:latest"
             return [prompt] // list of prompts is expected
         }
       }
       
-    action(name: 'filter', type: 'Nicad6') {
-        collapseClones = true // drop clones
-
+      action(name: 'generateCodeDeepSeek', type: 'GenerateCodeOllama') {
+        // pipeline specific
         dependsOn 'generateCodeLlama'
         include '*'
-        profile('nicad:6.2')
+        profile('java11Profile') // evosuite 11
+
+        // action configuration block 
+        servers = ["http://bagdana.informatik.uni-mannheim.de:11434"]
+        model = "deepseek-r1:32b"
+        samples = 3 // how many to sample
+        javaVersion = "11" // because of EvoSuite ..
+
+        prompt { stimulusMatrix ->
+            def prompt = [:] // create prompt model
+            prompt.promptContent = """implement a java class with the following interface specification, but do not inherit a java interface: ```${stimulusMatrix.lql}```. Only output the java class and nothing else."""
+            prompt.id = "lql_prompt"
+            return [prompt] // list of prompts is expected
+        }
+      }
+      
+       // add tests: SBST
+    action(name: 'evoSuite', type: 'EvoSuite') {
+        searchBudget = 30 // we need this as upper bound for timeouts
+        stoppingCondition = "MaxTime"
+        //criterion = "LINE:BRANCH:EXCEPTION:WEAKMUTATION:OUTPUT:METHOD:METHODNOEXCEPTION:CBRANCH"
+
+        dependsOn 'generateCodeDeepSeek'
+        include '*'
+        profile('java11Profile')
+    }
+    
+    action(name: 'test', type: 'Arena') { // run all collected stimulus sheets on all impls in arena
+        maxAdaptations = 1 // how many adaptations to try
+        //features = ["cc", "mutation"]
+
+        dependsOn 'evoSuite'
+        include '*'
+        profile('java17Profile')
     }
 }
         '''
@@ -682,6 +805,189 @@ study(name: 'CodeClone') {
         ClusterSRMRepository srmRepository = clusterEngine.getClusterSRMRepository();
         Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
         System.out.println(table.printAll());
+
+        Warehouse.writeRawSrmToFile(lslExecutionContext.getExecutionId(), new File("/tmp/EVOSUITE_humaneval.parquet"));
+    }
+
+    // Evosuite needs to be deployed in nexus
+    @Test
+    void test_evosuite_boundedqueue() throws IOException, DataSourceNotFoundException {
+        @Language("Groovy")
+        String content = '''
+dataSource 'lasso_quickstart'
+study(name: 'Evosuite-LLM') {
+    
+    // profile for execution
+    profile('java11Profile') {
+        scope('class') { type = 'class' }
+        environment('java17') {
+            image = 'maven:3.6.3-openjdk-11' // EvoSuite won't run in > JDK 11
+        }
+    }
+
+    action(name: 'create') {
+        execute {
+            // from JDK classes
+            stimulusMatrix('BoundedQueue', """MyBoundedQueue {
+                    MyBoundedQueue(int)
+                    enQueue(java.lang.Object)->void
+                    deQueue()->java.lang.Object
+                    isEmpty()->boolean
+                    isFull()->boolean
+                }
+                """,
+                [
+                    implementation("1", "demo_examples.BoundedQueue")
+                ], [
+                        test(name: 'testEnqueue()') {
+                            row '',    'create', 'MyBoundedQueue', '10'
+                            row '',  'enQueue',   'A1',     '"Hello World!"'
+                            row '',  'isEmpty',   'A1'
+                            row '',  'isFull',   'A1'
+                            row '',  'deQueue',   'A1'
+                            row '',  'isEmpty',   'A1'
+                        }
+                ])
+        }
+    }
+      
+       // add tests: SBST
+    action(name: 'evoSuite', type: 'EvoSuite') {
+        searchBudget = 120 // we need this as upper bound for timeouts
+        stoppingCondition = "MaxTime"
+        //criterion = "LINE:BRANCH:EXCEPTION:WEAKMUTATION:OUTPUT:METHOD:METHODNOEXCEPTION:CBRANCH"
+
+        dependsOn 'create'
+        include '*'
+        profile('java11Profile')
+    }
+    
+    action(name: 'test', type: 'Arena') { // run all collected stimulus sheets on all impls in arena
+        maxAdaptations = 1 // how many adaptations to try
+        //features = ["cc", "mutation"]
+
+        dependsOn 'evoSuite'
+        include '*'
+        profile('java17Profile')
+    }
+}
+        '''
+
+        //
+        LSLScript scriptUnderTest = createScript(content)
+
+
+        // DO EXECUTE
+        LSLExecutionResult lslExecutionResult = lassoEngine.execute(scriptUnderTest);
+        LSLExecutionContext lslExecutionContext = lassoEngine.getLastContext();
+
+        // assertions
+        //verifyAbstraction(lslExecutionContext, 'select', 'Base64', 1)
+        //verifyAbstraction(lslExecutionContext, 'execute', 'Base64', 1)
+
+        // TODO verify SRM
+        // put
+        ClusterEngine clusterEngine = lslExecutionContext.getConfiguration().getService(ClusterEngine.class);
+
+        // also make sure that the SRM is initialized (otherwise the client has no way to put cells)
+        ClusterSRMRepository srmRepository = clusterEngine.getClusterSRMRepository();
+        Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
+        System.out.println(table.printAll());
+
+        Warehouse.writeRawSrmToFile(lslExecutionContext.getExecutionId(), new File("/tmp/EVOSUITE_boundedqueue.parquet"));
+    }
+
+    @Test
+    void test_codeclone() throws IOException, DataSourceNotFoundException {
+        @Language("Groovy")
+        String content = '''
+dataSource 'lasso_quickstart'
+study(name: 'CodeClone') {
+
+    // profile for execution
+    profile('java17Profile') {
+        scope('class') { type = 'class' }
+        environment('java17') {
+            image = 'maven:3.9-eclipse-temurin-17'
+        }
+    }
+
+    // load benchmark
+    def humanEval = loadBenchmark("humaneval-java-reworded")
+
+    action(name: "createStimulusMatrices") {
+        execute {
+            // create stimulus matrices for given problems
+            def myProblems = [humanEval.abstractions['HumanEval_13_greatest_common_divisor']]
+            myProblems.each { problem ->
+                stimulusMatrix(problem.id, problem.lql, [/*impls*/], problem.tests, problem.dependencies) // id, interface, impls, tests, dependencies
+            }
+        }
+    }
+
+    action(name: 'generateCodeLlama', type: 'GenerateCodeOllama') {
+        // pipeline specific
+        dependsOn 'createStimulusMatrices'
+        include '*'
+        profile('java17Profile') // evosuite 11
+
+        // action configuration block 
+        servers = ["http://bagdana.informatik.uni-mannheim.de:11434"]
+        model = "llama3.1:latest"
+        samples = 5 // how many to sample
+
+        // custom DSL command offered by the action (for each stimulus matrix, create one prompt to obtain impls)
+        prompt { stimulusMatrix ->
+            // can by for any prompts: FA, impls, models etc.
+            def prompt = [:] // create prompt model
+            prompt.promptContent = """implement a java class with the following interface specification, but do not inherit a java interface: ```${stimulusMatrix.lql}```. Only output the java class and nothing else."""
+            prompt.id = "lql_prompt"
+            //prompt.model = "llama3.1:latest"
+            return [prompt] // list of prompts is expected
+        }
+    }
+
+    action(name: 'codeClones', type: 'Nicad6') {
+        collapseClones = true // drop clones
+
+        dependsOn 'generateCodeLlama'
+        include '*'
+        profile('nicad:6.2')
+    }
+
+    action(name: 'test', type: 'Arena') { // run all collected stimulus sheets on all impls in arena
+        maxAdaptations = 1 // how many adaptations to try
+        //features = ["cc", "mutation"]
+
+        dependsOn 'codeClones'
+        include '*'
+        profile('java17Profile')
+    }
+}
+        '''
+
+        //
+        LSLScript scriptUnderTest = createScript(content)
+
+
+        // DO EXECUTE
+        LSLExecutionResult lslExecutionResult = lassoEngine.execute(scriptUnderTest);
+        LSLExecutionContext lslExecutionContext = lassoEngine.getLastContext();
+
+        // assertions
+        //verifyAbstraction(lslExecutionContext, 'select', 'Base64', 1)
+        //verifyAbstraction(lslExecutionContext, 'execute', 'Base64', 1)
+
+        // TODO verify SRM
+        // put
+        ClusterEngine clusterEngine = lslExecutionContext.getConfiguration().getService(ClusterEngine.class);
+
+        // also make sure that the SRM is initialized (otherwise the client has no way to put cells)
+        ClusterSRMRepository srmRepository = clusterEngine.getClusterSRMRepository();
+        Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
+        System.out.println(table.printAll());
+
+        Warehouse.writeRawSrmToFile(lslExecutionContext.getExecutionId(), new File("/tmp/CLONE.parquet"));
     }
 
     // Randoop needs to be deployed in nexus
