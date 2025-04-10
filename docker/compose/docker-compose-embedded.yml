@@ -8,12 +8,12 @@ services:
     container_name: lasso-service
     network_mode: host  # using host network as specified by original command
     environment:
-      - DIND_SUPPORT_LIBS=/opt/lasso/work/
+      - DIND_SUPPORT_LIBS=${PWD}/lasso-work/
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./lasso-work/:/opt/lasso/work/
-      - ./ignite/:/opt/lasso/ignite/
-    working_dir: /opt/lasso/work/
+      - ${PWD}/lasso-work/:/opt/lasso/work/
+      - ${PWD}/ignite/:/opt/lasso/ignite/
+#      - ${PWD}/config/:/opt/lasso/config/
     tty: true
     stdin_open: true
 

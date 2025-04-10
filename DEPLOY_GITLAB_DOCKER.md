@@ -116,3 +116,25 @@ docker pull swtrepo.informatik.uni-mannheim.de:5050/docker/lasso/lasso-service-e
 docker pull swtrepo.informatik.uni-mannheim.de:5050/docker/lasso/lasso-nexus-preconfigured:latest
 docker pull swtrepo.informatik.uni-mannheim.de:5050/docker/lasso/lasso-solr-preconfigured:latest
 ```
+
+## Deploy
+
+### Classic
+
+```bash
+# 1. start LASSO and set work directory to current directory
+docker run -it --env DIND_SUPPORT_LIBS=$(pwd)/lasso-work/ --network host -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd)/lasso-work/:/opt/lasso/work/ -v $(pwd)/ignite/:/opt/lasso/ignite/ swtrepo.informatik.uni-mannheim.de:5050/docker/lasso/lasso-service-embedded:latest
+
+## start executable corpus
+# 2a) start artifact repository (http://localhost:8081/)
+docker run -d -p 8081:8081 --name lasso-nexus swtrepo.informatik.uni-mannheim.de:5050/docker/lasso/lasso-nexus-preconfigured:latest
+# 2b) start code search index (http://localhost:8983/)
+docker run -d -p 8983:8983 --name lasso-solr swtrepo.informatik.uni-mannheim.de:5050/docker/lasso/lasso-solr-preconfigured:latest
+```
+
+### Compose
+
+```bash
+curl https://raw.githubusercontent.com/SoftwareObservatorium/lasso/refs/heads/develop/docker/compose/docker-compose-embedded.yml -o docker-compose.yml
+docker compose up
+```
