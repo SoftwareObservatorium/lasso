@@ -19,9 +19,11 @@
  */
 package de.uni_mannheim.swt.lasso.service.controller;
 
+import de.uni_mannheim.swt.lasso.cluster.ClusterEngine;
 import de.uni_mannheim.swt.lasso.core.dto.*;
 import de.uni_mannheim.swt.lasso.core.dto.file.FileViewRequest;
 import de.uni_mannheim.swt.lasso.core.dto.file.FileViewResponse;
+import de.uni_mannheim.swt.lasso.engine.LassoConfiguration;
 import de.uni_mannheim.swt.lasso.engine.dag.model.LGraph;
 import de.uni_mannheim.swt.lasso.service.LassoManager;
 import de.uni_mannheim.swt.lasso.service.dto.ScriptInfo;
@@ -70,6 +72,11 @@ public class LassoApiController extends BaseApi {
 
     @Autowired
     ScriptJobRepository scriptJobRepository;
+
+    @Autowired
+    ClusterEngine clusterEngine;
+    @Autowired
+    private LassoConfiguration lassoConfiguration;
 
     /**
      * Execute LSL based on given {@link LSLRequest}
@@ -297,6 +304,40 @@ public class LassoApiController extends BaseApi {
 
             // bad request
             throw new RuntimeException(String.format("Could not get Records response"), e);
+        }
+    }
+
+    @Operation(summary = "Query Data from LSL script", description = "Get listing of all abstractions etc.")
+    @RequestMapping(value = "/scripts/{executionId}/query", method = RequestMethod.POST, consumes = "application/json;charset=UTF-8", produces = "application/json;charset=UTF-8")
+    @ResponseBody
+    public ResponseEntity<SearchSrmQueryResponse> query(
+            @RequestBody SearchSrmQueryRequest request,
+            /*@ApiIgnore*/ @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletRequest httpServletRequest,
+            HttpServletResponse httpServletResponse) {
+        // get user details
+        UserInfo userInfo = getUserInfo(httpServletRequest, userDetails);
+
+        SearchSrmQueryResponse response = new SearchSrmQueryResponse();
+
+        try {
+            SrmQueryStrategy queryStrategy = new SrmQueryStrategy(clusterEngine, lassoConfiguration);
+            response = queryStrategy.query(request);
+
+            if (LOG.isInfoEnabled()) {
+                LOG.info("Returning query script response to '{}'",
+                        userInfo.getRemoteIpAddress());
+            }
+
+            // 200
+            return ResponseEntity.ok(response);
+        } catch (Throwable e) {
+            if (LOG.isWarnEnabled()) {
+                LOG.warn(String.format("Could not get query script response"), e);
+            }
+
+            // bad request
+            throw new RuntimeException(String.format("Could not get query script response"), e);
         }
     }
 

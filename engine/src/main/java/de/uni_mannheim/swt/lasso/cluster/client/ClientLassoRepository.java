@@ -22,6 +22,7 @@ package de.uni_mannheim.swt.lasso.cluster.client;
 import de.uni_mannheim.swt.lasso.cluster.LassoClusterClient;
 import de.uni_mannheim.swt.lasso.cluster.data.repository.ExecKey;
 
+import de.uni_mannheim.swt.lasso.core.model.Specification;
 import de.uni_mannheim.swt.lasso.engine.data.LassoOperations;
 import de.uni_mannheim.swt.lasso.core.model.System;
 import de.uni_mannheim.swt.lasso.core.model.Systems;
@@ -125,6 +126,16 @@ public class ClientLassoRepository implements LassoOperations {
 
     @Override
     public void putExecutables(String executionId, String actionName, Systems executables) {
+
+    }
+
+    @Override
+    public Specification getSpecification(String executionId, String actionName, String abstractionName) {
+        return null;
+    }
+
+    @Override
+    public void putSpecification(String executionId, String actionName, Systems executables) {
 
     }
 

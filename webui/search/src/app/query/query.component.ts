@@ -46,68 +46,37 @@ export class QueryComponent implements OnInit, AfterViewInit {
   // monaco for LSL
   lslEditorOptions = {theme: 'vs-light', language: 'lsl'};
   lslCode: string= `dataSource 'lasso_quickstart'
+study(name: 'HelloWorld') {
 
-def totalRows = 10
-def noOfAdapters = 100
-// interface in LQL notation
-def interfaceSpec = """Base64{encode(byte[])->byte[]}"""
-study(name: 'Base64encode') {
-    /* select class candidates using interface-driven code search */
-    action(name: 'select', type: 'Select') {
-        abstraction('Base64') {
-            queryForClasses interfaceSpec, 'class-simple'
-            rows = totalRows
-            excludeClassesByKeywords(['private', 'abstract'])
-            excludeTestClasses()
-            excludeInternalPkgs()
+    /* create stimulus matrix */
+    action(name: 'create') {
+        execute {
+            // from JDK classes
+            stimulusMatrix('Stack', """Stack {
+                    push(java.lang.String)->java.lang.String
+                    size()->int }""",
+                    [
+                            implementation("1", "java.util.Stack"),
+                            implementation("2", "java.util.ArrayDeque"),
+                            implementation("3", "java.util.LinkedList")
+                    ], [
+                    test(name: 'testPush()') {
+                        row '',    'create', 'Stack'
+                        row '',  'push',   'A1',     '"Hello World!"'
+                        row '',  'size',   'A1'
+                    }])
         }
     }
-    /* filter candidates by two tests (test-driven code filtering) */
-    action(name: 'filter', type: 'ArenaExecute') { // filter by tests
-        containerTimeout = 10 * 60 * 1000L // 10 minutes
-        specification = interfaceSpec
-        sequences = [
-                // parameterised sheet (SSN) with default input parameter values
-                // expected values are given in first row (oracle)
-                'testEncode': sheet(base64:'Base64', p2:"user:pass".getBytes()) {
-                    row  '',    'create', '?base64'
-                    row 'dXNlcjpwYXNz'.getBytes(),  'encode',   'A1',     '?p2'
-                },
-                'testEncode_padding': sheet(base64:'Base64', p2:"Hello World".getBytes()) {
-                    row  '',    'create', '?base64'
-                    row 'SGVsbG8gV29ybGQ='.getBytes(),  'encode',   'A1',     '?p2'
-                }
-        ]
-        features = ['cc'] // enable code coverage measurement (class scope)
-        maxAdaptations = noOfAdapters // how many adaptations to try
-
-        dependsOn 'select'
-        includeAbstractions 'Base64'
-        profile('myTdsProfile') {
+    /* Execute stimulus matrix and obtain stimulus response matrix */
+    action(name: 'filter', type: 'Arena') {
+        dependsOn 'create'
+        include 'Stack'
+        profile('java17Profile') {
             scope('class') { type = 'class' }
-            environment('java11') {
-                image = 'maven:3.6.3-openjdk-17' // Java 17
+            environment('java17') {
+                image = 'maven:3.9-eclipse-temurin-17' // docker image (JDK 17)
             }
         }
-
-        // match implementations (note no candidates are dropped)
-        whenAbstractionsReady() {
-            def base64 = abstractions['Base64']
-            // define oracle based on expected responses in sequences
-            def expectedBehaviour = toOracle(srm(abstraction: base64).sequences)
-            // returns a filtered SRM
-            def matchesSrm = srm(abstraction: base64)
-                    .systems // select all systems
-                    .equalTo(expectedBehaviour) // functionally equivalent
-        }
-    }
-    /* rank candidates based on functional correctness */
-    action(name:'rank', type:'Rank') {
-        // sort by functional similarity (passing tests/total tests) descending
-        criteria = ['FunctionalSimilarityReport.score:MAX:1'] // more criteria possible
-
-        dependsOn 'filter'
-        includeAbstractions '*'
     }
 }`;
 

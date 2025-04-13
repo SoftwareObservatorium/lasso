@@ -20,6 +20,7 @@
 package de.uni_mannheim.swt.lasso.engine.data;
 
 import de.uni_mannheim.swt.lasso.cluster.data.repository.ExecKey;
+import de.uni_mannheim.swt.lasso.core.model.Specification;
 import de.uni_mannheim.swt.lasso.core.model.System;
 import de.uni_mannheim.swt.lasso.core.model.Systems;
 
@@ -42,6 +43,10 @@ public interface LassoOperations {
     Map<String, Systems> getAbstractions(String executionId, String actionName);
 
     void putExecutables(String executionId, String actionName, Systems executables);
+
+    Specification getSpecification(String executionId, String actionName, String abstractionName);
+
+    void putSpecification(String executionId, String actionName, Systems executables);
 
     void putExecutables(String executionId, String actionName, Systems executables, boolean removeExisting);
 }

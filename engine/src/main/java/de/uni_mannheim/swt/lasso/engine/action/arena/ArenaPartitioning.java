@@ -613,6 +613,11 @@ public class ArenaPartitioning extends DefaultAction {
             stimulusSheets.addAll(tests);
         }
 
+        // update executables
+        executables.getSpecification().setTests(stimulusSheets);
+
+        // XXX start: deprecated code blocks ...
+
         // benchmark set?
         if(benchmark != null) {
             LOG.info("Trying to load sequences from benchmark '{}' using abstraction '{}'", benchmark, executables.getAbstractionName());

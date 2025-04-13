@@ -20,6 +20,7 @@
 package de.uni_mannheim.swt.lasso.cluster.data.repository;
 
 import de.uni_mannheim.swt.lasso.cluster.ClusterEngine;
+import de.uni_mannheim.swt.lasso.core.model.Specification;
 import de.uni_mannheim.swt.lasso.engine.data.LassoOperations;
 import de.uni_mannheim.swt.lasso.core.model.System;
 import de.uni_mannheim.swt.lasso.core.model.Systems;
@@ -48,6 +49,7 @@ public class LassoRepository implements LassoOperations {
     private final ClusterEngine clusterEngine;
 
     private IgniteCache<ExecKey, System> executionCache;
+    private IgniteCache<SpecificationKey, Specification> specificationCache;
 
     public LassoRepository(ClusterEngine clusterEngine) {
         this.clusterEngine = clusterEngine;
@@ -60,9 +62,13 @@ public class LassoRepository implements LassoOperations {
                 new CacheConfiguration<>("executables");
         execCacheConfig.setIndexedTypes(ExecKey.class, System.class);
         //execCacheConfig.setGroupName("lassoModel");
-
         this.executionCache = this.clusterEngine.getIgnite().getOrCreateCache(execCacheConfig);
 
+        CacheConfiguration<SpecificationKey, Specification> specificationCache =
+                new CacheConfiguration<>("specifications");
+        specificationCache.setIndexedTypes(SpecificationKey.class, Specification.class);
+
+        this.specificationCache = this.clusterEngine.getIgnite().getOrCreateCache(specificationCache);
     }
 
     @Override
@@ -137,6 +143,16 @@ public class LassoRepository implements LassoOperations {
             abstractions.get(abstractionName).getExecutables().add(entry.getValue());
         }
 
+        // add specification
+        for(String abName : abstractions.keySet()) {
+            try {
+                Specification specification = getSpecification(executionId, actionName, abName);
+                abstractions.get(abName).setSpecification(specification);
+            } catch (Throwable e) {
+                LOG.warn("Setting specification failed for '{}', '{}', '{}'", executionId, actionName, abName);
+            }
+        }
+
         return abstractions;
     }
 
@@ -169,9 +185,47 @@ public class LassoRepository implements LassoOperations {
     }
 
     @Override
+    public Specification getSpecification(String executionId, String actionName, String abstractionName) {
+        SpecificationKey key = new SpecificationKey();
+        key.setExecutionId(executionId);
+        key.setAbstractionName(abstractionName);
+        key.setActionName(actionName);
+
+        return this.specificationCache.get(key);
+    }
+
+    @Override
+    public void putSpecification(String executionId, String actionName, Systems executables) {
+        if(LOG.isInfoEnabled()) {
+            LOG.info("PUT SPECIFICATION '{}' '{}' '{}' '{}'", executionId, actionName, executables.getAbstractionName(), executables);
+        }
+
+        if(executables == null || CollectionUtils.isEmpty(executables.getExecutables())) {
+            return;
+        }
+
+        //
+        SpecificationKey key = new SpecificationKey();
+        key.setExecutionId(executionId);
+        key.setAbstractionName(executables.getAbstractionName());
+        key.setActionName(actionName);
+
+        Specification specification = executables.getSpecification();
+        if(specification == null) {
+            if(LOG.isWarnEnabled()) {
+                LOG.warn("Specification was null for '{}' '{}' '{}' '{}'", executionId, actionName, executables.getAbstractionName(), executables);
+            }
+
+            specification = new Specification();
+        }
+
+        this.specificationCache.put(key, specification);
+    }
+
+    @Override
     public void putExecutables(String executionId, String actionName, Systems executables, boolean removeExisting) {
         if(LOG.isInfoEnabled()) {
-            LOG.info("PUT '{}' '{}' '{}' '{}' removeExisting '{}'", executionId, actionName, executables.getAbstractionName(), executables, removeExisting);
+            LOG.info("PUT EXECUTABLES '{}' '{}' '{}' '{}' removeExisting '{}'", executionId, actionName, executables.getAbstractionName(), executables, removeExisting);
         }
 
         if(executables == null || CollectionUtils.isEmpty(executables.getExecutables())) {
@@ -221,6 +275,9 @@ public class LassoRepository implements LassoOperations {
 
             executionCache.put(key, i);
         });
+
+        // update specification
+        putSpecification(executionId, actionName, executables);
     }
 
     public IgniteCache<ExecKey, System> getExecutableIgniteCache() {
