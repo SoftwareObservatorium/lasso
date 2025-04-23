@@ -18,6 +18,7 @@ COPY arena/target/arena-1.0.0-SNAPSHOT-exec.jar /opt/lasso_temp/support/arena-1.
 
 #ENV TEST2=$TEST1
 ENV JVM_OPTS="-Xms2G -Xmx4G"
+ENV IGNITE_OPTS="-Dserver.port=10222 -Djava.net.preferIPv4Stack=true -Dcluster.nodeId=lasso-quickstart -Dcluster.embedded=true -Dcluster.multicast.ip=228.1.2.5"
 
 # going to be host mount
 WORKDIR /opt/lasso/
@@ -51,7 +52,7 @@ CMD mkdir -p /opt/lasso/work/repository/support/ && \
      --add-opens=java.management/sun.management=ALL-UNNAMED  \
      --add-opens java.desktop/java.awt.font=ALL-UNNAMED \
     -server -ea $JVM_OPTS \
-    -Dserver.port=10222 -Djava.net.preferIPv4Stack=true -Dcluster.nodeId=lasso-quickstart -Dcluster.embedded=true \
+    $IGNITE_OPTS \
     -Dthirdparty.docker.uid=$(id -u) -Dthirdparty.docker.gid=$(id -g) \
     -Dlasso.workspace.root=/opt/lasso/work/ \
     -Dusers="file:/opt/lasso/config/users.json" \

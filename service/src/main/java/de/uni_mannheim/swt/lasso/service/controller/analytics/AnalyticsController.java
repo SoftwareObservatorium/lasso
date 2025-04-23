@@ -223,7 +223,11 @@ public class AnalyticsController extends BaseApi {
         try {
             String parquetFile = executionId + "_all" + ".parquet";
 
-            String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
+//            String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
+//                    .path("/publicapi/v1/lasso/analytics/srm/")
+//                    .path(parquetFile)
+//                    .toUriString();
+            String fileDownloadUri = ServletUriComponentsBuilder.fromContextPath(httpServletRequest)
                     .path("/publicapi/v1/lasso/analytics/srm/")
                     .path(parquetFile)
                     .toUriString();
