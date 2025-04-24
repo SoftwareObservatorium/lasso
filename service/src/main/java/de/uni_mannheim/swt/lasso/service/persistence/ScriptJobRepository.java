@@ -35,6 +35,8 @@ import java.util.Optional;
 @Transactional
 public interface ScriptJobRepository extends JpaRepository<ScriptJob, Long> {
 
+    Optional<ScriptJob> findByOwnerAndExecutionId(User owner, String executionId);
+
     Optional<ScriptJob> findByExecutionId(String executionId);
 
     List<ScriptJob> findAllByOwner(User owner, Pageable page);

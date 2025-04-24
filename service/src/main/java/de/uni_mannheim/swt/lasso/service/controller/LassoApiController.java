@@ -198,43 +198,88 @@ public class LassoApiController extends BaseApi {
         }
     }
 
-    @Operation(summary = "LSL Execution Result", description = "Get LSL Script Execution Result")
+//    @Operation(summary = "LSL Execution Result", description = "Get LSL Script Execution Result")
+//    @RequestMapping(value = "/scripts/{executionId}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+//    public ResponseEntity<ExecutionResult> executionResult(
+//            @PathVariable("executionId") String executionId,
+//            /*@ApiIgnore*/ @AuthenticationPrincipal UserDetails userDetails,
+//            HttpServletRequest httpServletRequest) {
+//        // get user details
+//        UserInfo userInfo = getUserInfo(httpServletRequest, userDetails);
+//
+//        if (LOG.isInfoEnabled()) {
+//            LOG.info("Received LSL execution result request from '{}':\n{}",
+//                    userInfo.getRemoteIpAddress(),
+//                    ToStringBuilder
+//                            .reflectionToString(executionId));
+//        }
+//
+//        // do something
+//        try {
+//            // response
+//            ExecutionResult response = lassoManager.getExecutionResult(executionId, userInfo);
+//
+//            if (LOG.isInfoEnabled()) {
+//                LOG.info("Returning LSL execution result response to '{}':\n{}",
+//                        userInfo.getRemoteIpAddress(),
+//                        ToStringBuilder
+//                                .reflectionToString(response));
+//            }
+//
+//            // return 200
+//            return ResponseEntity.ok(response);
+//        } catch (Throwable e) {
+//            if (LOG.isWarnEnabled()) {
+//                LOG.warn(String.format("Could not get execution result for '%s'", executionId ), e);
+//            }
+//
+//            // bad request
+//            throw new RuntimeException(String.format("Could not get execution result for '%s'", executionId ), e);
+//        }
+//    }
+
+    @Operation(summary = "Script", description = "Get Script")
     @RequestMapping(value = "/scripts/{executionId}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
-    public ResponseEntity<ExecutionResult> executionResult(
-            @PathVariable("executionId") String executionId,
+    @ResponseBody
+    public ResponseEntity<ScriptInfo> getScript(@PathVariable("executionId") String executionId,
             /*@ApiIgnore*/ @AuthenticationPrincipal UserDetails userDetails,
-            HttpServletRequest httpServletRequest) {
+                           HttpServletRequest httpServletRequest) {
         // get user details
         UserInfo userInfo = getUserInfo(httpServletRequest, userDetails);
 
-        if (LOG.isInfoEnabled()) {
-            LOG.info("Received LSL execution result request from '{}':\n{}",
-                    userInfo.getRemoteIpAddress(),
-                    ToStringBuilder
-                            .reflectionToString(executionId));
-        }
-
-        // do something
         try {
-            // response
-            ExecutionResult response = lassoManager.getExecutionResult(executionId, userInfo);
+            // by owner
+            User owner = (User) userDetails;
+
+            ScriptInfo info = scriptJobRepository.findByOwnerAndExecutionId(owner, executionId).map(s -> {
+                ScriptInfo scriptInfo = new ScriptInfo();
+                scriptInfo.setExecutionId(s.getExecutionId());
+                scriptInfo.setName(s.getName());
+                scriptInfo.setOwner(s.getOwner().getUsername());
+                scriptInfo.setStatus(s.getStatus().name());
+                scriptInfo.setStart(s.getStart());
+                scriptInfo.setEnd(s.getEnd());
+                scriptInfo.setContent(s.getContent());
+
+                return scriptInfo;
+            }).get();
 
             if (LOG.isInfoEnabled()) {
-                LOG.info("Returning LSL execution result response to '{}':\n{}",
+                LOG.info("Returning script info response to '{}':\n{}",
                         userInfo.getRemoteIpAddress(),
                         ToStringBuilder
-                                .reflectionToString(response));
+                                .reflectionToString(info));
             }
 
-            // return 200
-            return ResponseEntity.ok(response);
+            // 200
+            return ResponseEntity.ok(info);
         } catch (Throwable e) {
             if (LOG.isWarnEnabled()) {
-                LOG.warn(String.format("Could not get execution result for '%s'", executionId ), e);
+                LOG.warn(String.format("Could not get script info"), e);
             }
 
             // bad request
-            throw new RuntimeException(String.format("Could not get execution result for '%s'", executionId ), e);
+            throw new RuntimeException(String.format("Could not get script info"), e);
         }
     }
 
