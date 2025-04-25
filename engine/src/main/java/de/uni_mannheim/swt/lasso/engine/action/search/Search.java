@@ -84,7 +84,7 @@ public class Search extends DefaultAction {
 
                 MavenQuery queryModel = new MavenQuery();
                 context.getLassoContext().register(queryModel);
-                queryModel.queryForProjectClasses(codeQuery.getQueryContent(), "class-simple");
+                queryModel.queryForClasses(codeQuery.getQueryContent(), "class-simple");
                 queryModel.setRows(codeQuery.getRows());
                 codeQuery.getFilters().forEach(queryModel::filter);
 

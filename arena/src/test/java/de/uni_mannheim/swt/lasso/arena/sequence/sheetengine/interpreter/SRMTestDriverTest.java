@@ -44,9 +44,9 @@ public class SRMTestDriverTest {
         @Language("jsonl")
         String ssnJsonlStr = """
                 {"cells": {"A1": {}, "B1": "create", "C1": "Stack"}}
-                {"sheet": "Sheet 1", "header": "Row 2", "cells": {"A2": {}, "B2": "create", "C2": "java.lang.String", "D2": "'Hello World!'"}}
-                {"sheet": "Sheet 1", "header": "Row 3", "cells": {"A3": {}, "B3": "push", "C3": "A1", "D3": "A2"}}
-                {"sheet": "Sheet 1", "header": "Row 4", "cells": {"A4": 1, "B4": "size", "C4": "A1"}}
+                {"cells": {"A2": {}, "B2": "create", "C2": "java.lang.String", "D2": "'Hello World!'"}}
+                {"cells": {"A3": {}, "B3": "push", "C3": "A1", "D3": "A2"}}
+                {"cells": {"A4": 1, "B4": "size", "C4": "A1"}}
                 """;
 
         String lql = """
@@ -626,6 +626,61 @@ public class SRMTestDriverTest {
         // SM
         StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, ClassUnderTest, TestInvocation> stimulusMatrix = SSNTestDriver.parseStimulusMatrix(
                 Arrays.asList(new Sheet("test1()", ssnJsonlStr1, lql), new Sheet("test2()", ssnJsonlStr2, lql)), Arrays.asList(classUnderTest), Arrays.asList(new SheetInvocation("test1", ""), new SheetInvocation("test2", "")));
+
+        // SRM
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> stimulusResponseMatrix = testDriver.runSheets(stimulusMatrix, 1, visitor);
+
+        for(Table.Cell<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> cell : stimulusResponseMatrix.getTable().cellSet()) {
+            ExecutedInvocations executedInvocations = cell.getValue();
+
+            LOG.debug("executed invocations for '{}' \n{}", cell.getColumnKey().getAdaptee().getVariantId(), executedInvocations);
+            List<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String>> sheets = TestUtils.createSheets(cell.getColumnKey(), executedInvocations);
+            de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> actuationSheetData = sheets.get(0);
+            actuationSheetData.debug();
+            de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> adaptedActuationSheetData = sheets.get(1);
+            adaptedActuationSheetData.debug();
+
+            Invocations invocations = executedInvocations.getInvocations();
+        }
+
+        jaCoCoListener.getStimulusResponseMatrix().debug();
+    }
+
+    @Test
+    public void test_Base64_JaCoCo_multiple_Tests_bug() throws IOException, ClassNotFoundException {
+        @Language("jsonl")
+        String ssnJsonlStr1 = """
+                {"cells": {"A1": {}, "B1": "create", "C1": "Base64"}}
+                {"cells": {"A2": {}, "B2": "encode", "C2": "A1", "D2": "\\"Hello World!\\".getBytes()"}}
+                """;
+        String ssnJsonlStr2 = """
+                {"cells": {"A1": {}, "B1": "create", "C1": "Base64"}}
+                {"cells": {"A2": {}, "B2": "decode", "C2": "A1", "D2": "\\"SGVsbG8gV29ybGQh\\""}}
+                """;
+
+        String lql = """
+                Base64{
+                    encode(byte[])->byte[]
+                    decode(java.lang.String)->byte[]
+                }
+                """;
+        JaCoCoListener jaCoCoListener = new JaCoCoListener();
+        InvocationVisitor visitor = new CompositeInvocationVisitor(
+                Arrays.asList(jaCoCoListener)); // add jacoco listener
+
+        SSNTestDriver testDriver = new SSNTestDriver();
+        String mavenRepoUrl = NexusInstance.MAVEN_CENTRAL;
+        File localRepo = new File("/tmp/my_repo/local-repo");
+        DependencyResolver resolver = new DependencyResolver(mavenRepoUrl, localRepo.getAbsolutePath());
+        testDriver.setMavenRepository(new MavenRepository(resolver));
+        testDriver.setEnableJaCoCoCoverage(true);
+
+        // 4b294925-9e8c-47d8-ad25-3076caeb6d16 cn.openapis:hy.common.license:1.1.5
+        ClassUnderTest classUnderTest = CutUtils.resolve("org.hy.common.license.base64.Base64Default", "cn.openapis:hy.common.license:1.1.5");
+
+        // SM
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, ClassUnderTest, TestInvocation> stimulusMatrix = SSNTestDriver.parseStimulusMatrix(
+                Arrays.asList(new Sheet("test1()", ssnJsonlStr1, lql)), Arrays.asList(classUnderTest), Arrays.asList(new SheetInvocation("test1", "")));
 
         // SRM
         StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> stimulusResponseMatrix = testDriver.runSheets(stimulusMatrix, 1, visitor);
