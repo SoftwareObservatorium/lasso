@@ -180,7 +180,7 @@ public class AnalyticsController extends BaseApi {
         try {
             String parquetFile = executionId + ".parquet";
 
-            String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
+            String fileDownloadUri = ServletUriComponentsBuilder.fromContextPath(httpServletRequest)
                             .path("/publicapi/v1/lasso/analytics/srm/" + type + "/")
                             .path(parquetFile)
                             .toUriString();
@@ -229,6 +229,53 @@ public class AnalyticsController extends BaseApi {
 //                    .toUriString();
             String fileDownloadUri = ServletUriComponentsBuilder.fromContextPath(httpServletRequest)
                     .path("/publicapi/v1/lasso/analytics/srm/")
+                    .path(parquetFile)
+                    .toUriString();
+
+            String notebook = JupyterUtils.createSrmNotebook(fileDownloadUri);
+
+            Resource resource = new ByteArrayResource(notebook.getBytes());
+
+            //
+            String fileName = "srm_" + executionId + "_all" + ".ipynb";
+
+            LOG.info(fileName);
+            String contentType = "application/x-ipynb+json";
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                    .body(resource);
+        } catch (Throwable e) {
+            if (LOG.isWarnEnabled()) {
+                LOG.warn(String.format("Could not get SRM for '%s'", executionId), e);
+            }
+
+            // bad request
+            throw new RuntimeException(String.format("Could not get SRM for '%s'", executionId), e);
+        }
+    }
+
+    @Operation(summary = "Generate Jupyter notebook", description = "Generate Jupyter notebook")
+    @RequestMapping(value = "/raw/srm/{executionId}.ipynb", method = RequestMethod.GET, produces = "application/x-ipynb+json")
+    @ResponseBody
+    public ResponseEntity<Resource> getRawAllJupyterParquet(
+            @PathVariable("executionId") String executionId,
+            /*@ApiIgnore*/ /*@AuthenticationPrincipal UserDetails userDetails,*/
+            HttpServletRequest httpServletRequest,
+            HttpServletResponse httpServletResponse) {
+        // get user details
+        //UserInfo userInfo = getUserInfo(httpServletRequest, userDetails);
+
+        try {
+            String parquetFile = executionId + "_all" + ".parquet";
+
+//            String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
+//                    .path("/publicapi/v1/lasso/analytics/srm/")
+//                    .path(parquetFile)
+//                    .toUriString();
+            String fileDownloadUri = ServletUriComponentsBuilder.fromContextPath(httpServletRequest)
+                    .path("/publicapi/v1/lasso/analytics/raw/srm/")
                     .path(parquetFile)
                     .toUriString();
 
