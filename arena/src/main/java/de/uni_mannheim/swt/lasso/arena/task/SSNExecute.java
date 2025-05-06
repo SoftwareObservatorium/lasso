@@ -439,8 +439,8 @@ public class SSNExecute extends Task {
 
                 if(oracleSheet == null) {
                     try {
-                        // FIXME merge resolved parameters etc. (get rid of "null" entries)
-                        ExecutedInvocations oracleInvocations = SheetUtils.toOracle(executedInvocations.getInvocations());
+                        //ExecutedInvocations oracleInvocations = SheetUtils.toOracle(executedInvocations.getInvocations());
+                        ExecutedInvocations oracleInvocations = SheetUtils.toOracle(executedInvocations);
                         oracleSheet = SheetUtils.toOracleSheet(oracleInvocations, gsonMapper);
 
                         //oracleSheet.debug();

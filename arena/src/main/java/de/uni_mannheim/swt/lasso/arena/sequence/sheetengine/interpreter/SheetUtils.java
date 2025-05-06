@@ -147,6 +147,7 @@ public class SheetUtils {
         return adaptedActuationSheet;
     }
 
+    @Deprecated
     public static ExecutedInvocations toOracle(Invocations invocations) {
         ExecutedInvocations executedInvocations = new ExecutedInvocations(invocations);
         for(Invocation invocation : invocations.getSequence()) {
@@ -156,6 +157,24 @@ public class SheetUtils {
         }
 
         return executedInvocations;
+    }
+
+    public static ExecutedInvocations toOracle(ExecutedInvocations implExecutedInvocations) {
+        ExecutedInvocations oracleExecutedInvocations = new ExecutedInvocations(implExecutedInvocations.getInvocations());
+        for(ExecutedInvocation executedInvocation : implExecutedInvocations.getExecutedSequence()) {
+            ExecutedInvocation oracleExecutedInvocation = oracleExecutedInvocations.create(executedInvocation.getInvocation());
+
+            Obj obj;
+            try {
+                obj = SSNInterpreter.resolveOutput(implExecutedInvocations, executedInvocation);
+            } catch (Throwable e) {
+                Parameter parameter = executedInvocation.getInvocation().getExpectedOutput();
+                obj = Obj.fromValue(parameter.getValue(), Obj.PRODUCER_INDEX_NONE);
+            }
+            oracleExecutedInvocation.setOutput(obj);
+        }
+
+        return oracleExecutedInvocations;
     }
 
     public static Sheet<Integer, Integer, String> toOracleSheet(ExecutedInvocations executedInvocations, ObjectMapper objectMapper) {

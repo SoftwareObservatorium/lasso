@@ -11,6 +11,7 @@ import de.uni_mannheim.swt.lasso.arena.search.CodeSearch;
 import de.uni_mannheim.swt.lasso.arena.search.SolrInstance;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.event.CompositeInvocationVisitor;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.TestInvocation;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize.GsonMapper;
 import de.uni_mannheim.swt.lasso.core.dto.srm.Sheet;
 import de.uni_mannheim.swt.lasso.core.dto.srm.SheetInvocation;
 import de.uni_mannheim.swt.lasso.core.dto.srm.StimulusResponseMatrix;
@@ -128,6 +129,84 @@ public class CodeSearchTestDriverTest {
             assertEquals("1", invocations.getInvocation(3).getExpectedOutput().getExpression());
 
             assertEquals(4, executedInvocations.getSequence().size());
+        }
+    }
+
+    @Test
+    public void test_Stack_empty_constructor_oracle_cellrefs() throws IOException, ClassNotFoundException {
+        @Language("jsonl")
+        String ssnJsonlStr = """
+{"cells":{"A1":{},"B1":"create","C1":"Stack"}}
+{"cells":{"A2":{},"B2":"push","C2":"A1","D2":"\\"Hello World!\\""}}
+{"cells":{"A3":"D2","B3":"peek","C3":"A1"}}
+{"cells":{"A4":"D2","B4":"pop","C4":"A1"}}
+{"cells":{"A5":0,"B5":"size","C5":"A1"}}
+                """;
+
+        String lql = """
+Stack{
+    push(java.lang.Object)->java.lang.Object
+    pop()->java.lang.Object
+    peek()->java.lang.Object
+    size()->int
+}
+                """;
+        CompositeInvocationVisitor visitor = new CompositeInvocationVisitor(Arrays.asList());
+
+        // use code search
+        CodeSearch codeSearch = new CodeSearch(solrInstance);
+        // retrieved classes
+        List<ClassUnderTest> classesUnderTest = codeSearch.queryForClassesDirectly(lql, 10, "class"); // retrieve classes
+
+        SSNTestDriver testDriver = new SSNTestDriver();
+        // set resolvable repo
+        testDriver.setMavenRepository(mavenRepository());
+        // set permutator
+        testDriver.setAdaptationStrategy(new DefaultAdaptationStrategy());
+
+        // SM
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, ClassUnderTest, TestInvocation> stimulusMatrix = SSNTestDriver.parseStimulusMatrix(
+                Arrays.asList(new Sheet("test()", ssnJsonlStr, lql)), classesUnderTest, Arrays.asList(new SheetInvocation("test", "")));
+
+        // SRM
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> stimulusResponseMatrix = testDriver.runSheets(stimulusMatrix, 1, visitor);
+
+        for(Table.Cell<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> cell : stimulusResponseMatrix.getTable().cellSet()) {
+            ExecutedInvocations executedInvocations = cell.getValue();
+
+            LOG.debug("executed invocations\n{}", executedInvocations);
+            List<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String>> sheets = TestUtils.createSheets(cell.getColumnKey(), executedInvocations);
+            de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> actuationSheetData = sheets.get(0);
+            actuationSheetData.debug();
+            de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> adaptedActuationSheetData = sheets.get(1);
+            adaptedActuationSheetData.debug();
+
+            Invocations invocations = executedInvocations.getInvocations();
+
+            assertEquals(5, invocations.getSequence().size());
+
+            // test oracle values (first column)
+            assertEquals("", invocations.getInvocation(0).getExpectedOutput().getExpression());
+            assertEquals("", invocations.getInvocation(1).getExpectedOutput().getExpression());
+            assertEquals("D2", invocations.getInvocation(2).getExpectedOutput().getExpression());
+            assertTrue(invocations.getInvocation(2).getExpectedOutput().isReference());
+            assertEquals("D2", invocations.getInvocation(3).getExpectedOutput().getExpression());
+            assertTrue(invocations.getInvocation(3).getExpectedOutput().isReference());
+            assertEquals("0", invocations.getInvocation(4).getExpectedOutput().getExpression());
+
+            assertEquals(5, executedInvocations.getSequence().size());
+
+            //assertEquals(null, executedInvocations.getExecutedInvocation(0).getOutput().getValue());
+//            assertEquals(null, executedInvocations.getExecutedInvocation(1).getOutput().getValue());
+//            assertEquals(null, executedInvocations.getExecutedInvocation(2).getOutput().getValue());
+//            assertEquals(null, executedInvocations.getExecutedInvocation(3).getOutput().getValue());
+//            assertEquals(null, executedInvocations.getExecutedInvocation(4).getOutput().getValue());
+
+            ExecutedInvocations oracleInvocations = SheetUtils.toOracle(executedInvocations);
+            de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> oracleSheet = SheetUtils.toOracleSheet(oracleInvocations, new GsonMapper());
+            oracleSheet.debug();
+
+            return;
         }
     }
 }

@@ -610,4 +610,41 @@ public class SSNInterpreter {
 
         return inputs;
     }
+
+    /**
+     * Resolve expected output parameter
+     *
+     * @param executedInvocations
+     * @param executedInvocation
+     * @return
+     */
+    public static Obj resolveOutput(ExecutedInvocations executedInvocations, ExecutedInvocation executedInvocation) {
+        Invocation invocation = executedInvocation.getInvocation();
+        Parameter parameter = invocation.getExpectedOutput();
+        Obj obj;
+        // either value (object) or reference
+        if(parameter.isReference()) {
+            // by row
+            // get value from ExecutedInvocation
+            if(parameter.getReference()[0] == 0) { // row
+                ExecutedInvocation ref = executedInvocations.getExecutedInvocation(parameter.getReference()[0]);
+                obj = ref.getOutput();
+            } else {
+                // from inputs
+                ExecutedInvocation ref = executedInvocations.getExecutedInvocation(parameter.getReference()[0]);
+                int col = parameter.getReference()[1] - 2 - 1; // minus output, op
+                obj = ref.getInputs().get(col);
+            }
+        } else {
+            // just interpret expression
+            try {
+                Object value = CodeInvocation.evalCode(executedInvocations.getInvocations().getEval(), CodeExpressionUtils.cleanExpression(parameter.getExpression()));
+                obj = Obj.fromValue(value, Obj.PRODUCER_INDEX_NONE);
+            } catch (EvalException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        return obj;
+    }
 }
