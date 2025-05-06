@@ -55,7 +55,7 @@ public class CodeSearchTestDriverTest {
                 "pop()->java.lang.Object\n" +
                 "peek()->java.lang.Object\n" +
                 "size()->int" +
-                "}";
+                "} m_static_complexity_td:[5 TO *]";
 
         List<ClassUnderTest> classesUnderTest = codeSearch.queryForClassesDirectly(mql, 10, "class"); // retrieve classes
 

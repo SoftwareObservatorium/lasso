@@ -850,10 +850,7 @@ public class LassoComputeEngine extends LassoEngine {
 
                                 Abstraction updatedAbstraction = executables.toAbstraction();
                                 AbstractionSpec abstractionSpec = abstractionMap.get(abstractionName);
-//                                Abstraction oldAbstraction = abstractionSpec.getAbstraction();
-//                                if(oldAbstraction.getSpecification() != null) {
-//                                    updatedAbstraction.setSpecification(oldAbstraction.getSpecification());
-//                                }
+
                                 abstractionSpec.setAbstraction(updatedAbstraction);
                             } catch (Throwable e) {
                                 LOG.warn("Updating executables failed", e);

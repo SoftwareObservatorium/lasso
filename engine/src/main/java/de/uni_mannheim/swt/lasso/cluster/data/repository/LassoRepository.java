@@ -110,6 +110,14 @@ public class LassoRepository implements LassoOperations {
         container.setAbstractionName(abstractionName);
         container.setExecutables(executables);
 
+        // add specification
+        try {
+            Specification specification = getSpecification(executionId, actionName, abstractionName);
+            container.setSpecification(specification);
+        } catch (Throwable e) {
+            LOG.warn("Setting specification failed for '{}', '{}', '{}'", executionId, actionName, abstractionName);
+        }
+
         return container;
     }
 

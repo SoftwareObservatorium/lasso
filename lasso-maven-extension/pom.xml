@@ -17,6 +17,8 @@
     <description>maven extension for monitoring</description>
 
     <properties>
+	    <!--	<maven.compiler.source>8</maven.compiler.source>
+	    <maven.compiler.target>8</maven.compiler.target>-->
 	    <maven.version>3.5.4</maven.version>
     </properties>
 
@@ -90,8 +92,14 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-        </plugins>
+	</plugin>
+    <plugin>    
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+            <release>8</release>
+        </configuration>
+    </plugin>
+</plugins>
     </build>
 
 </project>

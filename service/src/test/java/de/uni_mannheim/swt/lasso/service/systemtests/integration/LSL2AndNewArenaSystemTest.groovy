@@ -727,12 +727,12 @@ study(name: 'Evosuite-LLM') {
         // pipeline specific
         dependsOn 'createStimulusMatrices'
         include '*'
-        profile('java11Profile') // evosuite 11
+        profile('java17Profile') 
 
         // action configuration block 
-        servers = ["http://bagdana.informatik.uni-mannheim.de:11434"]
+        servers = ["http://localhost:11434"]
         model = "llama3.1:latest"
-        samples = 3 // how many to sample
+        samples = 1 // how many to sample
         javaVersion = "11" // because of EvoSuite ..
 
         prompt { stimulusMatrix ->
@@ -747,12 +747,12 @@ study(name: 'Evosuite-LLM') {
         // pipeline specific
         dependsOn 'generateCodeLlama'
         include '*'
-        profile('java11Profile') // evosuite 11
+        profile('java17Profile') 
 
         // action configuration block 
-        servers = ["http://bagdana.informatik.uni-mannheim.de:11434"]
-        model = "deepseek-r1:32b"
-        samples = 3 // how many to sample
+        servers = ["http://localhost:11434"]
+        model = "llama3.1:latest"
+        samples = 1 // how many to sample
         javaVersion = "11" // because of EvoSuite ..
 
         prompt { stimulusMatrix ->
