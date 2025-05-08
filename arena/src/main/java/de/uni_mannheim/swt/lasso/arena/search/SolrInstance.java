@@ -73,7 +73,7 @@ public class SolrInstance {
     }
 
     public static SolrInstance mavenCentral2023() {
-        return new SolrInstance("mavencentral2023", "", "", "http://lassohp10.informatik.uni-mannheim.de:8983/solr/mavencentral2023/");
+        return new SolrInstance("mavencentral2023", "", "", "https://odisse.informatik.uni-mannheim.de/solr/mavencentral2023/");
     }
 
     public static SolrInstance secorpora2022() {

@@ -41,7 +41,7 @@ docker pull sonatype/nexus3:3.79.0
 docker run -d -p 8081:8081 --name lasso-nexus sonatype/nexus3
 
 # configure
-docker exec -it nexus bash
+docker exec -it lasso-nexus bash
 cat sonatype-work/nexus3/admin.password
 # configure in repos in http://localhost:8081/ (lasso-deploy, lasso-web)
 # see https://softwareobservatorium.github.io/web/docs/infrastructure/nexus
