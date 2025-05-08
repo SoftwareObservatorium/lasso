@@ -50,6 +50,7 @@ import de.uni_mannheim.swt.lasso.engine.matcher.TestMatcher;
 import de.uni_mannheim.swt.lasso.engine.project.ProjectHelper;
 import de.uni_mannheim.swt.lasso.sandbox.container.support.ArenaContainer;
 import de.uni_mannheim.swt.lasso.srm.ClusterSRMRepository;
+import de.uni_mannheim.swt.lasso.srm.olap.Warehouse;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
@@ -693,6 +694,30 @@ public class ArenaPartitioning extends DefaultAction {
                     LOG.warn("Stack trace:", e);
                 }
             });
+        }
+
+        // read sheets from arena: Sheets
+        try {
+            LOG.info("Storing all sheets in specification");
+
+            List<Sheet> stimulusSheets = Warehouse.queryStimulusSheets(context.getExecutionId(), getName(), executables.getAbstractionName());
+
+            LOG.info("Found '{}' sheets", stimulusSheets.size());
+
+            // TODO filter / duplicates? (if arena is re-run)
+            //stimulusSheets = stimulusSheets.stream().filter(s -> StringUtils.startsWithIgnoreCase(s.getSignature(), "evo_")).toList();
+
+            // adding or replacing?
+//            if(CollectionUtils.isEmpty(getExecutables().getSpecification().getTests())) {
+//                getExecutables().getSpecification().setTests(new LinkedList<>());
+//            } else {
+//                getExecutables().getSpecification().getTests().addAll(stimulusSheets);
+//            }
+
+            getExecutables().getSpecification().setTests(stimulusSheets);
+        } catch (Throwable e) {
+            //throw new RuntimeException(e);
+            LOG.warn("Storing all sheets failed", e);
         }
     }
 

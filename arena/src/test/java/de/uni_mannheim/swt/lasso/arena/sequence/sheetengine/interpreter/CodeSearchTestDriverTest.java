@@ -35,7 +35,8 @@ public class CodeSearchTestDriverTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(CodeSearchTestDriverTest.class);
 
-    SolrInstance solrInstance = new SolrInstance("mavencentral2023", "solr", "Y2E5ZjgzMGV", "http://lassohp10.informatik.uni-mannheim.de:8983/solr/mavencentral2023/");
+    SolrInstance solrInstance =
+            new SolrInstance("mavencentral2023", "solr", "Y2E5ZjgzMGV", "https://odisse.informatik.uni-mannheim.de/solr/mavencentral2023/");
 
     public MavenRepository mavenRepository() {
         // FIXME change maven repo
@@ -55,7 +56,7 @@ public class CodeSearchTestDriverTest {
                 "pop()->java.lang.Object\n" +
                 "peek()->java.lang.Object\n" +
                 "size()->int" +
-                "} m_static_complexity_td:[5 TO *]";
+                "}"; // FIXME add support for range queries m_static_complexity_td:[5 TO *]
 
         List<ClassUnderTest> classesUnderTest = codeSearch.queryForClassesDirectly(mql, 10, "class"); // retrieve classes
 

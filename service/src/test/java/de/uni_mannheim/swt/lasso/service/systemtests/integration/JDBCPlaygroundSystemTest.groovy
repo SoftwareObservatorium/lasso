@@ -19,9 +19,13 @@
  */
 package de.uni_mannheim.swt.lasso.service.systemtests.integration
 
+import de.uni_mannheim.swt.lasso.core.dto.srm.Sheet
 import de.uni_mannheim.swt.lasso.engine.DataSourceNotFoundException
 import de.uni_mannheim.swt.lasso.service.systemtests.util.LassoTestEngine
 import de.uni_mannheim.swt.lasso.srm.JDBC
+import de.uni_mannheim.swt.lasso.srm.olap.Warehouse
+import joinery.DataFrame
+import org.apache.commons.lang3.builder.ToStringBuilder
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
@@ -44,5 +48,18 @@ class JDBCPlaygroundSystemTest extends AbstractGroovySystemTest {
 
         Table schemaTable = jdbc.sqlToTable("SELECT * FROM INFORMATION_SCHEMA.TABLES");
         System.out.println(schemaTable.printAll());
+    }
+
+    @Test
+    void test_getstimulussheets() {
+        String executionId = "7558a558-9719-492c-966b-2e34a8e4d90e";
+        String actionId = "test";
+        String abstractionId = "HumanEval_13_greatest_common_divisor";
+
+        JDBC jdbc = new JDBC();
+
+        List<Sheet> stimulusSheets = Warehouse.queryStimulusSheets(executionId, actionId, abstractionId);
+
+        stimulusSheets.stream().forEach {s -> System.out.println(ToStringBuilder.reflectionToString(s))}
     }
 }

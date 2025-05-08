@@ -11,6 +11,15 @@
       "pass": "",
       "name": "LASSO Quickstart",
       "description": "Code search index as part of quickstart guide"
+    },
+    {
+      "type": "solr",
+      "id": "mavenCentral2023",
+      "host": "https://odisse.informatik.uni-mannheim.de/solr/mavencentral2023/",
+      "user": "solr",
+      "pass": "Y2E5ZjgzMGV",
+      "name": "LASSO Maven Central 2023",
+      "description": "Code search index for Maven Central 2023"
     }
   ],
   "artifactRepository": {
