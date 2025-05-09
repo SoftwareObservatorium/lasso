@@ -149,39 +149,39 @@ public class EvosuiteClassCollector extends RecordCollector {
             }
         }
 
-        // export?
-        if(exportTests && CollectionUtils.isNotEmpty(testClasses)) {
-            FileUtils.copyDirectory(
-                    new File(executable.getProject().getBaseDir(), EVOSUITE_TESTS),
-                    executable.getProject().getSrcTest());
-
-            testClasses = workspace.listFilesRecursively(
-                    executable.getProject().getSrcTest(), "java");
-
-            // FIXME workaround for NPE in EvoSuite tests
-            try {
-                // also checks for 'notGeneratedAnyTest' (i.e empty test classes)
-                removeNPECall(executable.getProject().getSrcTest());
-            } catch (IOException e) {
-                LOG.warn("removeNPECall failed", e);
-
-                return Result.FAILURE;
-            }
-        }
-
-        // make tests available in filesystem
-        testClasses.forEach(file -> {
-            if(LOG.isDebugEnabled()) {
-                LOG.debug("Writing test to remote filesystem '{}'", file.getAbsolutePath());
-            }
-
-            try {
-                executionContext.getLassoFileSystem().write(file.getAbsolutePath(), file);
-            } catch (Throwable e) {
-                LOG.warn("Failed to write test '{}'", file.getAbsolutePath());
-                LOG.warn("Stack trace:", e);
-            }
-        });
+//        // export?
+//        if(exportTests && CollectionUtils.isNotEmpty(testClasses)) {
+//            FileUtils.copyDirectory(
+//                    new File(executable.getProject().getBaseDir(), EVOSUITE_TESTS),
+//                    executable.getProject().getSrcTest());
+//
+//            testClasses = workspace.listFilesRecursively(
+//                    executable.getProject().getSrcTest(), "java");
+//
+//            // FIXME workaround for NPE in EvoSuite tests
+//            try {
+//                // also checks for 'notGeneratedAnyTest' (i.e empty test classes)
+//                removeNPECall(executable.getProject().getSrcTest());
+//            } catch (IOException e) {
+//                LOG.warn("removeNPECall failed", e);
+//
+//                return Result.FAILURE;
+//            }
+//        }
+//
+//        // make tests available in filesystem
+//        testClasses.forEach(file -> {
+//            if(LOG.isDebugEnabled()) {
+//                LOG.debug("Writing test to remote filesystem '{}'", file.getAbsolutePath());
+//            }
+//
+//            try {
+//                executionContext.getLassoFileSystem().write(file.getAbsolutePath(), file);
+//            } catch (Throwable e) {
+//                LOG.warn("Failed to write test '{}'", file.getAbsolutePath());
+//                LOG.warn("Stack trace:", e);
+//            }
+//        });
 
         return Result.SUCCESS;
     }

@@ -13,6 +13,7 @@ import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.adapter.
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.event.CompositeInvocationVisitor;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.event.JaCoCoListener;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.TestInvocation;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize.GsonMapper;
 import de.uni_mannheim.swt.lasso.core.dto.srm.StimulusResponseMatrix;
 import de.uni_mannheim.swt.lasso.core.dto.srm.Sheet;
 import de.uni_mannheim.swt.lasso.core.dto.srm.SheetInvocation;
@@ -71,6 +72,11 @@ public class SRMTestDriverTest {
         for(Table.Cell<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> cell : stimulusResponseMatrix.getTable().cellSet()) {
             ExecutedInvocations executedInvocations = cell.getValue();
 
+            de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test test = cell.getRowKey();
+
+            System.out.println("TEST " + test.getParsedSheet().getSheet().getBody());
+
+
             LOG.debug("executed invocations\n{}", executedInvocations);
             List<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String>> sheets = TestUtils.createSheets(cell.getColumnKey(), executedInvocations);
             de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> actuationSheetData = sheets.get(0);
@@ -97,6 +103,49 @@ public class SRMTestDriverTest {
             assertEquals("1", invocations.getInvocation(3).getExpectedOutput().getExpression());
 
             assertEquals(4, executedInvocations.getSequence().size());
+        }
+    }
+
+    @Test
+    public void test_Stack_empty_constructor_oracle_jsonl() throws IOException, ClassNotFoundException {
+        @Language("jsonl")
+        String ssnJsonlStr = """
+                {"cells": {"A1": {}, "B1": "create", "C1": "Stack"}}
+                {"cells": {"A2": {}, "B2": "create", "C2": "java.lang.String", "D2": "'Hello World!'"}}
+                {"cells": {"A3": {}, "B3": "push", "C3": "A1", "D3": "A2"}}
+                {"cells": {"A4": 1, "B4": "size", "C4": "A1"}}
+                """;
+
+        String lql = """
+                Stack {
+                    push(java.lang.String)->java.lang.String
+                    size()->int
+                }
+                """;
+        CompositeInvocationVisitor visitor = new CompositeInvocationVisitor(Arrays.asList());
+
+        Class cutClass = StackEmptyConstructorExample.class;
+
+        SSNTestDriver testDriver = new SSNTestDriver();
+
+        // SM
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, ClassUnderTest, TestInvocation> stimulusMatrix = SSNTestDriver.parseStimulusMatrix(
+                Arrays.asList(new Sheet("test()", ssnJsonlStr, lql)), Arrays.asList(CutUtils.createExample(cutClass)), Arrays.asList(new SheetInvocation("test", "")));
+
+        // SRM
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> stimulusResponseMatrix = testDriver.runSheets(stimulusMatrix, 1, visitor);
+
+        for(Table.Cell<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> cell : stimulusResponseMatrix.getTable().cellSet()) {
+            ExecutedInvocations executedInvocations = cell.getValue();
+
+            ExecutedInvocations oracleInvocations = SheetUtils.toOracle(executedInvocations);
+            de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> oracleSheet = SheetUtils.toOracleSheet(oracleInvocations, new GsonMapper());
+
+            System.out.println("----------- ORACLE -------");
+
+            oracleSheet.debug();
+
+            System.out.println(oracleSheet.toJsonl());
         }
     }
 

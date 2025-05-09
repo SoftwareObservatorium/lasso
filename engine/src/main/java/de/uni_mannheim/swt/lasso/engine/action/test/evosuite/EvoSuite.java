@@ -19,7 +19,10 @@
  */
 package de.uni_mannheim.swt.lasso.engine.action.test.evosuite;
 
+import com.github.javaparser.JavaParser;
 import de.uni_mannheim.swt.lasso.cluster.ClusterEngine;
+import de.uni_mannheim.swt.lasso.core.dto.srm.JUnitCodeUnit;
+import de.uni_mannheim.swt.lasso.core.dto.srm.Sheet;
 import de.uni_mannheim.swt.lasso.core.model.System;
 import de.uni_mannheim.swt.lasso.core.model.*;
 import de.uni_mannheim.swt.lasso.engine.LSLExecutionContext;
@@ -594,9 +597,16 @@ public class EvoSuite extends MavenAction {
     public void postExecute(LSLExecutionContext context, ActionConfiguration actionConfiguration, String executableId, boolean success) {
         // check if tests exist
         System executable = getExecutables().getExecutable(executableId);
-        int size = executable.getProject()
-                .getFiles(executable.getProject().getSrcTest(), "java")
-                .size();
+
+        Workspace workspace = context.getWorkspace();
+
+        Collection<File> testClasses = workspace.listFilesRecursively(
+                executable.getProject(), EvosuiteClassCollector.EVOSUITE_TESTS, "java");
+
+//        int size = executable.getProject()
+//                .getFiles(executable.getProject().getSrcTest(), "java")
+//                .size();
+        int size = testClasses.size();
 //        if(size < 1) {
 //            getExecutables().getExecutables().remove(executable); // drop
 //
@@ -604,6 +614,17 @@ public class EvoSuite extends MavenAction {
 //                LOG.warn("Dropping executable '{}', since it has no tests", executable.getId());
 //            }
 //        }
+
+        LOG.info("Parsing code");
+        List<CodeUnit> units = testClasses.stream().map(this::parse).filter(Objects::nonNull).toList();
+        // store junit test classes
+        List<Sheet> junitClasses = units.stream().map(u -> {
+            JUnitCodeUnit jUnitCodeUnit = new JUnitCodeUnit(u, getExecutables().getSpecification().getInterfaceSpecification().getLqlQuery());
+            jUnitCodeUnit.setTestPrefix("evo");
+            return (Sheet) jUnitCodeUnit;
+        }).toList();
+        // set to FA
+        getExecutables().getSpecification().getTests().addAll(junitClasses);
 
         if (!success) {
             // report why failed
@@ -706,6 +727,35 @@ public class EvoSuite extends MavenAction {
 //                }
 //            }
 //        }
+    }
+
+    protected CodeUnit parse(File codeFile) {
+        if (LOG.isInfoEnabled()) {
+            LOG.info("Parsing code\n{}", codeFile);
+        }
+
+        try {
+            JavaParser javaParser = new JavaParser();
+            com.github.javaparser.ast.CompilationUnit cu = javaParser.parse(codeFile).getResult().get();
+
+            // parse name
+            CodeUnit unit = new CodeUnit();
+            unit.setId(UUID.randomUUID().toString());
+            unit.setName(cu.getType(0).getNameAsString());
+
+//            // add package name
+//            cu.setPackageDeclaration(pkg);
+
+
+            unit.setPackagename(cu.getPackageDeclaration().get().getNameAsString());
+            unit.setContent(cu.toString());
+            unit.setUnitType(CodeUnit.CodeUnitType.CLASS);
+
+            return unit;
+        } catch (Throwable e) {
+            LOG.warn("failed to parse code", e);
+            return null;
+        }
     }
 
     /**

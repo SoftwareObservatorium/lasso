@@ -151,6 +151,11 @@ public class GsonMapper implements ObjectMapper {
 
     String toString(Obj obj) {
         String serializedStr;
+        if(obj == null) {
+            serializedStr = "$N/A";
+            return serializedStr;
+        }
+
         if(obj.hasException()) {
             Throwable throwable = obj.getException();
             serializedStr = "$EXCEPTION@" + throwable.getClass().getCanonicalName() + "@" + throwable.getMessage();

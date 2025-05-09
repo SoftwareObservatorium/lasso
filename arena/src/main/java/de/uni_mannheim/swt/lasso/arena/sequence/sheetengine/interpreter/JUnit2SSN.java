@@ -125,6 +125,11 @@ public class JUnit2SSN {
 
             int currentRow = r - skipRows;
 
+            // fill first column with empty
+            //System.out.println("first column missing " + SheetResolver.toColumnLabel(0) + SheetResolver.toRowLabel(currentRow));
+            // FIXME set oracle values from spec
+            rowData.put(SheetResolver.toColumnLabel(0) + SheetResolver.toRowLabel(currentRow), Collections.emptyMap());
+
             if(statement instanceof ConstructorCallStatement) {
                 CallStatement m = (CallStatement) statement;
                 MethodSignature methodSignature = m.getMethodSignature();
