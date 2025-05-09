@@ -1,5 +1,5 @@
 # FIXME finalize
-FROM eclipse-temurin:17-jdk-jammy
+FROM eclipse-temurin:21-jdk-noble
 
 # for docker in docker via socket
 RUN apt update && curl -fsSL https://get.docker.com | sh

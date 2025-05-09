@@ -56,7 +56,7 @@ class JDBCPlaygroundSystemTest extends AbstractGroovySystemTest {
         String actionId = "test";
         String abstractionId = "HumanEval_13_greatest_common_divisor";
 
-        JDBC jdbc = new JDBC();
+        JDBC jdbc = new JDBC()
 
         List<Sheet> stimulusSheets = Warehouse.queryStimulusSheets(executionId, actionId, abstractionId);
 

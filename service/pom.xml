@@ -17,7 +17,7 @@
     <description>lasso service</description>
 
     <properties>
-        <spring.security.version>5.3.5.RELEASE</spring.security.version>
+        <spring.security.version>5.8.16</spring.security.version>
         <springdoc.version>1.6.14</springdoc.version>
         <jjwt.version>0.9.1</jjwt.version>
     </properties>
