@@ -621,6 +621,7 @@ public class EvoSuite extends MavenAction {
         List<Sheet> junitClasses = units.stream().map(u -> {
             JUnitCodeUnit jUnitCodeUnit = new JUnitCodeUnit(u, getExecutables().getSpecification().getInterfaceSpecification().getLqlQuery());
             jUnitCodeUnit.setTestPrefix("evo");
+            jUnitCodeUnit.setClassUnderTest(executableId); // set class under test so that we can fully resolve the class
             return (Sheet) jUnitCodeUnit;
         }).toList();
         // set to FA

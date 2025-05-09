@@ -12,6 +12,8 @@ public class JUnitCodeUnit extends Sheet {
 
     private String testPrefix = "";
 
+    private String classUnderTest;
+
     public JUnitCodeUnit(CodeUnit codeUnit, String interfaceSpecification) {
         super(codeUnit.getName() + "()", codeUnit.getContent(), interfaceSpecification);
         this.codeUnit = codeUnit;
@@ -27,5 +29,13 @@ public class JUnitCodeUnit extends Sheet {
 
     public void setTestPrefix(String testPrefix) {
         this.testPrefix = testPrefix;
+    }
+
+    public String getClassUnderTest() {
+        return classUnderTest;
+    }
+
+    public void setClassUnderTest(String classUnderTest) {
+        this.classUnderTest = classUnderTest;
     }
 }

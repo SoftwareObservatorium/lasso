@@ -119,6 +119,43 @@ public class JUnit2SSNTest {
     }
 
     @Test
+    public void testToSequenceSpecification_ArrayStack__javautilStack_EvoSuite() throws IOException {
+        String lql = "Stack {\n" +
+                "push(java.lang.Object)->java.lang.Object\n" +
+                "pop()->java.lang.Object\n" +
+                "peek()->java.lang.Object\n" +
+                "size()->int\n" +
+                "}";
+
+        // CREATE CUT
+        ClassUnderTest pseudo = CutUtils.createExample(Stack.class);
+
+        CandidatePool pool = new CandidatePool(mavenRepository(), Arrays.asList(pseudo));
+        pool.initProjects();
+
+        String testClass = FileUtils.readFileToString(new File("sheets/EvoStack.java"), StandardCharsets.UTF_8);
+
+        List<InterfaceSpecification> parseResults = LQLUtils.lqlToList(lql);
+        InterfaceSpecification specification = parseResults.get(0);
+
+        AdaptationStrategy adaptationStrategy = new PassThroughAdaptationStrategy();
+        List<AdaptedImplementation> adaptedImplementations = adaptationStrategy.adapt(specification, pseudo, 1);
+        AdaptedImplementation adaptedImplementation = adaptedImplementations.get(0);
+
+        List<Sheet> stimulusSheets = JUnit2SSN.junit2Sheets(testClass, pseudo, specification, adaptedImplementation, "evo");
+
+        for(Sheet stimulusSheet : stimulusSheets) {
+            System.out.println(stimulusSheet.getSignature());
+            System.out.println(stimulusSheet.getBody());
+            System.out.println("----");
+        }
+
+        JUnitSequenceSpecificationParser importJUnitClass = new JUnitSequenceSpecificationParser();
+        InterfaceSpecification parsedSpecification = importJUnitClass.toSpecification(testClass, pseudo).get(pseudo.getClassName());
+        System.out.println(parsedSpecification.toLQL());
+    }
+
+    @Test
     public void testToSequenceSpecification_Base64() throws IOException {
         String lql = """
         Base64 {

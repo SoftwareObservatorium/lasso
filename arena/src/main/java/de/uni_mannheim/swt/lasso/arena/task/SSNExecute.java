@@ -224,10 +224,18 @@ public class SSNExecute extends Task {
     public static List<Sheet> resolveSheetsFromJUnit(SSNTestDriver ssnTestDriver, List<JUnitCodeUnit> jUnitCodeUnits, List<System> implementations, File path, ArenaJob arenaJob) throws IOException {
         // use from FA spec
         InterfaceSpecification interfaceSpecification = LQLUtils.lqlToList(arenaJob.getSpecification()).get(0);
-
         ClassUnderTest pseudo = CutUtils.createExample(interfaceSpecification.getClassName());
 
-        CandidatePool pool = new CandidatePool(ssnTestDriver.getMavenRepository(), Arrays.asList(pseudo));
+        // create CUTs
+        List<ClassUnderTest> classesUnderTest = new LinkedList<>();
+        classesUnderTest.add(pseudo);
+
+        for(System implementation : implementations) {
+            ClassUnderTest classUnderTest = new ClassUnderTest(implementation);
+            classesUnderTest.add(classUnderTest);
+        }
+
+        CandidatePool pool = new CandidatePool(ssnTestDriver.getMavenRepository(), classesUnderTest);
         if(ssnTestDriver.getBuildWorkingDirectory() != null) {
             pool.setWorkingDirectory(ssnTestDriver.getBuildWorkingDirectory());
         }
@@ -244,7 +252,18 @@ public class SSNExecute extends Task {
 
                 String testClassSource = jUnitCodeUnit.getCodeUnit().getContent();
 
-                List<Sheet> stimulusSheets = JUnit2SSN.junit2Sheets(testClassSource, pseudo, interfaceSpecification, null, jUnitCodeUnit.getTestPrefix());
+                // certain unit tests can only be fully resolved by using its CUT
+                ClassUnderTest classUnderTest = pseudo; // pseudo is default
+                if(StringUtils.isNotBlank(jUnitCodeUnit.getClassUnderTest())) {
+                    // resolve
+                    Optional<System> systemOp = implementations.stream().filter(s -> StringUtils.equals(jUnitCodeUnit.getClassUnderTest(), s.getId())).findFirst();
+
+                    if(systemOp.isPresent()) {
+                        classUnderTest = classesUnderTest.stream().filter(c -> StringUtils.equals(c.getId(), systemOp.get().getId())).findFirst().get();
+                    }
+                }
+
+                List<Sheet> stimulusSheets = JUnit2SSN.junit2Sheets(testClassSource, classUnderTest, interfaceSpecification, null, jUnitCodeUnit.getTestPrefix());
 
                 if(CollectionUtils.isNotEmpty(stimulusSheets)) {
                     for(Sheet stimulusSheet : stimulusSheets) {
