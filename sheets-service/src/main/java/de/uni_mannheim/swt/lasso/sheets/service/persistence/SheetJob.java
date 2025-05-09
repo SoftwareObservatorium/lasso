@@ -19,7 +19,7 @@
  */
 package de.uni_mannheim.swt.lasso.sheets.service.persistence;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.Date;
 
 /**

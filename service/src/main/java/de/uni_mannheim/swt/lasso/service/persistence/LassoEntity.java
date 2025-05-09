@@ -19,14 +19,15 @@
  */
 package de.uni_mannheim.swt.lasso.service.persistence;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.Date;
 
 /**
  *
  * @author Marcus Kessel
  */
-@MappedSuperclass
+//@MappedSuperclass
+@Entity
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 public abstract class LassoEntity {
 

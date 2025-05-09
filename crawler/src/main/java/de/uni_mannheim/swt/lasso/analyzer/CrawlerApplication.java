@@ -22,7 +22,6 @@ package de.uni_mannheim.swt.lasso.analyzer;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
-import org.springframework.boot.autoconfigure.solr.SolrAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -36,8 +35,7 @@ import de.uni_mannheim.swt.lasso.analyzer.config.ApplicationConfig;
  *
  */
 @Configuration
-//we need to exclude auto conf because SolrJ > 5 is not supported
-@SpringBootApplication(exclude = { SolrAutoConfiguration.class, DataSourceAutoConfiguration.class})
+@SpringBootApplication(exclude = { DataSourceAutoConfiguration.class})
 @ComponentScan(basePackages = { "de.uni_mannheim.swt.lasso.analyzer" })
 @Import({ ApplicationConfig.class })
 public class CrawlerApplication {

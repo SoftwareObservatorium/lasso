@@ -29,7 +29,7 @@ import de.uni_mannheim.swt.lasso.ssn.SSNParser;
 import de.uni_mannheim.swt.lasso.core.model.CodeUnit;
 import de.uni_mannheim.swt.lasso.core.model.Scope;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.pitest.mutationtest.engine.MutationDetails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -34,7 +34,6 @@
     </developers>
 
     <properties>
-        <jacoco.version>0.8.8</jacoco.version>
         <maven.version>3.5.4</maven.version>
         <javaparser.version>3.24.10</javaparser.version>
     </properties>
@@ -64,6 +63,12 @@
             <artifactId>h2</artifactId>
             <version>1.4.197</version>
             <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-math3</artifactId>
+            <version>${commons.math.version}</version>
         </dependency>
 
         <!-- Maven Artifact -->

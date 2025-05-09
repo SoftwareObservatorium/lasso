@@ -19,18 +19,24 @@
  */
 package de.uni_mannheim.swt.lasso.sheets.service.config;
 
-import de.uni_mannheim.swt.lasso.sheets.service.config.security.JwtConfigurer;
-import de.uni_mannheim.swt.lasso.sheets.service.config.security.JwtTokenProvider;
+import de.uni_mannheim.swt.lasso.sheets.service.config.security.JwtTokenFilter;
+import de.uni_mannheim.swt.lasso.sheets.service.controller.ExceptionHandlerFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -44,15 +50,24 @@ import java.util.Arrays;
  */
 @Configuration
 @EnableWebSecurity
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
+@EnableMethodSecurity(securedEnabled = true, jsr250Enabled = true)
+public class SecurityConfig {
 
     @Autowired
-    private JwtTokenProvider jwtTokenProvider;
+    private JwtTokenFilter jwtTokenFilter;
+
+    @Autowired
+    private UserDetailsService userDetailsService;
+
+//    @Bean
+//    //@Override
+//    public AuthenticationManager authenticationManagerBean() throws Exception {
+//        return super.authenticationManagerBean();
+//    }
 
     @Bean
-    @Override
-    public AuthenticationManager authenticationManagerBean() throws Exception {
-        return super.authenticationManagerBean();
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
     }
 
     @Bean
@@ -67,35 +82,51 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         return source;
     }
 
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
-        http.cors().and()
-                .csrf().disable()
-                .httpBasic().disable()
+    @Bean
+    protected SecurityFilterChain configure(HttpSecurity http) throws Exception {
+        return http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Apply CORS
+                .csrf(csrf -> csrf.disable()) // Disable CSRF protection
+                //.cors().and()
+                //.csrf().disable()
+                .httpBasic(hb -> hb.disable())
                 // https://stackoverflow.com/questions/26220083/h2-database-console-spring-boot-load-denied-by-x-frame-options
-                .headers().frameOptions().sameOrigin().and()
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
-                .authorizeRequests()
-                // permit new web app (angular webui)
-                .antMatchers("/**").permitAll()
-                .antMatchers("/auth/signin").permitAll()
-                .antMatchers("/api/**").hasRole("USER")
+                //.headers().frameOptions().sameOrigin().and()
+                .authorizeHttpRequests(auth -> auth
+                        // permit new web app (angular webui)
+                        .requestMatchers("/**").permitAll()
+                        .requestMatchers("/auth/signin").permitAll()
+                        .requestMatchers("/api/**").hasRole("USER")
 
-                // start swagger
-                .antMatchers("/swagger-ui.html").permitAll()
-                //.antMatchers("/swagger-resources/**").permitAll()
-                //.antMatchers("/configuration/**").permitAll()
-                .antMatchers("/v3/api-docs/**").permitAll()
-                .antMatchers("/api-docs/**").permitAll()
-                .antMatchers("/swagger-ui/**").permitAll()
-                // end swagger
-                .antMatchers("/webjars/**").permitAll()
-                .antMatchers("/docs/**").permitAll()
-                .antMatchers("/h2-console/**").permitAll()
-                .anyRequest().authenticated()
-                .and()
-                .apply(new JwtConfigurer(jwtTokenProvider));
+                        // start swagger
+                        .requestMatchers("/swagger-ui.html").permitAll()
+                        //.antMatchers("/swagger-resources/**").permitAll()
+                        //.antMatchers("/configuration/**").permitAll()
+                        .requestMatchers("/v3/api-docs/**").permitAll()
+                        .requestMatchers("/api-docs/**").permitAll()
+                        .requestMatchers("/swagger-ui/**").permitAll()
+                        // end swagger
+                        .requestMatchers("/webjars/**").permitAll()
+                        .requestMatchers("/docs/**").permitAll()
+                        .requestMatchers("/h2-console/**").permitAll()
+                        .anyRequest().authenticated())
+//                .and()
+//                .apply(new JwtConfigurer(jwtTokenProvider));
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                //.and()
+                .authenticationProvider(authenticationProvider()) // Register the authentication provider
+                .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class) // Add the JWT filter before processing the request
+                // add exception filter
+                .addFilterBefore(new ExceptionHandlerFilter(), JwtTokenFilter.class)
+                .build();
+    }
+
+    @Bean
+    public AuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
+        authenticationProvider.setUserDetailsService(userDetailsService);
+        authenticationProvider.setPasswordEncoder(passwordEncoder());
+        return authenticationProvider;
     }
 
     @Bean

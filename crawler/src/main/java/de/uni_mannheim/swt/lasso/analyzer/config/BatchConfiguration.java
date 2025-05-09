@@ -44,11 +44,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.DefaultBatchConfigurer;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.configuration.support.DefaultBatchConfiguration;
+import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
@@ -66,7 +67,7 @@ import org.springframework.core.task.support.TaskExecutorAdapter;
  */
 @Configuration
 @EnableBatchProcessing
-public class BatchConfiguration extends DefaultBatchConfigurer {
+public class BatchConfiguration extends DefaultBatchConfiguration {
 
     private static final Logger LOG = LoggerFactory.getLogger(BatchConfiguration.class);
 
@@ -111,12 +112,6 @@ public class BatchConfiguration extends DefaultBatchConfigurer {
 
     @Value("${batch.maven.mode.extension}")
     private String archiveExtension;
-
-    @Resource
-    private JobBuilderFactory jobBuilder;
-
-    @Resource
-    private StepBuilderFactory stepBuilder;
 
     @Bean
     public ItemReader<MavenArtifact> itemReader()
@@ -163,13 +158,13 @@ public class BatchConfiguration extends DefaultBatchConfigurer {
     }
 
     @Bean
-    public Job mavenArtifactJob(JobBuilderFactory jobs, Step s1, JobExecutionListener listener) {
-        return jobs.get("mavenArtifactJob").incrementer(new RunIdIncrementer()).listener(listener).flow(s1).end()
+    public Job mavenArtifactJob(JobRepository jobRepository, Step s1, JobExecutionListener listener) {
+        return new JobBuilder("mavenArtifactJob", jobRepository).incrementer(new RunIdIncrementer()).listener(listener).flow(s1).end()
                 .build();
     }
 
     @Bean
-    public Step step1(StepBuilderFactory stepBuilderFactory, ItemReader<MavenArtifact> reader,
+    public Step step1(JobRepository jobRepository, ItemReader<MavenArtifact> reader,
             ItemProcessor<MavenArtifact, AnalysisResult> processor, ItemWriter<AnalysisResult> writer) {
         ExecutorService workerExecutor = Executors.newFixedThreadPool(workerThreads,
                 new ThreadFactory() {
@@ -187,7 +182,7 @@ public class BatchConfiguration extends DefaultBatchConfigurer {
 
                 });
 
-        return stepBuilderFactory.get("mavenArtifactJob_step1").<MavenArtifact, AnalysisResult>chunk(commitInterval)
+        return new StepBuilder("mavenArtifactJob_step1", jobRepository).<MavenArtifact, AnalysisResult>chunk(commitInterval)
                 .reader(reader).processor(processor).writer(writer)
                 // task executor
                 .taskExecutor(new TaskExecutorAdapter(

@@ -22,7 +22,7 @@ package de.uni_mannheim.swt.lasso.sheets.service.controller;
 import de.uni_mannheim.swt.lasso.sheets.service.dto.UserInfo;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Abstract API controller.

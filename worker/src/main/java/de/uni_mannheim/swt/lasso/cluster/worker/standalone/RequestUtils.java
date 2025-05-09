@@ -21,7 +21,7 @@ package de.uni_mannheim.swt.lasso.cluster.worker.standalone;
 
 import de.uni_mannheim.swt.lasso.cluster.worker.standalone.dto.UserInfo;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Request utilities

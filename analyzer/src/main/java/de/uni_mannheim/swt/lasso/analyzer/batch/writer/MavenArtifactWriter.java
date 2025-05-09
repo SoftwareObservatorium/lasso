@@ -26,6 +26,7 @@ import de.uni_mannheim.swt.lasso.analyzer.batch.processor.AnalysisResult;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 
 import de.uni_mannheim.swt.lasso.analyzer.index.CompilationUnitRepository;
@@ -55,7 +56,7 @@ public class MavenArtifactWriter implements ItemWriter<AnalysisResult> {
     /**
      * {@inheritDoc}
      */
-    @Override
+    //@Override
     public void write(List<? extends AnalysisResult> analysisResults)
             throws Exception {
         //
@@ -96,6 +97,15 @@ public class MavenArtifactWriter implements ItemWriter<AnalysisResult> {
         analysisResults.stream().forEach(ar -> ar.getCompilationUnits().clear());
     }
 
+    @Override
+    public void write(Chunk<? extends AnalysisResult> chunk) throws Exception {
+        try {
+            write(chunk.getItems());
+        } catch (Throwable e) {
+            LOG.warn("something went wrong", e);
+        }
+    }
+
     public int getMaxThreads() {
         return maxThreads;
     }
@@ -103,5 +113,4 @@ public class MavenArtifactWriter implements ItemWriter<AnalysisResult> {
     public void setMaxThreads(int maxThreads) {
         this.maxThreads = maxThreads;
     }
-
 }

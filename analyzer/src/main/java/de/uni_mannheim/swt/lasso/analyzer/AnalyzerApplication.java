@@ -23,7 +23,6 @@ import de.uni_mannheim.swt.lasso.analyzer.config.ApplicationConfig;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
-import org.springframework.boot.autoconfigure.solr.SolrAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -37,7 +36,7 @@ import org.springframework.context.annotation.Import;
  *
  */
 @Configuration
-@SpringBootApplication(exclude = { SolrAutoConfiguration.class, DataSourceAutoConfiguration.class})
+@SpringBootApplication(exclude = { DataSourceAutoConfiguration.class})
 @ComponentScan(basePackages = { "de.uni_mannheim.swt.lasso.analyzer" })
 @Import({ ApplicationConfig.class })
 public class AnalyzerApplication {

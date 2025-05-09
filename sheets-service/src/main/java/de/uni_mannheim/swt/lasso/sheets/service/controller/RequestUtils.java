@@ -21,7 +21,7 @@ package de.uni_mannheim.swt.lasso.sheets.service.controller;
 
 import de.uni_mannheim.swt.lasso.sheets.service.dto.UserInfo;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Request utilities

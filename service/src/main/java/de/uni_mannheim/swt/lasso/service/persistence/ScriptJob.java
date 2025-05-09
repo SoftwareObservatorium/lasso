@@ -19,7 +19,7 @@
  */
 package de.uni_mannheim.swt.lasso.service.persistence;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.Date;
 
 /**
@@ -50,7 +50,7 @@ public class ScriptJob extends LassoEntity {
     @Temporal(TemporalType.TIMESTAMP)
     private Date end;
 
-    @Column(name = "content", columnDefinition="LONGTEXT")
+    @Column(name = "content", columnDefinition="CLOB")
     private String content;
 
     @Column(name = "shared")

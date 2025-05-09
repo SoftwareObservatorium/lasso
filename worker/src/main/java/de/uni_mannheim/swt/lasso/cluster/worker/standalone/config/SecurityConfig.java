@@ -24,13 +24,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -44,15 +45,21 @@ import java.util.Arrays;
  */
 @Configuration
 @EnableWebSecurity
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
+@EnableMethodSecurity(securedEnabled = true, jsr250Enabled = true)
+public class SecurityConfig {
 
     @Autowired
     private Environment env;
 
+//    @Bean
+//    //@Override
+//    public AuthenticationManager authenticationManagerBean() throws Exception {
+//        return super.authenticationManagerBean();
+//    }
+
     @Bean
-    @Override
-    public AuthenticationManager authenticationManagerBean() throws Exception {
-        return super.authenticationManagerBean();
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
     }
 
     @Bean
@@ -67,42 +74,44 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         return source;
     }
 
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
-        http.cors().and()
-                .csrf().disable()
+    @Bean
+    protected SecurityFilterChain configure(HttpSecurity http) throws Exception {
+        return http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Apply CORS
+                .csrf(csrf -> csrf.disable()) // Disable CSRF protection
                 //.httpBasic().disable()
                 // https://stackoverflow.com/questions/26220083/h2-database-console-spring-boot-load-denied-by-x-frame-options
-                .headers().frameOptions().sameOrigin().and()
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
-                .authorizeRequests()
-                .antMatchers("/auth/signin").permitAll()
-                .antMatchers("/api/**").hasRole("USER")
-
-                // FIXME permit ZIP downloads
-                //.antMatchers("/api/**/records").permitAll()
-
-                // permit web app (angular)
-                .antMatchers("/lasso/**").permitAll()
-                //, "/*.html", "/*.js", "/*.ico", "/*.css", "/*.txt", "/assets/**").permitAll()
-
-                // start swagger
-                .antMatchers("/swagger-ui.html").permitAll()
-                //.antMatchers("/swagger-resources/**").permitAll()
-                //.antMatchers("/configuration/**").permitAll()
-                .antMatchers("/v3/api-docs/**").permitAll()
-                .antMatchers("/api-docs/**").permitAll()
-                .antMatchers("/swagger-ui/**").permitAll()
-                // end swagger
-                .antMatchers("/webjars/**").permitAll()
-                .antMatchers("/docs/**").permitAll()
-                .antMatchers("/h2-console/**").permitAll()
-                .anyRequest().authenticated()
+                //.headers().frameOptions().sameOrigin().and()
+                //.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 //.and()
-                //.apply(new JwtConfigurer(jwtTokenProvider));
-                .and()
-                .httpBasic();
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/auth/signin").permitAll()
+                        .requestMatchers("/api/**").hasRole("USER")
+
+                        // FIXME permit ZIP downloads
+                        //.requestMatchers("/api/**/records").permitAll()
+
+                        // permit web app (angular)
+                        .requestMatchers("/lasso/**").permitAll()
+                        //, "/*.html", "/*.js", "/*.ico", "/*.css", "/*.txt", "/assets/**").permitAll()
+
+                        // start swagger
+                        .requestMatchers("/swagger-ui.html").permitAll()
+                        //.requestMatchers("/swagger-resources/**").permitAll()
+                        //.requestMatchers("/configuration/**").permitAll()
+                        .requestMatchers("/v3/api-docs/**").permitAll()
+                        .requestMatchers("/api-docs/**").permitAll()
+                        .requestMatchers("/swagger-ui/**").permitAll()
+                        // end swagger
+                        .requestMatchers("/webjars/**").permitAll()
+                        .requestMatchers("/docs/**").permitAll()
+                        .requestMatchers("/h2-console/**").permitAll()
+                        .anyRequest().authenticated())
+//                .and()
+//                .apply(new JwtConfigurer(jwtTokenProvider));
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .httpBasic(Customizer.withDefaults())
+                .build();
     }
 
     @Autowired

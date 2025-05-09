@@ -20,7 +20,7 @@
 package de.uni_mannheim.swt.lasso.engine.matcher;
 
 import de.uni_mannheim.swt.lasso.core.model.Abstraction;
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.AntPathMatcher;
 

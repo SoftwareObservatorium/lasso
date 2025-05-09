@@ -23,6 +23,7 @@ import de.uni_mannheim.swt.lasso.analyzer.batch.processor.AnalysisResult;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 
 import java.io.File;
@@ -41,7 +42,7 @@ public class MavenArtifactWriterDownloadOnly implements ItemWriter<AnalysisResul
     /**
      * {@inheritDoc}
      */
-    @Override
+    //@Override
     public void write(List<? extends AnalysisResult> analysisResults)
             throws Exception {
         //
@@ -57,6 +58,15 @@ public class MavenArtifactWriterDownloadOnly implements ItemWriter<AnalysisResul
             } catch (Throwable e) {
                 LOG.warn(String.format("Failed to write down lasso info for '%s'", analysisResult.getMavenArtifact().toUri()), e);
             }
+        }
+    }
+
+    @Override
+    public void write(Chunk<? extends AnalysisResult> chunk) throws Exception {
+        try {
+            write(chunk.getItems());
+        } catch (Throwable e) {
+            LOG.warn("something went wrong", e);
         }
     }
 

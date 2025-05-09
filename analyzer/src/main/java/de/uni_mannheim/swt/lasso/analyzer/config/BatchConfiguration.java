@@ -26,18 +26,20 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 
 import de.uni_mannheim.swt.lasso.analyzer.asm.ASMAnalyzer;
 import de.uni_mannheim.swt.lasso.analyzer.batch.reader.LocalArtifactReader;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.DefaultBatchConfigurer;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+//import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
+//import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.configuration.support.DefaultBatchConfiguration;
+import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
@@ -53,6 +55,8 @@ import de.uni_mannheim.swt.lasso.analyzer.batch.writer.MavenArtifactWriter;
 import de.uni_mannheim.swt.lasso.analyzer.index.CompilationUnitRepository;
 import org.springframework.core.task.support.TaskExecutorAdapter;
 
+import org.springframework.batch.core.repository.JobRepository;
+
 /**
  * Spring Boot Batch Configuration
  * 
@@ -61,7 +65,7 @@ import org.springframework.core.task.support.TaskExecutorAdapter;
  */
 @Configuration
 @EnableBatchProcessing
-public class BatchConfiguration extends DefaultBatchConfigurer {
+public class BatchConfiguration extends DefaultBatchConfiguration {
 
     @Value("${lasso.indexer.worker.threads}")
     private int workerThreads;
@@ -75,11 +79,11 @@ public class BatchConfiguration extends DefaultBatchConfigurer {
     @Value("${batch.maven.repo.path}")
     private String mavenRepoPath;
 
-    @Resource
-    private JobBuilderFactory jobBuilder;
-
-    @Resource
-    private StepBuilderFactory stepBuilder;
+//    @Resource
+//    private JobBuilderFactory jobBuilder;
+//
+//    @Resource
+//    private StepBuilderFactory stepBuilder;
 
     @Resource
     private CompilationUnitRepository compilationUnitRepository;
@@ -113,13 +117,13 @@ public class BatchConfiguration extends DefaultBatchConfigurer {
     }
 
     @Bean
-    public Job mavenArtifactJob(JobBuilderFactory jobs, Step s1, JobExecutionListener listener) {
-        return jobs.get("mavenArtifactJob").incrementer(new RunIdIncrementer()).listener(listener).flow(s1).end()
+    public Job mavenArtifactJob(JobRepository jobRepository, Step s1, JobExecutionListener listener) {
+        return new JobBuilder("mavenArtifactJob", jobRepository).incrementer(new RunIdIncrementer()).listener(listener).flow(s1).end()
                 .build();
     }
 
     @Bean
-    public Step step1(StepBuilderFactory stepBuilderFactory, ItemReader<MavenArtifact> reader,
+    public Step step1(JobRepository jobRepository, ItemReader<MavenArtifact> reader,
             ItemProcessor<MavenArtifact, AnalysisResult> processor, ItemWriter<AnalysisResult> writer) {
         ExecutorService workerExecutor = Executors.newFixedThreadPool(workerThreads,
                 new ThreadFactory() {
@@ -137,7 +141,7 @@ public class BatchConfiguration extends DefaultBatchConfigurer {
 
                 });
 
-        return stepBuilderFactory.get("mavenArtifactJob_step1").<MavenArtifact, AnalysisResult>chunk(commitInterval)
+        return new StepBuilder("mavenArtifactJob_step1", jobRepository).<MavenArtifact, AnalysisResult>chunk(commitInterval)
                 .reader(reader).processor(processor).writer(writer)
                 // task executor
                 .taskExecutor(new TaskExecutorAdapter(

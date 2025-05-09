@@ -31,7 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.solr.SolrAutoConfiguration;
+//import org.springframework.boot.autoconfigure.solr.SolrAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -48,7 +48,7 @@ import java.util.List;
  *
  */
 @Configuration
-@EnableAutoConfiguration(exclude = { SolrAutoConfiguration.class })
+@EnableAutoConfiguration//(exclude = { SolrAutoConfiguration.class })
 @ComponentScan(basePackages = { "de.uni_mannheim.swt.lasso.service" })
 @Import({ EngineConfig.class, SecurityConfig.class, WebAppConfig.class, SwaggerConfig.class, JpaConfig.class, CorpusConfig.class, NotificationConfig.class })
 public class LassoApplication implements CommandLineRunner {

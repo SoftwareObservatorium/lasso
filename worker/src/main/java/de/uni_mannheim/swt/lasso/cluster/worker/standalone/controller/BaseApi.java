@@ -23,7 +23,7 @@ import de.uni_mannheim.swt.lasso.cluster.worker.standalone.RequestUtils;
 import de.uni_mannheim.swt.lasso.cluster.worker.standalone.dto.UserInfo;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Abstract API controller.

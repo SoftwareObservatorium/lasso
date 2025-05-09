@@ -17,7 +17,7 @@
     <description>lasso query language</description>
 
     <properties>
-        <antlr.version>4.7.1</antlr.version>
+        <antlr.version>4.13.0</antlr.version>
     </properties>
 
     <licenses>

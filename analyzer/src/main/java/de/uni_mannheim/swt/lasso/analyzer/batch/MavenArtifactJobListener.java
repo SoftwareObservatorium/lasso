@@ -45,7 +45,7 @@ public class MavenArtifactJobListener extends JobExecutionListenerSupport {
         //
         if(jobExecution.getStatus() == BatchStatus.COMPLETED) {
             if(LOG.isInfoEnabled()) {
-                LOG.info("Job finished " + jobExecution.getJobConfigurationName());
+                LOG.info("Job finished " + jobExecution.getJobInstance().getJobName());
             }
         }
     }

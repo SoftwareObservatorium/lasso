@@ -115,7 +115,7 @@ public abstract class RestfulClient {
             throws IOException {
         if (!responseEntity.getStatusCode().is2xxSuccessful()) {
             throw new IOException("HTTP response status: "
-                    + responseEntity.getStatusCode().getReasonPhrase());
+                    + responseEntity.getStatusCode()/*.getReasonPhrase()*/);
         }
     }
 

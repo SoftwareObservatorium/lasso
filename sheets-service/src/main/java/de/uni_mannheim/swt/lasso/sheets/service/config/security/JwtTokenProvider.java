@@ -28,8 +28,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.util.Base64;
 import java.util.Date;
 import java.util.List;
@@ -53,8 +54,8 @@ public class JwtTokenProvider {
 
     public String createToken(String username, List<String> roles) {
 
-        Claims claims = Jwts.claims().setSubject(username);
-        claims.put("roles", roles);
+        Claims claims = Jwts.claims().setSubject(username).add("roles", roles).build();
+        //claims.put("roles", roles);
 
         Date now = new Date();
         Date validity = new Date(now.getTime() + (validityInSeconds * 1000L));
@@ -73,7 +74,7 @@ public class JwtTokenProvider {
     }
 
     public String getUsername(String token) {
-        return Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody().getSubject();
+        return Jwts.parser().setSigningKey(secretKey).build().parseClaimsJws(token).getBody().getSubject();
     }
 
     public String resolveToken(HttpServletRequest req) {
@@ -86,7 +87,7 @@ public class JwtTokenProvider {
 
     public boolean validateToken(String token) {
         try {
-            Jws<Claims> claims = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
+            Jws<Claims> claims = Jwts.parser().setSigningKey(secretKey).build().parseClaimsJws(token);
 
             if (claims.getBody().getExpiration().before(new Date())) {
                 return false;
