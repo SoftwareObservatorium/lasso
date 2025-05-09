@@ -36,7 +36,7 @@ import org.springframework.context.annotation.Import;
  *
  */
 @Configuration
-@SpringBootApplication(exclude = { DataSourceAutoConfiguration.class})
+@SpringBootApplication//(exclude = { DataSourceAutoConfiguration.class})
 @ComponentScan(basePackages = { "de.uni_mannheim.swt.lasso.analyzer" })
 @Import({ ApplicationConfig.class })
 public class AnalyzerApplication {

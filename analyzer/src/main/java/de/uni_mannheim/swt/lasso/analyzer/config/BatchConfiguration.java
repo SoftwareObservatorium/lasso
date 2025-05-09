@@ -33,10 +33,6 @@ import de.uni_mannheim.swt.lasso.analyzer.batch.reader.LocalArtifactReader;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-//import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-//import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
-import org.springframework.batch.core.configuration.support.DefaultBatchConfiguration;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.step.builder.StepBuilder;
@@ -56,6 +52,12 @@ import de.uni_mannheim.swt.lasso.analyzer.index.CompilationUnitRepository;
 import org.springframework.core.task.support.TaskExecutorAdapter;
 
 import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
+import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
+import org.springframework.jdbc.support.JdbcTransactionManager;
+import org.springframework.transaction.PlatformTransactionManager;
+
+import javax.sql.DataSource;
 
 /**
  * Spring Boot Batch Configuration
@@ -64,8 +66,8 @@ import org.springframework.batch.core.repository.JobRepository;
  *
  */
 @Configuration
-@EnableBatchProcessing
-public class BatchConfiguration extends DefaultBatchConfiguration {
+//@EnableBatchProcessing
+public class BatchConfiguration /*extends DefaultBatchConfiguration*/ {
 
     @Value("${lasso.indexer.worker.threads}")
     private int workerThreads;
@@ -123,7 +125,7 @@ public class BatchConfiguration extends DefaultBatchConfiguration {
     }
 
     @Bean
-    public Step step1(JobRepository jobRepository, ItemReader<MavenArtifact> reader,
+    public Step step1(JobRepository jobRepository, PlatformTransactionManager transactionManager, ItemReader<MavenArtifact> reader,
             ItemProcessor<MavenArtifact, AnalysisResult> processor, ItemWriter<AnalysisResult> writer) {
         ExecutorService workerExecutor = Executors.newFixedThreadPool(workerThreads,
                 new ThreadFactory() {
@@ -141,7 +143,7 @@ public class BatchConfiguration extends DefaultBatchConfiguration {
 
                 });
 
-        return new StepBuilder("mavenArtifactJob_step1", jobRepository).<MavenArtifact, AnalysisResult>chunk(commitInterval)
+        return new StepBuilder("mavenArtifactJob_step1", jobRepository).<MavenArtifact, AnalysisResult>chunk(commitInterval, transactionManager)
                 .reader(reader).processor(processor).writer(writer)
                 // task executor
                 .taskExecutor(new TaskExecutorAdapter(
@@ -152,5 +154,23 @@ public class BatchConfiguration extends DefaultBatchConfiguration {
     @Bean
     public JobExecutionListener jobExecutionListener() {
         return new MavenArtifactJobListener();
+    }
+
+    public DataSource dataSource() {
+        EmbeddedDatabaseBuilder builder = new EmbeddedDatabaseBuilder();
+        return builder.setType(EmbeddedDatabaseType.H2)
+                .addScript("classpath:org/springframework/batch/core/schema-drop-h2.sql")
+                .addScript("classpath:org/springframework/batch/core/schema-h2.sql")
+                .build();
+    }
+
+//    @Bean(name = "transactionManager")
+//    public PlatformTransactionManager getTransactionManager() {
+//        return new ResourcelessTransactionManager();
+//    }
+
+    @Bean(name = "transactionManager")
+    public JdbcTransactionManager batchTransactionManager(DataSource batchDataSource) {
+        return new JdbcTransactionManager(batchDataSource);
     }
 }
