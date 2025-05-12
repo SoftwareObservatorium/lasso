@@ -438,6 +438,8 @@ public class SSNInterpreter {
             // FIXME can happen that we don't know all types (e.g., null)
             Class[] types = parameters.stream().map(Parameter::getTargetClass).collect(Collectors.toList()).toArray(new Class[0]);
 
+            //LOG.debug("resolved types {}", Arrays.toString(types));
+
             // resolve "constructor" (here just a declared placeholder)
             // FIXME isAssignable (i.e., String->Object) - use more sophisticated matching here.
             Method method = MemberResolutionUtils.resolveDeclaredMethod(resolvedClass, methodName, types, false);

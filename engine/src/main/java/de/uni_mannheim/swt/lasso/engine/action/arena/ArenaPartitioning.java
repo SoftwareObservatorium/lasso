@@ -56,6 +56,7 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -613,6 +614,14 @@ public class ArenaPartitioning extends DefaultAction {
             List<Sheet> tests = actionConfiguration.getAbstraction().getSpecification().getTests();
             stimulusSheets.addAll(tests);
         }
+
+//        if(LOG.isDebugEnabled()) {
+//            stimulusSheets.forEach(s -> {
+//                LOG.debug(ToStringBuilder.reflectionToString(s));
+//
+//                s.getInvocations().forEach(i -> LOG.debug("Type {} {}", i, i.getClass().getName()));
+//            });
+//        }
 
         // update executables
         executables.getSpecification().setTests(stimulusSheets);

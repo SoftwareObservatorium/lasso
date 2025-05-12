@@ -52,6 +52,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -372,6 +373,8 @@ public class SSNExecute extends Task {
             //
             return invocations.stream().map(i -> new SheetInvocation(sheetName, i));
         }).toList();
+
+        //sheetInvocations.forEach(s -> java.lang.System.out.println(ToStringBuilder.reflectionToString(s)));
 
         // stimulus matrix
         StimulusResponseMatrix<Test, ClassUnderTest, TestInvocation> stimulusMatrix;

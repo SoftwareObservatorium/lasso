@@ -395,15 +395,16 @@ public class SequenceUtils {
                 seen.put(signature, stimulusSheet);
             }
 
-            // parameters defined
+            // parameters defined: assumes that the underlying set is ordered (see Groovy LinkedHashMap keys)
             Set<String> inputParameterKeys = spec.getParameters();
             if(CollectionUtils.isNotEmpty(inputParameterKeys)) {
                 List<String> paramValues = new ArrayList<>(inputParameterKeys.size());
                 for(String inputKey : inputParameterKeys) {
                     Object value = spec.getInputParameters().get(inputKey);
 
-                    String json = objectMapper.writeValueAsString(value);
-                    paramValues.add(json);
+                    //String json = objectMapper.writeValueAsString(value);
+                    // MUST BE THE ORIGINAL STRING
+                    paramValues.add(String.valueOf(value));
                 }
 
                 if(CollectionUtils.isEmpty(stimulusSheet.getInvocations())) {

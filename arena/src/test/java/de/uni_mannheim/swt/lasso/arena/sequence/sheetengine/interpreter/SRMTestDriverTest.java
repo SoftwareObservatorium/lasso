@@ -495,6 +495,52 @@ public class SRMTestDriverTest {
     }
 
     @Test
+    public void test_Base64_remote_parameterized() throws IOException, ClassNotFoundException {
+        @Language("jsonl")
+        String ssnJsonlStr = """
+                {"cells":{"A1":"","B1":"create","C1":"Base64"}}
+{"cells":{"A2":"\\"SGVsbG8gV29ybGQh\\".getBytes()","B2":"encode","C2":"A1","D2":"?p1"}}
+                """;
+
+        String lql = """
+                Base64{
+                    encode(byte[])->byte[]
+                }
+                """;
+        CompositeInvocationVisitor visitor = new CompositeInvocationVisitor(Arrays.asList());
+
+        SSNTestDriver testDriver = new SSNTestDriver();
+        String mavenRepoUrl = NexusInstance.MAVEN_CENTRAL;
+        File localRepo = new File("/tmp/my_repo/local-repo");
+        DependencyResolver resolver = new DependencyResolver(mavenRepoUrl, localRepo.getAbsolutePath());
+        testDriver.setMavenRepository(new MavenRepository(resolver));
+
+        // commons-codec:commons-codec:1.15
+        ClassUnderTest classUnderTest = CutUtils.resolve("org.apache.commons.codec.binary.Base64", "commons-codec:commons-codec:1.15");
+
+        // SM
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, ClassUnderTest, TestInvocation> stimulusMatrix = SSNTestDriver.parseStimulusMatrix(
+                Arrays.asList(new Sheet("testEncode(p1=byte[])", ssnJsonlStr, lql)), Arrays.asList(classUnderTest), Arrays.asList(new SheetInvocation("testEncode", "\"Hello World!\".getBytes()")));
+
+        // SRM
+        StimulusResponseMatrix<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> stimulusResponseMatrix = testDriver.runSheets(stimulusMatrix, 1, visitor);
+
+        for(Table.Cell<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test, AdaptedImplementation, ExecutedInvocations> cell : stimulusResponseMatrix.getTable().cellSet()) {
+            ExecutedInvocations executedInvocations = cell.getValue();
+
+            LOG.debug("executed invocations for '{}' \n{}", cell.getColumnKey().getAdaptee().getVariantId(), executedInvocations);
+            List<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String>> sheets = TestUtils.createSheets(cell.getColumnKey(), executedInvocations);
+            de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> actuationSheetData = sheets.get(0);
+            actuationSheetData.debug();
+            de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> adaptedActuationSheetData = sheets.get(1);
+            adaptedActuationSheetData.debug();
+
+            Invocations invocations = executedInvocations.getInvocations();
+        }
+
+    }
+
+    @Test
     public void test_Base64_remote_multiple_cuts() throws IOException, ClassNotFoundException {
         @Language("jsonl")
         String ssnJsonlStr = """

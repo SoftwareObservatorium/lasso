@@ -375,12 +375,12 @@ study(name: 'Stack') {
                         row '',  'push',   'A1',     '"Hi"'
                         row '',  'size',   'A1'
                     },
-                    test(name: 'testPushParameterized(p1=java.lang.String)', p1: "Hello World!") {
+                    test(name: 'testPushParameterized(p1=java.lang.String)', p1: '"Hello World!"') {
                         row '',  'create', 'Stack'
                         row '',  'push',   'A1',     '?p1'
                         row '',  'size',   'A1'
                     },
-                    test(name: 'testPushParameterized(p1=java.lang.String)', p1: "Bla blub!") // e.g., parameterized
+                    test(name: 'testPushParameterized(p1=java.lang.String)', p1: '"Bla blub!"') // e.g., parameterized
                 ]
             )
     }
@@ -1359,6 +1359,82 @@ study(name: 'OriginalBenchmarkPrompt') {
         //features = ["cc", "mutation"]
 
         dependsOn 'generateTestsLlama'
+        include '*'
+        profile('java17Profile')
+    }
+}
+        '''
+
+        //
+        LSLScript scriptUnderTest = createScript(content)
+
+
+        // DO EXECUTE
+        LSLExecutionResult lslExecutionResult = lassoEngine.execute(scriptUnderTest);
+        LSLExecutionContext lslExecutionContext = lassoEngine.getLastContext();
+
+        // assertions
+        //verifyAbstraction(lslExecutionContext, 'select', 'Base64', 1)
+        //verifyAbstraction(lslExecutionContext, 'execute', 'Base64', 1)
+
+        // TODO verify SRM
+        // put
+        ClusterEngine clusterEngine = lslExecutionContext.getConfiguration().getService(ClusterEngine.class);
+
+        // also make sure that the SRM is initialized (otherwise the client has no way to put cells)
+        ClusterSRMRepository srmRepository = clusterEngine.getClusterSRMRepository();
+        Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
+        System.out.println(table.printAll());
+    }
+
+    @Test
+    void test_tds_base64() throws IOException, DataSourceNotFoundException {
+        @Language("Groovy")
+        String content = '''
+// LSL generated
+dataSource "mavenCentral2023" // default dataSource
+study(name: 'TDSGenerated') {
+
+    profile('java17Profile') {
+    scope('class') { type = 'class' }
+    environment('java17') {
+        image = 'maven:3.9-eclipse-temurin-17' // docker image (JDK 17)
+    }
+    }
+      
+    action(name: 'createStimulusMatrix') {
+        execute {
+            stimulusMatrix('myAb', """Base64 {
+    encode(byte[])->byte[]
+    decode(java.lang.String)->byte[]
+}""", [/*impls*/], [
+  test(name: 'testEncode(p1=byte[])', p1:'"Hello World!".getBytes()') {
+    row '', 'create', 'Base64'
+    row '"SGVsbG8gV29ybGQh".getBytes()', 'encode', 'A1', '?p1'
+  },
+  test(name: 'testEncode(p1=byte[])', p1:'"Hello World".getBytes()')
+])
+        }
+    }
+
+    /* select class candidates using interface-driven code search */
+    action(name: 'select', type: 'Search') {
+        dependsOn 'createStimulusMatrix'
+        include '*'
+
+        query { stimulusMatrix ->
+            def query = [:] // create query model
+            query.queryContent = stimulusMatrix.lql
+            query.rows = 10
+
+            return [query] // list of queries is expected
+        }
+    }
+    /* filter candidates by two tests (test-driven code filtering) */
+    action(name: 'filter', type: 'Arena') { // filter by tests
+        maxAdaptations = 1 // how many adaptations to try
+
+        dependsOn 'select'
         include '*'
         profile('java17Profile')
     }

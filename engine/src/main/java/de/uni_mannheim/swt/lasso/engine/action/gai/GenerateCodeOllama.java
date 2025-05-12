@@ -182,11 +182,17 @@ public class GenerateCodeOllama extends LangChainAction {
                         LOG.info("Package and deploy code");
                         // create manager
                         MavenProjectManager manager = new MavenProjectManager(context);
-                        doPackage(context, actionConfiguration, manager, mavenProject);
+                        List<String> pkgArgs = doPackage(context, actionConfiguration, manager, mavenProject);
 
                         // 5. index
                         LOG.info("Index code");
-                        doAnalyzeAndStore(context, actionConfiguration, manager, myPrompt, mavenProject, ds);
+                        List<String> indexArgs = doAnalyzeAndStore(context, actionConfiguration, manager, myPrompt, mavenProject, ds);
+
+                        // run maven
+                        List<List<String>> allArgs = new ArrayList<>();
+                        allArgs.add(pkgArgs);
+                        allArgs.add(indexArgs);
+                        runMaven(context, actionConfiguration, manager, mavenProject, allArgs);
 
                     } catch (Throwable e) {
                         LOG.warn("Generation failed {}", sampleId);
@@ -212,7 +218,7 @@ public class GenerateCodeOllama extends LangChainAction {
         setExecutables(Systems.fromAbstraction(abstraction, getName()));
     }
 
-    void doPackage(LSLExecutionContext context, ActionConfiguration actionConfiguration, MavenProjectManager manager, MavenProject mavenProject) {
+    List<String> doPackage(LSLExecutionContext context, ActionConfiguration actionConfiguration, MavenProjectManager manager, MavenProject mavenProject) {
         File projectRoot = mavenProject.getBaseDir();
 
         // args passed
@@ -246,6 +252,11 @@ public class GenerateCodeOllama extends LangChainAction {
             LOG.info("Packaging '{}' with args '{}'", mavenProject.getBaseDir(), args);
         }
 
+        return args;
+    }
+
+    void runMaven(LSLExecutionContext context, ActionConfiguration actionConfiguration, MavenProjectManager manager, MavenProject mavenProject, List<List<String>> args) {
+        File projectRoot = mavenProject.getBaseDir();
         //
         ExecutionEnvironmentManager executionEnvironmentManager = context.getExecutionEnvironmentManager();
         MavenExecutionEnvironment mavenExecutionEnvironment = createMavenEnvironment(context, actionConfiguration, manager, projectRoot, args);
@@ -359,13 +370,13 @@ public class GenerateCodeOllama extends LangChainAction {
         }
     }
 
-    MavenExecutionEnvironment createMavenEnvironment(LSLExecutionContext context, ActionConfiguration actionConfiguration, MavenProjectManager manager, File projectRoot, List<String> args) {
+    MavenExecutionEnvironment createMavenEnvironment(LSLExecutionContext context, ActionConfiguration actionConfiguration, MavenProjectManager manager, File projectRoot, List<List<String>> args) {
         //
         ExecutionEnvironmentManager executionEnvironmentManager = context.getExecutionEnvironmentManager();
 
         // set default commands
         Environment environment = actionConfiguration.getProfile().getEnvironment().copy();
-        ;
+
         if (CollectionUtils.isEmpty(environment.getCommandArgsList())) {
             environment.setCommandArgsList(new LinkedList<>());
         }
@@ -381,7 +392,7 @@ public class GenerateCodeOllama extends LangChainAction {
 
         List<String> commands = new LinkedList<>();
         List<List<String>> commandArgsList = new LinkedList<>();
-        commandArgsList.add(args);
+        commandArgsList.addAll(args);
         for (List<String> commandArgs : commandArgsList) {
             String command = String.join(" ", commandArgs);
             commands.add(command);
@@ -392,7 +403,7 @@ public class GenerateCodeOllama extends LangChainAction {
         return mavenExecutionEnvironment;
     }
 
-    void doAnalyzeAndStore(LSLExecutionContext context, ActionConfiguration actionConfiguration, MavenProjectManager manager, Prompt prompt, MavenProject mavenProject, Datasource ds) {
+    List<String> doAnalyzeAndStore(LSLExecutionContext context, ActionConfiguration actionConfiguration, MavenProjectManager manager, Prompt prompt, MavenProject mavenProject, Datasource ds) {
         // mvn indexer-maven-plugin:index
         File projectRoot = mavenProject.getBaseDir();
 
@@ -428,10 +439,7 @@ public class GenerateCodeOllama extends LangChainAction {
             LOG.info("Indexing '{}' with args '{}'", mavenProject.getBaseDir(), args);
         }
 
-        //
-        ExecutionEnvironmentManager executionEnvironmentManager = context.getExecutionEnvironmentManager();
-        MavenExecutionEnvironment mavenExecutionEnvironment = createMavenEnvironment(context, actionConfiguration, manager, projectRoot, args);
-        executionEnvironmentManager.run(mavenExecutionEnvironment);
+        return args;
     }
 
     @Override

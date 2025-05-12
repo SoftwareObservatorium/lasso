@@ -52,6 +52,7 @@ import de.uni_mannheim.swt.lasso.analyzer.index.CompilationUnitRepository;
 import org.springframework.core.task.support.TaskExecutorAdapter;
 
 import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 import org.springframework.jdbc.support.JdbcTransactionManager;
@@ -169,8 +170,13 @@ public class BatchConfiguration /*extends DefaultBatchConfiguration*/ {
 //        return new ResourcelessTransactionManager();
 //    }
 
-    @Bean(name = "transactionManager")
-    public JdbcTransactionManager batchTransactionManager(DataSource batchDataSource) {
-        return new JdbcTransactionManager(batchDataSource);
+//    @Bean(name = "transactionManager")
+//    public JdbcTransactionManager batchTransactionManager(DataSource batchDataSource) {
+//        return new JdbcTransactionManager(batchDataSource);
+//    }
+
+    @Bean
+    public PlatformTransactionManager transactionManager(DataSource dataSource) {
+        return new DataSourceTransactionManager(dataSource);
     }
 }
