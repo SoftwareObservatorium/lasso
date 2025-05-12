@@ -536,6 +536,14 @@ public class SRMTestDriverTest {
             adaptedActuationSheetData.debug();
 
             Invocations invocations = executedInvocations.getInvocations();
+            ExecutedInvocations oracleInvocations = SheetUtils.toOracle(executedInvocations);
+            de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> oracleSheet = SheetUtils.toOracleSheet(oracleInvocations, new GsonMapper());
+
+            System.out.println("----------- ORACLE -------");
+
+            oracleSheet.debug();
+
+            System.out.println(oracleSheet.toJsonl());
         }
 
     }

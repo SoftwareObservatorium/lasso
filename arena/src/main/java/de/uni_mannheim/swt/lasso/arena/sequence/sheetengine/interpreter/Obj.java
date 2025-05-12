@@ -1,6 +1,7 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter;
 
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.adapter.InvocationInterceptor;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize.NA;
 
 /**
  * Represents an object (i.e., result) of an execution of an {@link Invocation} (e.g., output, inputs).
@@ -67,6 +68,14 @@ public class Obj {
         }
 
         return InvocationInterceptor.isProxy(value);
+    }
+
+    public boolean isNA() {
+        if(isNull()) {
+            return false;
+        }
+
+        return value.getClass().equals(NA.class);
     }
 
     public boolean hasException() {

@@ -4,6 +4,7 @@ import de.uni_mannheim.swt.lasso.arena.ClassUnderTest;
 import de.uni_mannheim.swt.lasso.arena.MethodSignature;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
 import de.uni_mannheim.swt.lasso.arena.search.InterfaceSpecification;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize.NA;
 import de.uni_mannheim.swt.lasso.ssn.eval.BshEval;
 import de.uni_mannheim.swt.lasso.ssn.eval.Eval;
 import de.uni_mannheim.swt.lasso.ssn.eval.EvalException;
@@ -624,8 +625,19 @@ public class SSNInterpreter {
         Invocation invocation = executedInvocation.getInvocation();
         Parameter parameter = invocation.getExpectedOutput();
         Obj obj;
-        // either value (object) or reference
-        if(parameter.isReference()) {
+
+        // is undefined?
+        if(parameter.isUndefined()) {
+            // take from CUT?
+            if(executedInvocation.getInvocation().isInstanceInvocation()) {
+                obj = executedInvocation.getOutput();
+
+            } else {
+                obj = Obj.fromValue(new NA(), Obj.PRODUCER_INDEX_NONE);
+            }
+        } else
+
+        if(parameter.isReference()) {         // either value (object) or reference
             // by row
             // get value from ExecutedInvocation
             if(parameter.getReference()[0] == 0) { // row

@@ -156,6 +156,10 @@ public class GsonMapper implements ObjectMapper {
             return serializedStr;
         }
 
+        if(obj.isNA()) {
+            serializedStr = "$*";
+        } else
+
         if(obj.hasException()) {
             Throwable throwable = obj.getException();
             serializedStr = "$EXCEPTION@" + throwable.getClass().getCanonicalName() + "@" + throwable.getMessage();
