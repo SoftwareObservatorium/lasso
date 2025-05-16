@@ -2,7 +2,9 @@ package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.srh;
 
 import com.google.common.collect.Table;
 import de.uni_mannheim.swt.lasso.arena.ArenaUtils;
+import de.uni_mannheim.swt.lasso.arena.ClassUnderTest;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
+import de.uni_mannheim.swt.lasso.arena.classloader.coverage.pitest.Pitest;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.TestInvocation;
 import de.uni_mannheim.swt.lasso.cluster.LassoClusterClient;
@@ -10,6 +12,7 @@ import de.uni_mannheim.swt.lasso.cluster.client.ArenaJob;
 import de.uni_mannheim.swt.lasso.srm.CellId;
 import de.uni_mannheim.swt.lasso.srm.CellValue;
 import org.apache.commons.collections4.MapUtils;
+import org.pitest.mutationtest.engine.MutationDetails;
 
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -182,6 +185,87 @@ public class SRHWriter {
             store(cells, arenaJob, arenaId);
         } catch (RuntimeException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public void storeMutationActuationSheet(ArenaJob arenaJob, String arenaId, AdaptedImplementation adaptedImplementation, String reportId) {
+        Map<CellId, CellValue> cells = new LinkedHashMap<>();
+
+        ClassUnderTest classUnderTest = adaptedImplementation.getAdaptee();
+        if(classUnderTest.getContext().containsKey(reportId)) {
+            try {
+                String mdJson = (String) classUnderTest.getContext().get(reportId);
+
+                CellId cellId = new CellId();
+                cellId.setSheetId(reportId);
+                cellId.setX(-1);
+                cellId.setY(-1);
+                cellId.setType("mutant");
+                cellId.setSystemId(adaptedImplementation.getAdaptee().getId());
+                cellId.setVariantId(adaptedImplementation.getAdaptee().getVariantId());
+                cellId.setAdapterId(adaptedImplementation.getAdapterId());
+
+                CellValue cellValue = new CellValue();
+                cellValue.setValue(mdJson);
+                //cellValue.setRawValue(cell.getValue());
+                //cellValue.setValueType();
+                //cellValue.setExecutionTime();
+                cellValue.setLastModified(new Date());
+
+                cells.put(cellId, cellValue);
+
+                // store
+                store(cells, arenaJob, arenaId);
+            } catch (RuntimeException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    /**
+     * Store static code measures from code index in SRM
+     *
+     * @param arenaJob
+     * @param arenaId
+     * @param adaptedImplementation
+     * @param reportId
+     */
+    public void storeStaticMetricsSheet(ArenaJob arenaJob, String arenaId, AdaptedImplementation adaptedImplementation, String reportId) {
+        Map<CellId, CellValue> cells = new LinkedHashMap<>();
+
+        ClassUnderTest classUnderTest = adaptedImplementation.getAdaptee();
+        if(MapUtils.isNotEmpty(classUnderTest.getImplementation().getCode().getMeasures())) {
+            for(String metricId : classUnderTest.getImplementation().getCode().getMeasures().keySet()) {
+                Double measure = classUnderTest.getImplementation().getCode().getMeasures().get(metricId);
+
+                if(measure != null) {
+                    try {
+                        CellId cellId = new CellId();
+                        cellId.setSheetId(reportId);
+                        cellId.setX(-1);
+                        cellId.setY(-1);
+                        cellId.setType(metricId);
+                        cellId.setSystemId(adaptedImplementation.getAdaptee().getId());
+                        cellId.setVariantId(adaptedImplementation.getAdaptee().getVariantId());
+                        cellId.setAdapterId(adaptedImplementation.getAdapterId());
+
+                        CellValue cellValue = new CellValue();
+                        cellValue.setValue(String.valueOf(measure));
+                        //cellValue.setRawValue(cell.getValue());
+                        //cellValue.setValueType();
+                        //cellValue.setExecutionTime();
+                        cellValue.setLastModified(new Date());
+
+                        cells.put(cellId, cellValue);
+
+                        // store
+                        store(cells, arenaJob, arenaId);
+                    } catch (RuntimeException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+
+            }
         }
     }
 

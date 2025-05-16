@@ -46,13 +46,13 @@ class LSL2AndNewArenaSystemTest extends AbstractGroovySystemTest {
 
     @Autowired
     @Qualifier("testLassoEngine")
-    LassoTestEngine lassoEngine;
+    LassoTestEngine lassoEngine
 
     @Test
     void test_EXECUTE_Base64_sheet_search() throws IOException, DataSourceNotFoundException {
         @Language("Groovy")
         String content = '''
-dataSource 'lasso_quickstart'
+dataSource 'mavenCentral2023'
 study(name: 'Base64encode') {
 
       profile('java17Profile') {
@@ -168,6 +168,131 @@ study(name: 'Base64encode') {
     /* filter candidates by two tests (test-driven code filtering) */
     action(name: 'filter', type: 'Arena') { // filter by tests
         features = ['cc'] // enable code coverage measurement (class scope)
+        maxAdaptations = 1 // how many adaptations to try
+
+        dependsOn 'select'
+        include 'Base64'
+        profile('java17Profile')
+    }
+}
+        '''
+
+        //
+        LSLScript scriptUnderTest = createScript(content)
+
+
+        // DO EXECUTE
+        LSLExecutionResult lslExecutionResult = lassoEngine.execute(scriptUnderTest);
+        LSLExecutionContext lslExecutionContext = lassoEngine.getLastContext();
+
+        // assertions
+        //verifyAbstraction(lslExecutionContext, 'select', 'Base64', 1)
+        //verifyAbstraction(lslExecutionContext, 'execute', 'Base64', 1)
+
+        // TODO verify SRM
+        // put
+        ClusterEngine clusterEngine = lslExecutionContext.getConfiguration().getService(ClusterEngine.class);
+
+        // also make sure that the SRM is initialized (otherwise the client has no way to put cells)
+        ClusterSRMRepository srmRepository = clusterEngine.getClusterSRMRepository();
+        Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
+        System.out.println(table.printAll());
+
+        Warehouse.writeRawSrmToFile(lslExecutionContext.getExecutionId(), new File("/tmp/base64_maven.parquet"));
+    }
+
+    @Test
+    void test_EXECUTE_Base64_manualartifact_junitclass() throws IOException, DataSourceNotFoundException {
+        @Language("Groovy")
+        String content = '''
+dataSource 'lasso_quickstart'
+study(name: 'Base64encode') {
+
+      profile('java17Profile') {
+        scope('class') { type = 'class' }
+        environment('java17') {
+          image = 'maven:3.9-eclipse-temurin-17' // docker image (JDK 17)
+        }
+      }
+
+    action(name: 'select') {
+        execute {
+            def interfaceSpecification = """Base64{
+                    encode(byte[])->byte[]
+                    decode(java.lang.String)->byte[]
+                }
+                """
+            // from known maven artifact (assuming maven repository is able to provide the artifact)
+            stimulusMatrix('Base64', interfaceSpecification, [
+                    implementation("1", "org.apache.commons.codec.binary.Base64", "commons-codec:commons-codec:1.15"),
+                ], [ // tests
+                    testFromJUnit("""
+import org.junit.Test;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+
+public class Base64Test {
+
+    @Test
+    public void encode_emptyBytesShouldReturnEmptyBytes() {
+        byte[] input = new byte[0];
+        byte[] expectedOutput = new byte[0];
+
+        byte[] result = Base64.encode(input);
+
+        assertThat(result, is(expectedOutput));
+    }
+
+    @Test
+    public void encode_singleByteShouldReturnSingleBase64EncodedByte() {
+        byte[] input = { 1 };
+        byte[] expectedOutput = Base64.encode(input);
+
+        // for example, the base64 encoded value of 1 would be a 4-byte array in Java: [49, 66, 82, -121]
+        byte[] expectedBase64 = { 49, 66, 82, (byte) -121 };
+
+        assertThat(result, is(expectedOutput));
+    }
+
+    @Test
+    public void encode_multipleBytesShouldReturnCorrectBase64EncodedValue() {
+        byte[] input = { 1, 2, 3 };
+        // for example, the base64 encoded value of 1, 2 and 3 would be a 7-byte array in Java: [49, 66, 82, -121, 50, 67, 84]
+        byte[] expectedOutput = { 49, 66, 82, (byte) -121, 50, 67, 84 };
+
+        byte[] result = Base64.encode(input);
+
+        assertThat(result, is(expectedOutput));
+    }
+
+    @Test
+    public void encode_nullInputShouldThrowNullPointerException() {
+        try {
+            Base64.encode(null);
+            fail("Expected NullPointerException to be thrown");
+        } catch (NullPointerException e) {
+            // expected
+        }
+    }
+
+    @Test
+    public void encode_largeInputShouldReturnCorrectBase64EncodedValue() {
+        byte[] input = new byte[1000];
+        // you can either hard-code the correct output or use a library like Apache Commons Codec to get the base64 encoded value
+        byte[] expectedOutput = Base64.encode(input);
+
+        byte[] result = Base64.encode(input);
+
+        assertThat(result, is(expectedOutput));
+    }
+}
+""", interfaceSpecification)
+                    ])
+        }
+    }
+    
+    /* filter candidates by two tests (test-driven code filtering) */
+    action(name: 'filter', type: 'Arena') { // filter by tests
         maxAdaptations = 1 // how many adaptations to try
 
         dependsOn 'select'

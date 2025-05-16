@@ -34,6 +34,7 @@ import de.uni_mannheim.swt.lasso.engine.workspace.WorkspaceManager;
 import de.uni_mannheim.swt.lasso.service.LassoManager;
 import de.uni_mannheim.swt.lasso.service.app.ShutdownManager;
 import de.uni_mannheim.swt.lasso.service.controller.file.FileStorageService;
+import de.uni_mannheim.swt.lasso.service.controller.rank.RankingManager;
 import de.uni_mannheim.swt.lasso.service.notification.NotificationService;
 import de.uni_mannheim.swt.lasso.service.persistence.UserRepository;
 import de.uni_mannheim.swt.lasso.service.persistence.ScriptJobRepository;
@@ -54,6 +55,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -263,5 +265,10 @@ public class EngineConfig {
     @Bean
     public SRHRepository srhRepository(ClusterEngine clusterEngine, FunctionalCorrectness correctness) {
         return new SRHRepository(clusterEngine, correctness);
+    }
+
+    @Bean
+    public RankingManager rankingManager() throws IOException {
+        return new RankingManager();
     }
 }

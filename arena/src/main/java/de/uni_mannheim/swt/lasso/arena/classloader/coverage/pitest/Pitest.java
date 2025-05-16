@@ -19,6 +19,7 @@
  */
 package de.uni_mannheim.swt.lasso.arena.classloader.coverage.pitest;
 
+import com.google.gson.Gson;
 import de.uni_mannheim.swt.lasso.arena.ClassUnderTest;
 import de.uni_mannheim.swt.lasso.arena.repository.MavenRepository;
 import de.uni_mannheim.swt.lasso.arena.classloader.ContainerFactory;
@@ -50,8 +51,12 @@ import java.util.function.Predicate;
  */
 public class Pitest {
 
+    public static final String REPORT_ID = "pitest";
+
     private final GregorMutater engine;
     private final ClassUnderTest classUnderTest;
+
+    Gson gson = new Gson();
 
     private Map<String, Mutant> mutants = new LinkedHashMap<>();
 
@@ -103,6 +108,13 @@ public class Pitest {
         mavenRepository.resolve(mutee, new ContainerFactory.PitestContainerFactory(mutant));
 
         mutants.put(mutee.getVariantId(), mutant);
+
+        // set md
+        try {
+            mutee.getContext().put(REPORT_ID, gson.toJson(details));
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
 
         return mutee;
     }

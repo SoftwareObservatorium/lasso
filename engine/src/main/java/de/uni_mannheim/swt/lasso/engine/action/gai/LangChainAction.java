@@ -20,6 +20,8 @@
 package de.uni_mannheim.swt.lasso.engine.action.gai;
 
 import com.github.javaparser.JavaParser;
+import com.github.javaparser.ParseResult;
+import com.github.javaparser.ast.CompilationUnit;
 import de.uni_mannheim.swt.lasso.core.model.*;
 import de.uni_mannheim.swt.lasso.engine.LSLExecutionContext;
 import de.uni_mannheim.swt.lasso.engine.action.DefaultAction;
@@ -99,7 +101,12 @@ public abstract class LangChainAction extends DefaultAction {
 
         try {
             JavaParser javaParser = new JavaParser();
-            com.github.javaparser.ast.CompilationUnit cu = javaParser.parse(code).getResult().get();
+            ParseResult<CompilationUnit> result = javaParser.parse(code);
+            if(!result.isSuccessful()) {
+                LOG.warn("Parser found the following problems: {}", result.getProblems());
+            }
+
+            com.github.javaparser.ast.CompilationUnit cu = result.getResult().get();
 
             // parse name
             CodeUnit unit = new CodeUnit();

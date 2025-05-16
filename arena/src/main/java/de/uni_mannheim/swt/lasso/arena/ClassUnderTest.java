@@ -24,7 +24,9 @@ import de.uni_mannheim.swt.lasso.core.model.MavenProject;
 import org.apache.commons.lang3.StringUtils;
 
 import java.net.URL;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -48,6 +50,9 @@ public class ClassUnderTest {
     private boolean pseudo;
 
     private List<URL> urls;
+
+    // FIXME add map for data (e.g., like MutationDetails so that it can be serialized)
+    private Map<String, Object> context = new LinkedHashMap<>();
 
     public ClassUnderTest(System implementation) {
         this(implementation.getId(),
@@ -178,5 +183,13 @@ public class ClassUnderTest {
 
     public void setUrls(List<URL> urls) {
         this.urls = urls;
+    }
+
+    public Map<String, Object> getContext() {
+        return context;
+    }
+
+    public void setContext(Map<String, Object> context) {
+        this.context = context;
     }
 }

@@ -344,6 +344,10 @@ public class SequenceUtils {
 
         Map<String, Sheet> seen = new HashMap<>();
         for (Object testObj : sheets) {
+            if(testObj == null) {
+                continue;
+            }
+
             if(testObj instanceof Sheet) {
                 stimulusSheets.add((Sheet) testObj);
                 continue;

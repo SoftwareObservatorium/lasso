@@ -23,6 +23,7 @@ import de.uni_mannheim.swt.lasso.arena.CandidatePool;
 import de.uni_mannheim.swt.lasso.arena.ClassUnderTest;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
 import de.uni_mannheim.swt.lasso.arena.adaptation.DefaultAdaptationStrategy;
+import de.uni_mannheim.swt.lasso.arena.classloader.coverage.pitest.Pitest;
 import de.uni_mannheim.swt.lasso.arena.repository.DependencyResolver;
 import de.uni_mannheim.swt.lasso.arena.repository.MavenRepository;
 import de.uni_mannheim.swt.lasso.arena.search.InterfaceSpecification;
@@ -52,7 +53,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,6 +81,8 @@ public class SSNExecute extends Task {
      * Measure Mutation score using PIT
      */
     private boolean measurePIT = false;
+
+    private boolean storeStaticMetrics = true;
 
     private boolean writeSequenceRecords;
 
@@ -459,6 +461,29 @@ public class SSNExecute extends Task {
                     }
                 }
 
+                if(isMeasurePIT()) {
+                    try {
+                        LOG.info("Storing mutant details in SRH");
+
+                        // store mutation details
+                        writer.storeMutationActuationSheet(arenaJob, arenaId, adaptedImplementation, Pitest.REPORT_ID);
+                    } catch (Throwable e) {
+                        LOG.warn("storing mutation details failed", e);
+                    }
+                }
+
+                if(isStoreStaticMetrics()) {
+                    // add to SRH
+                    try {
+                        LOG.info("Storing static metric sheet in SRH");
+
+                        // store
+                        writer.storeStaticMetricsSheet(arenaJob, arenaId, adaptedImplementation, "indexmeasures");
+                    } catch (Throwable e) {
+                        LOG.warn("Storing static metric sheet in SRH failed", e);
+                    }
+                }
+
                 if(oracleSheet == null) {
                     try {
                         //ExecutedInvocations oracleInvocations = SheetUtils.toOracle(executedInvocations.getInvocations());
@@ -489,12 +514,12 @@ public class SSNExecute extends Task {
 //                    LOG.debug("JSON adaptedActuationSheet\n{}", adaptedActuationSheetData.toJsonl());
 
                     try {
-                        LOG.info("Storing sheet in SRH for 'codeUnit {} adapter {} variant {}'", adaptedImplementation.getAdaptee().getId(), adaptedImplementation.getAdapterId(), adaptedImplementation.getAdaptee().getVariantId());
+                        LOG.info("Storing jacoco sheet in SRH for 'codeUnit {} adapter {} variant {}'", adaptedImplementation.getAdaptee().getId(), adaptedImplementation.getAdapterId(), adaptedImplementation.getAdaptee().getVariantId());
 
                         // store actuation sheet
                         writer.storeActuationSheet(arenaJob, arenaId, adaptedImplementation, test, testInvocation, adaptedActuationSheetData);
                     } catch (Throwable e) {
-                        LOG.warn("Storing sheet in SRH failed", e);
+                        LOG.warn("Storing jacoco sheet in SRH failed", e);
                     }
                 } catch (Throwable e) {
                     LOG.warn("execution failed", e);
@@ -552,5 +577,13 @@ public class SSNExecute extends Task {
 
     public void setWriteSequenceRecords(boolean writeSequenceRecords) {
         this.writeSequenceRecords = writeSequenceRecords;
+    }
+
+    public boolean isStoreStaticMetrics() {
+        return storeStaticMetrics;
+    }
+
+    public void setStoreStaticMetrics(boolean storeStaticMetrics) {
+        this.storeStaticMetrics = storeStaticMetrics;
     }
 }

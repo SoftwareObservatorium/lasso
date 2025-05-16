@@ -19,6 +19,8 @@
  */
 package de.uni_mannheim.swt.lasso.lsl.spec
 
+import com.github.javaparser.JavaParser
+import de.uni_mannheim.swt.lasso.core.dto.srm.JUnitCodeUnit
 import de.uni_mannheim.swt.lasso.core.model.Abstraction
 import de.uni_mannheim.swt.lasso.core.model.ActionConfiguration
 import de.uni_mannheim.swt.lasso.core.model.Behaviour
@@ -300,6 +302,10 @@ class ActionSpec extends LassoSpec {
         return implementation(id, className, EXAMPLES_LASSO_EXAMPLES_1_0_0_SNAPSHOT)
     }
 
+    String generateUUID() {
+        return UUID.randomUUID().toString();
+    }
+
     System implementation(String id, String className, String mavenCoordinate) {
         String[] uriParts = StringUtils.split(mavenCoordinate, ":");
 
@@ -316,6 +322,57 @@ class ActionSpec extends LassoSpec {
         System system = new System(codeUnit)
 
         return system
+    }
+
+    /**
+     * Implementation from source (i.e., manually defined)
+     *
+     * @param id
+     * @param className
+     * @param content
+     * @return
+     */
+    // FIXME realize: mark model with "unresolved" and then compile ad hoc in engine
+    System implementationFromSource(String id, String className, String content) {
+        // FIXME use some placeholder artifact
+        String EXAMPLES_LASSO_EXAMPLES_1_0_0_SNAPSHOT = "commons-codec:commons-codec:1.15";
+
+        System system = implementation(id, className, EXAMPLES_LASSO_EXAMPLES_1_0_0_SNAPSHOT)
+        system.code.content = content
+
+        return system
+    }
+
+    /**
+     * Manually specify JUnit tests
+     *
+     * @param content
+     * @param interfaceSpecification
+     * @return
+     */
+    JUnitCodeUnit testFromJUnit(String content, String interfaceSpecification) {
+        try {
+            JavaParser javaParser = new JavaParser();
+            com.github.javaparser.ast.CompilationUnit cu = javaParser.parse(content).getResult().get();
+
+            // parse name
+            CodeUnit unit = new CodeUnit();
+            unit.setId(generateUUID());
+            unit.setName(cu.getType(0).getNameAsString());
+
+            // add package name
+            unit.setPackagename(cu.getPackageDeclaration().isPresent() ? cu.getPackageDeclaration().get().toString() : "");
+            unit.setContent(cu.toString());
+            unit.setUnitType(CodeUnit.CodeUnitType.CLASS);
+
+            JUnitCodeUnit jUnitCodeUnit = new JUnitCodeUnit(unit, interfaceSpecification);
+            jUnitCodeUnit.setTestPrefix("junit");
+            return jUnitCodeUnit;
+        } catch (Throwable e) {
+            //LOG.warn("failed to parse code", e);
+            e.printStackTrace();
+            return null;
+        }
     }
 
      /**
