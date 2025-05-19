@@ -20,6 +20,7 @@
 package de.uni_mannheim.swt.lasso.service.dto;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  *
@@ -39,6 +40,13 @@ public class ScriptInfo {
     private Date end;
 
     private String content;
+
+    private String label;
+    private String description;
+
+    private List<String> tags;
+
+    private String permissionType;
 
     public String getExecutionId() {
         return executionId;
@@ -94,5 +102,37 @@ public class ScriptInfo {
 
     public void setOwner(String owner) {
         this.owner = owner;
+    }
+
+    public String getLabel() {
+        return label;
+    }
+
+    public void setLabel(String label) {
+        this.label = label;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getPermissionType() {
+        return permissionType;
+    }
+
+    public void setPermissionType(String permissionType) {
+        this.permissionType = permissionType;
+    }
+
+    public List<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(List<String> tags) {
+        this.tags = tags;
     }
 }

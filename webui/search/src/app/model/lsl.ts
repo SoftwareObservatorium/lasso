@@ -21,8 +21,12 @@
 export class LslRequest {
     script: string;
     email: string;
-    share: boolean;
+    permissionType: string;
     type: string;
+
+    label: string;
+    description: string;
+    tags: string[];
 }
 
 export class LslResponse {
@@ -39,6 +43,12 @@ export class ScriptInfo {
     end: Date;
     content: string;
     owner: string;
+
+    label: string;
+    description: string;
+    permissionType: string;
+
+    tags: string[];
 }
 
 export class LSLInfoResponse {

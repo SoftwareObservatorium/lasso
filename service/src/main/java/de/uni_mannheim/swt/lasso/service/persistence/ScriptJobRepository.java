@@ -41,5 +41,9 @@ public interface ScriptJobRepository extends JpaRepository<ScriptJob, Long> {
 
     List<ScriptJob> findAllByOwner(User owner, Pageable page);
 
-    List<ScriptJob> findAllByShared(boolean shared, Pageable page);
+    List<ScriptJob> findAllByPermissionType(JobPermissionType permissionType, Pageable page);
+
+    List<ScriptJob> findAllByOwnerAndPermissionType(User owner, JobPermissionType permissionType, Pageable page);
+
+    List<ScriptJob> findAllByPermissionTypeAndTags(JobPermissionType permissionType, List<String> tags, Pageable page);
 }

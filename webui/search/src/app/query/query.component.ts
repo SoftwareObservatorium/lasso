@@ -107,6 +107,11 @@ study(name: 'HelloWorld') {
   currentSheetTab: MatTabChangeEvent = null;
   selectedSheetIndex: any = 0;
 
+  scriptLabel: string;
+  scriptDescription: string;
+  scriptPermissionType: string;
+  scriptTagsCommaSeparated: string;
+
   infoResponse: LSLInfoResponse;
 
   datasourceResponse: DataSourceResponse;
@@ -148,6 +153,15 @@ study(name: 'HelloWorld') {
     })();
   }
 
+parseCSV(input: string, options?: { trim?: boolean; skipEmpty?: boolean }): string[] {
+  const { trim = true, skipEmpty = false } = options || {};
+
+  return input
+    .split(',')
+    .map(item => (trim ? item.trim() : item))
+    .filter(item => (skipEmpty ? item !== '' : true));
+}
+
   onSearch(draft: boolean): void {
     let lslRequest = new LslRequest();
 
@@ -156,6 +170,19 @@ study(name: 'HelloWorld') {
 
     lslRequest.email = this.currentUser.email;
     lslRequest.type = draft ? "DRAFT" : null; // or draft
+
+    lslRequest.label = this.scriptLabel;
+    lslRequest.description = this.scriptDescription;
+    if(this.scriptPermissionType) {
+        lslRequest.permissionType = this.scriptPermissionType;
+    } else {
+        lslRequest.permissionType = "LIMITED_SHARING";
+    }
+
+    // tags
+    if(this.scriptTagsCommaSeparated) {
+      lslRequest.tags = this.parseCSV(this.scriptTagsCommaSeparated);
+    }
 
     console.log(lslRequest);
 

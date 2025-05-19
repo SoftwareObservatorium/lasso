@@ -28,10 +28,10 @@ import de.uni_mannheim.swt.lasso.engine.dag.model.LGraph;
 import de.uni_mannheim.swt.lasso.service.LassoManager;
 import de.uni_mannheim.swt.lasso.service.dto.ScriptInfo;
 import de.uni_mannheim.swt.lasso.service.dto.UserInfo;
-import de.uni_mannheim.swt.lasso.service.persistence.ScriptJobRepository;
-import de.uni_mannheim.swt.lasso.service.persistence.User;
+import de.uni_mannheim.swt.lasso.service.persistence.*;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +47,9 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -55,9 +57,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
  * Lasso API.
- * 
- * @author Marcus Kessel
  *
+ * @author Marcus Kessel
  */
 @RestController
 @RequestMapping(value = "/api/v1/lasso")
@@ -71,6 +72,8 @@ public class LassoApiController extends BaseApi {
     LassoManager lassoManager;
 
     @Autowired
+    UserRepository userRepository;
+    @Autowired
     ScriptJobRepository scriptJobRepository;
 
     @Autowired
@@ -80,13 +83,11 @@ public class LassoApiController extends BaseApi {
 
     /**
      * Execute LSL based on given {@link LSLRequest}
-     * 
-     * @param request
-     *            {@link LSLRequest} instance
-     * @param httpServletRequest
-     *            {@link HttpServletRequest} instance
+     *
+     * @param request            {@link LSLRequest} instance
+     * @param httpServletRequest {@link HttpServletRequest} instance
      * @return {@link ResponseEntity} having a status and in case of success a
-     *         {@link LSLResponse} body set
+     * {@link LSLResponse} body set
      */
     @Operation(summary = "Execute LSL Script", description = "Execute LSL Script")
     @RequestMapping(value = "/execute", method = RequestMethod.POST, consumes = "application/json;charset=UTF-8", produces = "application/json;charset=UTF-8")
@@ -122,11 +123,11 @@ public class LassoApiController extends BaseApi {
             // warn
             if (LOG.isWarnEnabled()) {
                 LOG.warn(String.format(
-                        "LSL execution failed for '%s':\n %s",
-                        userInfo.getRemoteIpAddress(),
-                        ToStringBuilder
-                                .reflectionToString(request)),
-                e);
+                                "LSL execution failed for '%s':\n %s",
+                                userInfo.getRemoteIpAddress(),
+                                ToStringBuilder
+                                        .reflectionToString(request)),
+                        e);
             }
 
             throw new RuntimeException("LSL execution failed for '"
@@ -141,12 +142,10 @@ public class LassoApiController extends BaseApi {
     /**
      * Extract graph from script (by evaluation)
      *
-     * @param request
-     *            {@link LSLRequest} instance
-     * @param httpServletRequest
-     *            {@link HttpServletRequest} instance
+     * @param request            {@link LSLRequest} instance
+     * @param httpServletRequest {@link HttpServletRequest} instance
      * @return {@link ResponseEntity} having a status and in case of success a
-     *         {@link LSLResponse} body set
+     * {@link LSLResponse} body set
      */
     @Operation(summary = "Transform LSL Script", description = "Transform LSL Script into Graph")
     @RequestMapping(value = "/graph", method = RequestMethod.POST, consumes = "application/json;charset=UTF-8", produces = "application/json;charset=UTF-8")
@@ -198,52 +197,12 @@ public class LassoApiController extends BaseApi {
         }
     }
 
-//    @Operation(summary = "LSL Execution Result", description = "Get LSL Script Execution Result")
-//    @RequestMapping(value = "/scripts/{executionId}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
-//    public ResponseEntity<ExecutionResult> executionResult(
-//            @PathVariable("executionId") String executionId,
-//            /*@ApiIgnore*/ @AuthenticationPrincipal UserDetails userDetails,
-//            HttpServletRequest httpServletRequest) {
-//        // get user details
-//        UserInfo userInfo = getUserInfo(httpServletRequest, userDetails);
-//
-//        if (LOG.isInfoEnabled()) {
-//            LOG.info("Received LSL execution result request from '{}':\n{}",
-//                    userInfo.getRemoteIpAddress(),
-//                    ToStringBuilder
-//                            .reflectionToString(executionId));
-//        }
-//
-//        // do something
-//        try {
-//            // response
-//            ExecutionResult response = lassoManager.getExecutionResult(executionId, userInfo);
-//
-//            if (LOG.isInfoEnabled()) {
-//                LOG.info("Returning LSL execution result response to '{}':\n{}",
-//                        userInfo.getRemoteIpAddress(),
-//                        ToStringBuilder
-//                                .reflectionToString(response));
-//            }
-//
-//            // return 200
-//            return ResponseEntity.ok(response);
-//        } catch (Throwable e) {
-//            if (LOG.isWarnEnabled()) {
-//                LOG.warn(String.format("Could not get execution result for '%s'", executionId ), e);
-//            }
-//
-//            // bad request
-//            throw new RuntimeException(String.format("Could not get execution result for '%s'", executionId ), e);
-//        }
-//    }
-
     @Operation(summary = "Script", description = "Get Script")
     @RequestMapping(value = "/scripts/{executionId}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
     @ResponseBody
     public ResponseEntity<ScriptInfo> getScript(@PathVariable("executionId") String executionId,
             /*@ApiIgnore*/ @AuthenticationPrincipal UserDetails userDetails,
-                           HttpServletRequest httpServletRequest) {
+                                                HttpServletRequest httpServletRequest) {
         // get user details
         UserInfo userInfo = getUserInfo(httpServletRequest, userDetails);
 
@@ -251,18 +210,10 @@ public class LassoApiController extends BaseApi {
             // by owner
             User owner = (User) userDetails;
 
-            ScriptInfo info = scriptJobRepository.findByOwnerAndExecutionId(owner, executionId).map(s -> {
-                ScriptInfo scriptInfo = new ScriptInfo();
-                scriptInfo.setExecutionId(s.getExecutionId());
-                scriptInfo.setName(s.getName());
-                scriptInfo.setOwner(s.getOwner().getUsername());
-                scriptInfo.setStatus(s.getStatus().name());
-                scriptInfo.setStart(s.getStart());
-                scriptInfo.setEnd(s.getEnd());
-                scriptInfo.setContent(s.getContent());
-
-                return scriptInfo;
-            }).get();
+            ScriptInfo info = scriptJobRepository.findByExecutionId(executionId)
+                    .filter(s ->
+                            isAllowed(s, owner))
+                    .map(this::toScriptInfo).orElseThrow(() -> new RuntimeException("No script found"));
 
             if (LOG.isInfoEnabled()) {
                 LOG.info("Returning script info response to '{}':\n{}",
@@ -293,6 +244,7 @@ public class LassoApiController extends BaseApi {
         // get user details
         UserInfo userInfo = getUserInfo(httpServletRequest, userDetails);
 
+        // FIXME make accessible for non-owners?
         try {
             // query for execution status
             ExecutionStatus executionStatus = lassoManager.getExecutionStatus(executionId, userInfo);
@@ -308,11 +260,11 @@ public class LassoApiController extends BaseApi {
             return ResponseEntity.ok(executionStatus);
         } catch (Throwable e) {
             if (LOG.isWarnEnabled()) {
-                LOG.warn(String.format("Could not get execution status for '%s'", executionId ), e);
+                LOG.warn(String.format("Could not get execution status for '%s'", executionId), e);
             }
 
             // bad request
-            throw new RuntimeException(String.format("Could not get execution status for '%s'", executionId ), e);
+            throw new RuntimeException(String.format("Could not get execution status for '%s'", executionId), e);
         }
     }
 
@@ -417,11 +369,11 @@ public class LassoApiController extends BaseApi {
             return streamingResponseBody;
         } catch (Throwable e) {
             if (LOG.isWarnEnabled()) {
-                LOG.warn(String.format("Could not get records as zip for '%s'", executionId ), e);
+                LOG.warn(String.format("Could not get records as zip for '%s'", executionId), e);
             }
 
             // bad request
-            throw new RuntimeException(String.format("Could not get records as zip for '%s'", executionId ), e);
+            throw new RuntimeException(String.format("Could not get records as zip for '%s'", executionId), e);
         }
     }
 
@@ -461,11 +413,11 @@ public class LassoApiController extends BaseApi {
             return streamingResponseBody;
         } catch (Throwable e) {
             if (LOG.isWarnEnabled()) {
-                LOG.warn(String.format("Could not get file for '%s'", executionId ), e);
+                LOG.warn(String.format("Could not get file for '%s'", executionId), e);
             }
 
             // bad request
-            throw new RuntimeException(String.format("Could not get file for '%s'", executionId ), e);
+            throw new RuntimeException(String.format("Could not get file for '%s'", executionId), e);
         }
     }
 
@@ -509,7 +461,7 @@ public class LassoApiController extends BaseApi {
     @ResponseBody
     public ResponseEntity<LSLInfoResponse> getLSLInfo(
             /*@ApiIgnore*/ @AuthenticationPrincipal UserDetails userDetails,
-            HttpServletRequest httpServletRequest) {
+                           HttpServletRequest httpServletRequest) {
         // get user details
         UserInfo userInfo = getUserInfo(httpServletRequest, userDetails);
 
@@ -541,7 +493,7 @@ public class LassoApiController extends BaseApi {
     @ResponseBody
     public ResponseEntity<List<ScriptInfo>> getScripts(
             /*@ApiIgnore*/ @AuthenticationPrincipal UserDetails userDetails,
-            HttpServletRequest httpServletRequest) {
+                           HttpServletRequest httpServletRequest) {
         // get user details
         UserInfo userInfo = getUserInfo(httpServletRequest, userDetails);
 
@@ -551,18 +503,7 @@ public class LassoApiController extends BaseApi {
             // TODO add paging in UI add parameters page + size
             Pageable pageable = PageRequest.of(0, 1000, Sort.by("start").descending());
 
-            List<ScriptInfo> scriptInfos = scriptJobRepository.findAllByOwner(owner, pageable).stream().map(s -> {
-                ScriptInfo scriptInfo = new ScriptInfo();
-                scriptInfo.setExecutionId(s.getExecutionId());
-                scriptInfo.setName(s.getName());
-                scriptInfo.setOwner(s.getOwner().getUsername());
-                scriptInfo.setStatus(s.getStatus().name());
-                scriptInfo.setStart(s.getStart());
-                scriptInfo.setEnd(s.getEnd());
-                scriptInfo.setContent(s.getContent());
-
-                return scriptInfo;
-            }).collect(Collectors.toList());
+            List<ScriptInfo> scriptInfos = scriptJobRepository.findAllByOwner(owner, pageable).stream().map(this::toScriptInfo).collect(Collectors.toList());
 
             if (LOG.isInfoEnabled()) {
                 LOG.info("Returning script infos response to '{}':\n{}",
@@ -583,12 +524,12 @@ public class LassoApiController extends BaseApi {
         }
     }
 
-    @Operation(summary = "Shared Scripts", description = "Get Shared Scripts")
+    @Operation(summary = "Self-Shared Scripts", description = "Get (self) Shared Scripts")
     @RequestMapping(value = "/scripts/shared", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
     @ResponseBody
     public ResponseEntity<List<ScriptInfo>> getSharedScripts(
             /*@ApiIgnore*/ @AuthenticationPrincipal UserDetails userDetails,
-            HttpServletRequest httpServletRequest) {
+                           HttpServletRequest httpServletRequest) {
         // get user details
         UserInfo userInfo = getUserInfo(httpServletRequest, userDetails);
 
@@ -598,18 +539,7 @@ public class LassoApiController extends BaseApi {
             // TODO add paging in UI add parameters page + size
             Pageable pageable = PageRequest.of(0, 1000, Sort.by("start").descending());
 
-            List<ScriptInfo> scriptInfos = scriptJobRepository.findAllByShared(true, pageable).stream().map(s -> {
-                ScriptInfo scriptInfo = new ScriptInfo();
-                scriptInfo.setExecutionId(s.getExecutionId());
-                scriptInfo.setName(s.getName());
-                scriptInfo.setOwner(s.getOwner().getUsername());
-                scriptInfo.setStatus(s.getStatus().name());
-                scriptInfo.setStart(s.getStart());
-                scriptInfo.setEnd(s.getEnd());
-                scriptInfo.setContent(s.getContent());
-
-                return scriptInfo;
-            }).collect(Collectors.toList());
+            List<ScriptInfo> scriptInfos = scriptJobRepository.findAllByOwnerAndPermissionType(owner, JobPermissionType.GLOBAL_SHARING, pageable).stream().map(this::toScriptInfo).collect(Collectors.toList());
 
             if (LOG.isInfoEnabled()) {
                 LOG.info("Returning script infos response to '{}':\n{}",
@@ -628,5 +558,157 @@ public class LassoApiController extends BaseApi {
             // bad request
             throw new RuntimeException(String.format("Could not get script infos"), e);
         }
+    }
+
+    @Operation(summary = "Hub Scripts", description = "Get Hub Scripts")
+    @RequestMapping(value = "/hub", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+    @ResponseBody
+    public ResponseEntity<List<ScriptInfo>> getHubScripts(
+            /*@ApiIgnore*/ @AuthenticationPrincipal UserDetails userDetails,
+                           HttpServletRequest httpServletRequest) {
+        // get user details
+        UserInfo userInfo = getUserInfo(httpServletRequest, userDetails);
+
+        try {
+            // by owner
+            User owner = (User) userDetails;
+            // TODO add paging in UI add parameters page + size
+            Pageable pageable = PageRequest.of(0, 1000, Sort.by("start").descending());
+
+            List<ScriptInfo> scriptInfos = scriptJobRepository.findAllByPermissionType(JobPermissionType.GLOBAL_SHARING, pageable).stream().map(this::toScriptInfo).collect(Collectors.toList());
+
+            if (LOG.isInfoEnabled()) {
+                LOG.info("Returning script infos response to '{}':\n{}",
+                        userInfo.getRemoteIpAddress(),
+                        ToStringBuilder
+                                .reflectionToString(scriptInfos));
+            }
+
+            // 200
+            return ResponseEntity.ok(scriptInfos);
+        } catch (Throwable e) {
+            if (LOG.isWarnEnabled()) {
+                LOG.warn(String.format("Could not get script infos"), e);
+            }
+
+            // bad request
+            throw new RuntimeException(String.format("Could not get script infos"), e);
+        }
+    }
+
+    @Operation(summary = "Hub Scripts by User", description = "Get Hub Scripts by User")
+    @RequestMapping(value = "/hub/user/{user}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+    @ResponseBody
+    public ResponseEntity<List<ScriptInfo>> getHubScriptsByUser(
+            /*@ApiIgnore*/ @AuthenticationPrincipal UserDetails userDetails,
+                           @PathVariable("user") String user,
+                           HttpServletRequest httpServletRequest) {
+        // get user details
+        UserInfo userInfo = getUserInfo(httpServletRequest, userDetails);
+
+        try {
+            // by owner
+            User owner = (User) userDetails;
+            // TODO add paging in UI add parameters page + size
+            Pageable pageable = PageRequest.of(0, 1000, Sort.by("start").descending());
+
+            // FIXME limit to special owner (i.e., Hub user)
+            Optional<User> categoryUser = userRepository.findByUsername(user);
+            if (categoryUser.isEmpty()) {
+                throw new RuntimeException("Category User not found");
+            }
+
+            List<ScriptInfo> scriptInfos = scriptJobRepository.findAllByOwnerAndPermissionType(categoryUser.get(), JobPermissionType.GLOBAL_SHARING, pageable).stream().map(this::toScriptInfo).collect(Collectors.toList());
+
+            if (LOG.isInfoEnabled()) {
+                LOG.info("Returning script infos response to '{}':\n{}",
+                        userInfo.getRemoteIpAddress(),
+                        ToStringBuilder
+                                .reflectionToString(scriptInfos));
+            }
+
+            // 200
+            return ResponseEntity.ok(scriptInfos);
+        } catch (Throwable e) {
+            if (LOG.isWarnEnabled()) {
+                LOG.warn(String.format("Could not get script infos"), e);
+            }
+
+            // bad request
+            throw new RuntimeException(String.format("Could not get script infos"), e);
+        }
+    }
+
+    @Operation(summary = "Hub Scripts by Tag", description = "Get Hub Scripts by Tag")
+    @RequestMapping(value = "/hub/tag/{tag}", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+    @ResponseBody
+    public ResponseEntity<List<ScriptInfo>> getHubScriptsByTag(
+            /*@ApiIgnore*/ @AuthenticationPrincipal UserDetails userDetails,
+                           @PathVariable("tag") String tag,
+                           HttpServletRequest httpServletRequest) {
+        // get user details
+        UserInfo userInfo = getUserInfo(httpServletRequest, userDetails);
+
+        try {
+            // by owner
+            User owner = (User) userDetails;
+            // TODO add paging in UI add parameters page + size
+            Pageable pageable = PageRequest.of(0, 1000, Sort.by("start").descending());
+
+            List<ScriptInfo> scriptInfos = scriptJobRepository.findAllByPermissionTypeAndTags(JobPermissionType.GLOBAL_SHARING, List.of(tag), pageable).stream().map(this::toScriptInfo).collect(Collectors.toList());
+
+            if (LOG.isInfoEnabled()) {
+                LOG.info("Returning script infos response to '{}':\n{}",
+                        userInfo.getRemoteIpAddress(),
+                        ToStringBuilder
+                                .reflectionToString(scriptInfos));
+            }
+
+            // 200
+            return ResponseEntity.ok(scriptInfos);
+        } catch (Throwable e) {
+            if (LOG.isWarnEnabled()) {
+                LOG.warn(String.format("Could not get script infos"), e);
+            }
+
+            // bad request
+            throw new RuntimeException(String.format("Could not get script infos"), e);
+        }
+    }
+
+    ScriptInfo toScriptInfo(ScriptJob s) {
+        ScriptInfo scriptInfo = new ScriptInfo();
+        scriptInfo.setExecutionId(s.getExecutionId());
+        scriptInfo.setName(s.getName());
+        scriptInfo.setOwner(s.getOwner().getUsername());
+        scriptInfo.setStatus(s.getStatus().name());
+        scriptInfo.setStart(s.getStart());
+        scriptInfo.setEnd(s.getEnd());
+        scriptInfo.setContent(s.getContent());
+
+        // meta data
+        scriptInfo.setLabel(s.getLabel());
+        scriptInfo.setDescription(s.getDescription());
+        scriptInfo.setPermissionType(s.getPermissionType().name());
+
+        // tags
+        scriptInfo.setTags(s.getTags());
+
+        // FIXME allowed users
+
+        return scriptInfo;
+    }
+
+    /**
+     * either owned, globally shared, part of allowed users
+     *
+     * @param s
+     * @param callee
+     * @return
+     */
+    boolean isAllowed(ScriptJob s, User callee) {
+        return StringUtils.equals(s.getOwner().getUsername(), callee.getUsername())
+                || s.getPermissionType() == JobPermissionType.GLOBAL_SHARING
+                || s.getAllowedUsers().stream().anyMatch(a -> StringUtils.equals(a.getUser().getUsername(), callee.getUsername()));
     }
 }

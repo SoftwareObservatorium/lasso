@@ -19,6 +19,7 @@
  */
 package de.uni_mannheim.swt.lasso.service.dto;
 
+import de.uni_mannheim.swt.lasso.service.persistence.User;
 import org.springframework.security.core.userdetails.UserDetails;
 
 /**
@@ -34,6 +35,10 @@ public class UserInfo {
 
     private UserDetails userDetails;
 
+    public User getAsUser() {
+        return (User) userDetails;
+    }
+
     /**
      * @return the remoteIpAddress
      */
@@ -46,20 +51,6 @@ public class UserInfo {
      */
     public void setRemoteIpAddress(String remoteIpAddress) {
         this.remoteIpAddress = remoteIpAddress;
-    }
-
-    /**
-     * @return the emailAddress
-     */
-    public String getEmailAddress() {
-        return emailAddress;
-    }
-
-    /**
-     * @param emailAddress the emailAddress to set
-     */
-    public void setEmailAddress(String emailAddress) {
-        this.emailAddress = emailAddress;
     }
 
     public UserDetails getUserDetails() {

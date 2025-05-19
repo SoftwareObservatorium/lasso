@@ -29,6 +29,22 @@
                     <mat-option *ngFor="let actionInfo of infoResponse.actions | keyvalue" [value]="actionInfo.value">{{actionInfo.key}}</mat-option>
                   </mat-select>
                 </mat-form-field>
+                <mat-form-field>
+                    <mat-label>Assign a Label</mat-label>
+                    <input matInput [(ngModel)]="scriptLabel">
+                </mat-form-field>
+                <mat-form-field>
+                    <mat-label>Provide a Description</mat-label>
+                    <textarea matInput [(ngModel)]="scriptDescription" placeholder="This pipeline ..."></textarea>
+                </mat-form-field>
+                <mat-form-field>
+                    <mat-label>Sharing Permission? (leave empty if unsure)</mat-label>
+                    <input matInput [(ngModel)]="scriptPermissionType">
+                </mat-form-field>
+                <mat-form-field>
+                    <mat-label>Tags (comma-separated)</mat-label>
+                    <input matInput [(ngModel)]="scriptTagsCommaSeparated">
+                </mat-form-field>
               </mat-card-actions>
               <mat-card-content style="height: 100%;">
                   <ngx-monaco-editor style="height: 100%" [options]="lslEditorOptions" [(ngModel)]="lslCode" (onInit)="onLSLInit($event)"></ngx-monaco-editor>

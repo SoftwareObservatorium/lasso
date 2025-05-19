@@ -21,6 +21,7 @@ package de.uni_mannheim.swt.lasso.service.persistence;
 
 import jakarta.persistence.*;
 import java.util.Date;
+import java.util.List;
 
 /**
  *
@@ -53,8 +54,22 @@ public class ScriptJob extends LassoEntity {
     @Column(name = "content", columnDefinition="CLOB")
     private String content;
 
-    @Column(name = "shared")
-    private boolean shared;
+    @Column(name="label")
+    private String label;
+    @Column(name="description", columnDefinition="CLOB")
+    private String description;
+
+    @ElementCollection
+    @CollectionTable(name = "script_job_tags") // Adjust table name
+    @Column(name = "tag")  // Column name for the tag value
+    private List<String> tags;
+
+    @Column(name = "permission_type")
+    @Enumerated(EnumType.STRING)
+    private JobPermissionType permissionType;
+
+    @OneToMany(mappedBy = "scriptJob", fetch = FetchType.LAZY)
+    private List<ScriptJobAllowedUser> allowedUsers;
 
     public String getExecutionId() {
         return executionId;
@@ -112,11 +127,43 @@ public class ScriptJob extends LassoEntity {
         this.name = name;
     }
 
-    public boolean isShared() {
-        return shared;
+    public String getDescription() {
+        return description;
     }
 
-    public void setShared(boolean shared) {
-        this.shared = shared;
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getLabel() {
+        return label;
+    }
+
+    public void setLabel(String label) {
+        this.label = label;
+    }
+
+    public JobPermissionType getPermissionType() {
+        return permissionType;
+    }
+
+    public void setPermissionType(JobPermissionType permissionType) {
+        this.permissionType = permissionType;
+    }
+
+    public List<ScriptJobAllowedUser> getAllowedUsers() {
+        return allowedUsers;
+    }
+
+    public void setAllowedUsers(List<ScriptJobAllowedUser> allowedUsers) {
+        this.allowedUsers = allowedUsers;
+    }
+
+    public List<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(List<String> tags) {
+        this.tags = tags;
     }
 }

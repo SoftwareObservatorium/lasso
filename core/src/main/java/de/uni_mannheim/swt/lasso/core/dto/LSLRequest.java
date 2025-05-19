@@ -19,6 +19,8 @@
  */
 package de.uni_mannheim.swt.lasso.core.dto;
 
+import java.util.List;
+
 /**
  *
  * @author Marcus Kessel
@@ -28,11 +30,16 @@ public class LSLRequest {
 
     private String script;
 
-    private String email;
+    private String label;
+    private String description;
 
-    private boolean share;
+    private String permissionType;
+
+    private List<String> allowedUsers;
 
     private String type;
+
+    private List<String> tags;
 
     public String getScript() {
         return script;
@@ -42,20 +49,28 @@ public class LSLRequest {
         this.script = script;
     }
 
-    public String getEmail() {
-        return email;
+    public String getLabel() {
+        return label;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    public void setLabel(String label) {
+        this.label = label;
     }
 
-    public boolean isShare() {
-        return share;
+    public String getDescription() {
+        return description;
     }
 
-    public void setShare(boolean share) {
-        this.share = share;
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getPermissionType() {
+        return permissionType;
+    }
+
+    public void setPermissionType(String permissionType) {
+        this.permissionType = permissionType;
     }
 
     public String getType() {
@@ -64,5 +79,21 @@ public class LSLRequest {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public List<String> getAllowedUsers() {
+        return allowedUsers;
+    }
+
+    public void setAllowedUsers(List<String> allowedUsers) {
+        this.allowedUsers = allowedUsers;
+    }
+
+    public List<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(List<String> tags) {
+        this.tags = tags;
     }
 }

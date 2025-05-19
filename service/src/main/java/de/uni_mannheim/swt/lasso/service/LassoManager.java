@@ -46,10 +46,12 @@ import de.uni_mannheim.swt.lasso.service.notification.Notification;
 import de.uni_mannheim.swt.lasso.service.notification.NotificationFactory;
 import de.uni_mannheim.swt.lasso.service.notification.NotificationService;
 import de.uni_mannheim.swt.lasso.service.persistence.*;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.ignite.cluster.ClusterNode;
 import org.slf4j.Logger;
@@ -138,7 +140,7 @@ public class LassoManager {
         LSLScript script = new LSLScript();
         script.setExecutionId(executionId);
         script.setContent(lassoRequest.getScript());
-        script.setEmail(lassoRequest.getEmail());
+        script.setEmail(userInfo.getAsUser().getEmail());
         script.setIpAddress(userInfo.getRemoteIpAddress());
 
         return script;
@@ -173,12 +175,48 @@ public class LassoManager {
 
         ScriptJob scriptJob = new ScriptJob();
         scriptJob.setExecutionId(executionId);
-        scriptJob.setShared(lassoRequest.isShare());
+
+        // sharing options
+
+        JobPermissionType jobPermissionType = EnumUtils.getEnumIgnoreCase(JobPermissionType.class, lassoRequest.getPermissionType(), JobPermissionType.LIMITED_SHARING);
+        scriptJob.setPermissionType(jobPermissionType);
+
+        if(jobPermissionType == JobPermissionType.LIMITED_SHARING && CollectionUtils.isNotEmpty(lassoRequest.getAllowedUsers())) {
+            List<ScriptJobAllowedUser> allowedUsers = lassoRequest.getAllowedUsers().stream()
+                    .map(userId -> {
+                        // assumes email addresses .. check if exists
+                        Optional<User> allowedUserAccount = userRepository.findByEmail(userId);
+                        if(allowedUserAccount.isPresent()) {
+                            ScriptJobAllowedUser allowedUser = new ScriptJobAllowedUser();
+                            allowedUser.setCreated(new Date());
+                            allowedUser.setLastModified(allowedUser.getCreated());
+                            allowedUser.setUser(allowedUserAccount.get());
+                            allowedUser.setScriptJob(scriptJob);
+
+                            return allowedUser;
+                        }
+
+                        return null;
+                    }).filter(Objects::nonNull).toList();
+
+            scriptJob.setAllowedUsers(allowedUsers);
+        }
+
         scriptJob.setContent(lassoRequest.getScript());
 
         // get name
-        String name = StringUtils.substringBetween(lassoRequest.getScript().replace(" ", ""), "study(name:'", "')");
-        scriptJob.setName(name);
+        try {
+            String name = StringUtils.substringBetween(lassoRequest.getScript().replace(" ", ""), "study(name:'", "')");
+            scriptJob.setName(name);
+        } catch (Throwable e) {
+            scriptJob.setName("unknown");
+        }
+
+        // meta data
+        scriptJob.setLabel(lassoRequest.getLabel());
+        scriptJob.setDescription(lassoRequest.getDescription());
+
+        scriptJob.setTags(lassoRequest.getTags());
 
         // get owner
         User owner = getOwner(userInfo);
