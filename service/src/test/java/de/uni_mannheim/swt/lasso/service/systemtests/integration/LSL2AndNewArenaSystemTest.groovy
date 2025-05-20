@@ -327,6 +327,149 @@ public class Base64Test {
     }
 
     @Test
+    void test_EXECUTE_Stack_manualjdk_fromjunit() throws IOException, DataSourceNotFoundException {
+        @Language("Groovy")
+        String content = '''
+dataSource 'lasso_quickstart'
+study(name: 'HelloWorld') {
+
+    action(name: 'create') {
+        execute {
+            // from JDK classes
+            stimulusMatrix('Stack', """Stack {
+                push(java.lang.Object)->java.lang.Object
+                pop()->java.lang.Object
+                peek()->java.lang.Object
+                size()->int
+                }""",
+                    [
+                            implementation("1", "java.util.Stack")
+                    ], [testFromJUnit("""package gemma327b;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
+public class StackTest {
+
+    @Test
+    void testPushAndPop() {
+        Stack stack = new Stack();
+        Object item = new Object();
+        stack.push(item);
+        assertEquals(item, stack.pop());
+        // Should return null when empty
+        assertNull(stack.pop());
+    }
+
+    @Test
+    void testPeek() {
+        Stack stack = new Stack();
+        Object item = new Object();
+        stack.push(item);
+        assertEquals(item, stack.peek());
+        stack.pop();
+        assertNull(stack.peek());
+    }
+
+    @Test
+    void testSize() {
+        Stack stack = new Stack();
+        assertEquals(0, stack.size());
+        stack.push(new Object());
+        assertEquals(1, stack.size());
+        stack.push(new Object());
+        assertEquals(2, stack.size());
+        stack.pop();
+        assertEquals(1, stack.size());
+        stack.pop();
+        assertEquals(0, stack.size());
+    }
+
+    @Test
+    void testEmptyStackPopAndPeek() {
+        Stack stack = new Stack();
+        assertNull(stack.pop());
+        assertNull(stack.peek());
+        assertEquals(0, stack.size());
+    }
+
+    @Test
+    void testPushMultipleItems() {
+        Stack stack = new Stack();
+        Object item1 = new Object();
+        Object item2 = new Object();
+        Object item3 = new Object();
+        stack.push(item1);
+        stack.push(item2);
+        stack.push(item3);
+        assertEquals(3, stack.size());
+        assertEquals(item3, stack.pop());
+        assertEquals(item2, stack.pop());
+        assertEquals(item1, stack.pop());
+        assertNull(stack.pop());
+    }
+
+    @Test
+    void testPushNull() {
+        Stack stack = new Stack();
+        stack.push(null);
+        assertEquals(1, stack.size());
+        assertEquals(null, stack.pop());
+    }
+
+    @Test
+    void testPeekDoesNotRemove() {
+        Stack stack = new Stack();
+        Object item = new Object();
+        stack.push(item);
+        assertEquals(item, stack.peek());
+        // Call peek again to ensure it doesn't remove
+        assertEquals(item, stack.peek());
+        assertEquals(item, stack.pop());
+        assertEquals(0, stack.size());
+    }
+}
+""")])
+        }
+    }
+    /* Execute stimulus matrix and obtain stimulus response matrix */
+    action(name: 'filter', type: 'Arena') {
+        dependsOn 'create'
+        include 'Stack'
+        profile('java17Profile') {
+            scope('class') { type = 'class' }
+            environment('java17') {
+            image = 'maven:3.9-eclipse-temurin-17' // docker image (JDK 17)
+            }
+        }
+    }
+}
+        '''
+
+        //
+        LSLScript scriptUnderTest = createScript(content)
+
+
+        // DO EXECUTE
+        LSLExecutionResult lslExecutionResult = lassoEngine.execute(scriptUnderTest);
+        LSLExecutionContext lslExecutionContext = lassoEngine.getLastContext();
+
+        // assertions
+        //verifyAbstraction(lslExecutionContext, 'select', 'Base64', 1)
+        //verifyAbstraction(lslExecutionContext, 'execute', 'Base64', 1)
+
+        // TODO verify SRM
+        // put
+        ClusterEngine clusterEngine = lslExecutionContext.getConfiguration().getService(ClusterEngine.class);
+
+        // also make sure that the SRM is initialized (otherwise the client has no way to put cells)
+        ClusterSRMRepository srmRepository = clusterEngine.getClusterSRMRepository();
+        Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
+        System.out.println(table.printAll());
+
+        Warehouse.writeRawSrmToFile(lslExecutionContext.getExecutionId(), new File("/tmp/helloworld.parquet"));
+    }
+
+    @Test
     void test_EXECUTE_Stack_manualjdk() throws IOException, DataSourceNotFoundException {
         @Language("Groovy")
         String content = '''

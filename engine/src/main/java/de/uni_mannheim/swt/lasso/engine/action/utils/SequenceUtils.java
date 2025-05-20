@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import de.uni_mannheim.swt.lasso.benchmark.*;
 import de.uni_mannheim.swt.lasso.benchmark.Sequence;
+import de.uni_mannheim.swt.lasso.core.dto.srm.JUnitCodeUnit;
 import de.uni_mannheim.swt.lasso.core.dto.srm.Sheet;
 import de.uni_mannheim.swt.lasso.core.model.*;
 import de.uni_mannheim.swt.lasso.core.model.System;
@@ -349,6 +350,11 @@ public class SequenceUtils {
             }
 
             if(testObj instanceof Sheet) {
+                // set interface if blank
+                if(StringUtils.isBlank(((Sheet) testObj).getInterfaceSpecification())) {
+                    ((Sheet) testObj).setInterfaceSpecification(interfaceSpecification);
+                }
+
                 stimulusSheets.add((Sheet) testObj);
                 continue;
             }

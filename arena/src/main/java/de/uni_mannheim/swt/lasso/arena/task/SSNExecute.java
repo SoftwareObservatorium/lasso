@@ -228,6 +228,7 @@ public class SSNExecute extends Task {
         // use from FA spec
         InterfaceSpecification interfaceSpecification = LQLUtils.lqlToList(arenaJob.getSpecification()).get(0);
         ClassUnderTest pseudo = CutUtils.createExample(interfaceSpecification.getClassName());
+        pseudo.setPseudo(true);
 
         // create CUTs
         List<ClassUnderTest> classesUnderTest = new LinkedList<>();

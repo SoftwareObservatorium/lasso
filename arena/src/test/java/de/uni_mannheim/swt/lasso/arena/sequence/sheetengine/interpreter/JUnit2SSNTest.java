@@ -150,9 +150,81 @@ public class JUnit2SSNTest {
             System.out.println("----");
         }
 
-        JUnitSequenceSpecificationParser importJUnitClass = new JUnitSequenceSpecificationParser();
-        InterfaceSpecification parsedSpecification = importJUnitClass.toSpecification(testClass, pseudo).get(pseudo.getClassName());
-        System.out.println(parsedSpecification.toLQL());
+//        JUnitSequenceSpecificationParser importJUnitClass = new JUnitSequenceSpecificationParser();
+//        InterfaceSpecification parsedSpecification = importJUnitClass.toSpecification(testClass, pseudo).get(pseudo.getClassName());
+//        System.out.println(parsedSpecification.toLQL());
+    }
+
+    @Test
+    public void testToSequenceSpecification_ArrayStack__javautilStack_Gemma3_pseudo() throws IOException {
+        String lql = "Stack {\n" +
+                "push(java.lang.Object)->java.lang.Object\n" +
+                "pop()->java.lang.Object\n" +
+                "peek()->java.lang.Object\n" +
+                "size()->int\n" +
+                "}";
+
+        List<InterfaceSpecification> parseResults = LQLUtils.lqlToList(lql);
+        InterfaceSpecification specification = parseResults.get(0);
+
+        // CREATE CUT
+        ClassUnderTest pseudo = CutUtils.createExample(specification.getClassName());
+        pseudo.setPseudo(true);
+
+        CandidatePool pool = new CandidatePool(mavenRepository(), List.of(pseudo));
+        pool.initProjects();
+
+        String testClass = FileUtils.readFileToString(new File("sheets/Stack_Gemma3.java"), StandardCharsets.UTF_8);
+
+        List<Sheet> stimulusSheets = JUnit2SSN.junit2Sheets(testClass, pseudo, specification, null, "gemma3");
+
+        System.out.println(stimulusSheets.size());
+
+        for(Sheet stimulusSheet : stimulusSheets) {
+            System.out.println(stimulusSheet.getSignature());
+            System.out.println(stimulusSheet.getBody());
+            System.out.println("----");
+        }
+
+//        JUnitSequenceSpecificationParser importJUnitClass = new JUnitSequenceSpecificationParser();
+//        InterfaceSpecification parsedSpecification = importJUnitClass.toSpecification(testClass, pseudo).get(pseudo.getClassName());
+//        System.out.println(parsedSpecification.toLQL());
+    }
+
+    @Test
+    public void testToSequenceSpecification_ArrayStack__javautilStack_Gemma3_pseudo_inline() throws IOException {
+        String lql = "Stack {\n" +
+                "push(java.lang.Object)->java.lang.Object\n" +
+                "pop()->java.lang.Object\n" +
+                "peek()->java.lang.Object\n" +
+                "size()->int\n" +
+                "}";
+
+        List<InterfaceSpecification> parseResults = LQLUtils.lqlToList(lql);
+        InterfaceSpecification specification = parseResults.get(0);
+
+        // CREATE CUT
+        ClassUnderTest pseudo = CutUtils.createExample(specification.getClassName());
+        pseudo.setPseudo(true);
+
+        CandidatePool pool = new CandidatePool(mavenRepository(), List.of(pseudo));
+        pool.initProjects();
+
+        String testClass = FileUtils.readFileToString(new File("sheets/Stack_Gemma3_inline.java"), StandardCharsets.UTF_8);
+
+        List<Sheet> stimulusSheets = JUnit2SSN.junit2Sheets(testClass, pseudo, specification, null, "gemma3");
+
+        System.out.println(stimulusSheets.size());
+
+        for(Sheet stimulusSheet : stimulusSheets) {
+            System.out.println(stimulusSheet.getSignature());
+            System.out.println(stimulusSheet.getBody());
+            System.out.println("----");
+        }
+
+//        JUnitSequenceSpecificationParser importJUnitClass = new JUnitSequenceSpecificationParser();
+//        InterfaceSpecification parsedSpecification = importJUnitClass.toSpecification(testClass, pseudo).get(pseudo.getClassName());
+//        System.out.println(parsedSpecification.toLQL());
     }
 
     @Test
@@ -286,6 +358,7 @@ public class JUnit2SSNTest {
         // CREATE PSEUDO CUT
         //ClassUnderTest pseudo = TestSupport.createPseudoImplementation("GCD");
         ClassUnderTest pseudo = CutUtils.createExample("GCD");
+        pseudo.setPseudo(true);
 
         CandidatePool pool = new CandidatePool(mavenRepository(), Arrays.asList(pseudo));
         pool.initProjects();
@@ -317,6 +390,7 @@ public class JUnit2SSNTest {
         // CREATE PSEUDO CUT
         //ClassUnderTest pseudo = TestSupport.createPseudoImplementation("GCD");
         ClassUnderTest pseudo = CutUtils.createExample("GCD");
+        pseudo.setPseudo(true);
 
         CandidatePool pool = new CandidatePool(mavenRepository(), Arrays.asList(pseudo));
         pool.initProjects();

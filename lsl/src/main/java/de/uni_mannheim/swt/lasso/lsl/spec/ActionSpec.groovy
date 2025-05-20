@@ -375,6 +375,16 @@ class ActionSpec extends LassoSpec {
         }
     }
 
+    /**
+     * Manually specify JUnit tests
+     *
+     * @param content
+     * @return
+     */
+    JUnitCodeUnit testFromJUnit(String content) {
+        return testFromJUnit(content, null)
+    }
+
      /**
      * DSL command: Create new abstraction container and use the interface specified in LQL.
      *

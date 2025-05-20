@@ -550,7 +550,12 @@ public class JUnitSequenceSpecificationParser {
                 ConstructorCallStatement constructorCallStatement = (ConstructorCallStatement) statement;
                 if (constructorCallStatement.isResolved()) {
                     Constructor<?> constructor = constructorCallStatement.getResolvedConstructor();
-                    constructorCallStatement.setClassUnderTest(constructor.getDeclaringClass().equals(classUnderTest.loadClass()));
+
+                    if(classUnderTest.isPseudo()) {
+                        constructorCallStatement.setClassUnderTest(constructor.getDeclaringClass().getName().equals(classUnderTest.getClassName()));
+                    } else {
+                        constructorCallStatement.setClassUnderTest(constructor.getDeclaringClass().equals(classUnderTest.loadClass()));
+                    }
                 } else {
                     constructorCallStatement.setClassUnderTest(true);
                 }
@@ -560,7 +565,12 @@ public class JUnitSequenceSpecificationParser {
                 MethodCallStatement methodCallStatement = (MethodCallStatement) statement;
                 if (methodCallStatement.isResolved()) {
                     Method method = methodCallStatement.getResolvedMethod();
-                    methodCallStatement.setClassUnderTest(method.getDeclaringClass().equals(classUnderTest.loadClass()));
+
+                    if(classUnderTest.isPseudo()) {
+                        methodCallStatement.setClassUnderTest(method.getDeclaringClass().getName().equals(classUnderTest.getClassName()));
+                    } else {
+                        methodCallStatement.setClassUnderTest(method.getDeclaringClass().equals(classUnderTest.loadClass()));
+                    }
                 } else {
                     methodCallStatement.setClassUnderTest(true);
                 }
@@ -631,8 +641,8 @@ public class JUnitSequenceSpecificationParser {
             }
 
             if (statement != null) {
-                context.getSequenceSpecification().addStatement(statement, position);
-                processArguments(context, statement, objectCreationExpr.getArguments());
+                int currentPosition = processArguments(context, statement, objectCreationExpr.getArguments(), position);
+                context.getSequenceSpecification().addStatement(statement, currentPosition);
             }
         } else if (initExpr.isMethodCallExpr()) {
             // method call
@@ -941,12 +951,12 @@ public class JUnitSequenceSpecificationParser {
                 // need to introduce initializer
             }
 
-            context.getSequenceSpecification().addStatement(statement, position);
-            processArguments(context, statement, methodCallExpr.getArguments());
+            int currentPosition = processArguments(context, statement, methodCallExpr.getArguments(), position);
+            context.getSequenceSpecification().addStatement(statement, currentPosition);
         }
     }
 
-    private void processArguments(JUnitParseContext context, CallStatement statement, NodeList<Expression> arguments) {
+    private int processArguments(JUnitParseContext context, CallStatement statement, NodeList<Expression> arguments, int currentPosition) {
         // arguments passed
         int a = 0;
         for (Expression arg : arguments) {
@@ -1020,12 +1030,67 @@ public class JUnitSequenceSpecificationParser {
                 if (valueStatement != null) {
                     statement.addInput(valueStatement);
                 } else {
+
+                    if(arg.isObjectCreationExpr()) {
+                        // e.g. method(new Object())
+                        LOG.warn("Found isObjectCreationExpr");
+
+                        // START
+                        // constructor call
+                        ObjectCreationExpr objectCreationExpr = arg.asObjectCreationExpr();
+                        String className = objectCreationExpr.getType().getNameAsString();
+
+                        // attempt to resolve fully-qualified name
+                        try {
+                            className = objectCreationExpr.getType().resolve().getQualifiedName();
+                        } catch (Throwable e) {
+                            //
+                        }
+
+                        LOG.debug("Found constructor call '{}'", className);
+
+                        ConstructorCallStatement innerStatement;
+                        try {
+                            ResolvedConstructorDeclaration resolvedConstructorDeclaration = objectCreationExpr.resolve();
+                            Constructor<?> constructor = ParserUtils.resolveConstructor((ReflectionConstructorDeclaration) resolvedConstructorDeclaration);
+
+                            ReflectionConstructorSignature sig = new ReflectionConstructorSignature(constructor);
+                            innerStatement = new ConstructorCallStatement(sig);
+                        } catch (Throwable e) {
+                            LOG.warn("Could not resolve constructor", e);
+
+                            //statement = new ConstructorCallStatement(new MethodSignature());
+                            // resolve manually
+                            if(isResolvePseudoOperations()) {
+                                try {
+                                    MethodSignature sig = resolveConstructor(context, objectCreationExpr);
+                                    innerStatement = new ConstructorCallStatement(sig);
+                                } catch (Throwable ex) {
+                                    LOG.warn("manual resolution of constructor failed", e);
+
+                                    innerStatement = new ConstructorCallStatement(new MethodSignature(context.getSpecification()));
+                                }
+                            } else {
+                                innerStatement = new ConstructorCallStatement(new MethodSignature(context.getSpecification()));
+                            }
+                        }
+
+                        if (statement != null) {
+                            currentPosition = processArguments(context, innerStatement, objectCreationExpr.getArguments(), currentPosition);
+                            context.getSequenceSpecification().addStatement(innerStatement, currentPosition++);
+
+                            statement.addInput(innerStatement);
+                        }
+                    }
+
                     LOG.warn("Empty call statement for '{}'", valueStatement);
                 }
             }
 
             a++;
         }
+
+        return currentPosition;
     }
 
     private ValueStatement processLiteral(JUnitParseContext context, LiteralExpr literalExpr, Type type) {

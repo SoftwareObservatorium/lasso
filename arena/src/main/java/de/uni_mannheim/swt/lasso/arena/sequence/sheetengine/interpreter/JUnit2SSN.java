@@ -157,6 +157,11 @@ public class JUnit2SSN {
                         ValueStatement valueStatement = (ValueStatement) input;
                         // ignore position
                         String value = valueStatement.getCode();
+
+                        if(value == null) {
+                            value = "null";
+                        }
+
                         rowData.put(SheetResolver.toColumnLabel(currentCol) + SheetResolver.toRowLabel(currentRow), value);
                     } else if(input instanceof CallStatement) {
                         // CANNOT HAPPEN
@@ -190,6 +195,11 @@ public class JUnit2SSN {
                         ValueStatement valueStatement = (ValueStatement) input;
 
                         String value = valueStatement.getCode();
+
+                        if(value == null) {
+                            value = "null";
+                        }
+
                         rowData.put(SheetResolver.toColumnLabel(currentCol) + SheetResolver.toRowLabel(currentRow), value);
 
                     } else if(input instanceof CallStatement) {

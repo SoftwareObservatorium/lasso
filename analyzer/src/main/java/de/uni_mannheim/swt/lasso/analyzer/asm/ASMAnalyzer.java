@@ -268,28 +268,29 @@ public class ASMAnalyzer implements ProjectAnalyzer {
             }
         }
 
-        // analyse super hierarchy
-        try {
-            HierarchyAnalyser hierarchyAnalyser = new HierarchyAnalyser();
-            hierarchyAnalyser.analyse(classes);
-
-            // set measures
-            classes.stream().forEach(c -> {
-                // set java.lang.Object by default
-                if (c.getSuperClassNames() != null) {
-                    c.getMeasures().put("static_idit", new Integer(c.getSuperClassNames().size()).doubleValue());
-                }
-
-                // compute no. of accessible methods
-                double accessibleMethods = c.getMethods() != null ? c.getMethods().size() : 0d;
-                accessibleMethods += c.getInheritedMethods() != null ? c.getInheritedMethods().size() : 0d;
-                c.getMeasures().put("static_methodsacc", accessibleMethods);
-            });
-        } catch (Throwable e) {
-            if (LOG.isWarnEnabled()) {
-                LOG.warn("Hierarchy analysis failed for " + mavenArtifact.getBinaryJar().getAbsolutePath(), e);
-            }
-        }
+        // FIXME runs into heap issues for very large artefacts - make configurable
+//        // analyse super hierarchy
+//        try {
+//            HierarchyAnalyser hierarchyAnalyser = new HierarchyAnalyser();
+//            hierarchyAnalyser.analyse(classes);
+//
+//            // set measures
+//            classes.stream().forEach(c -> {
+//                // set java.lang.Object by default
+//                if (c.getSuperClassNames() != null) {
+//                    c.getMeasures().put("static_idit", new Integer(c.getSuperClassNames().size()).doubleValue());
+//                }
+//
+//                // compute no. of accessible methods
+//                double accessibleMethods = c.getMethods() != null ? c.getMethods().size() : 0d;
+//                accessibleMethods += c.getInheritedMethods() != null ? c.getInheritedMethods().size() : 0d;
+//                c.getMeasures().put("static_methodsacc", accessibleMethods);
+//            });
+//        } catch (Throwable e) {
+//            if (LOG.isWarnEnabled()) {
+//                LOG.warn("Hierarchy analysis failed for " + mavenArtifact.getBinaryJar().getAbsolutePath(), e);
+//            }
+//        }
 
         // find and set source code + hash
         findAndSetSourceCode(classes, mavenArtifact.getSourceJar());
