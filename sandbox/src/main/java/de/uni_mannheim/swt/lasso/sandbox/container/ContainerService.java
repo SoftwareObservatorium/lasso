@@ -184,14 +184,13 @@ public class ContainerService {
     }
 
     public String getActualImageName(String image) {
-        // FIXME hack to workaround publishing issue of NICAD
-        if(StringUtils.startsWith(image, "nicad")) {
-            if(LOG.isWarnEnabled()) {
-                LOG.warn("Assuming local deploy of nicad image");
-            }
-
-            return image;
-        }
+//        if(StringUtils.startsWith(image, "nicad")) {
+//            if(LOG.isWarnEnabled()) {
+//                LOG.warn("Assuming local deploy of nicad image");
+//            }
+//
+//            return image;
+//        }
 
         return StringUtils.isNotBlank(proxyRegistry) ? String.format("%s/%s", proxyRegistry, image) : image;
     }

@@ -37,7 +37,7 @@ import java.util.UUID;
  */
 public class Nicad5IntegrationTest {
 
-    String proxyRegistry = "swt100.informatik.uni-mannheim.de:8443";
+    String proxyRegistry = null;//;"docker.io";
     int pullTimeout = 10 * 60;
 
     @BeforeAll
@@ -59,10 +59,10 @@ public class Nicad5IntegrationTest {
         ContainerService containerService = new ContainerService(proxyRegistry, pullTimeout);
 
         BasicContainer basicContainer = new BasicContainer(containerService);
-        basicContainer.setImage("nicad:5.2");
+        basicContainer.setImage("swtrepo.informatik.uni-mannheim.de:5050/docker/lasso/nicad:6.2.1");
         basicContainer.setWorkingDirectory("/src/");
 
-        String containerName = "nicad5-" + UUID.randomUUID().toString();
+        String containerName = "nicad6-" + UUID.randomUUID().toString();
 
         //
         File projectRoot = new File("samples/nicad/");

@@ -33,14 +33,14 @@ import java.util.List;
  */
 public class ContainerServiceIntegrationTest {
 
-    String proxyRegistry = "swt100.informatik.uni-mannheim.de:8443";
+    String proxyRegistry = null;//"swt100.informatik.uni-mannheim.de:8443";
     int pullTimeout = 10 * 60;
 
     @Test
     public void test_pull() throws InterruptedException {
         ContainerService containerService = new ContainerService(proxyRegistry, pullTimeout);
 
-        containerService.pullImage("3.6.3-jdk-11");
+        containerService.pullImage("openjdk:8-jdk-alpine");
     }
 
     @Test

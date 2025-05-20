@@ -37,7 +37,7 @@ import java.util.UUID;
  */
 public class ArenaContainerIntegrationTest {
 
-    String proxyRegistry = "swt100.informatik.uni-mannheim.de:8443";
+    String proxyRegistry = null;//"swt100.informatik.uni-mannheim.de:8443";
     int pullTimeout = 10 * 60;
 
     @BeforeAll
