@@ -1220,7 +1220,7 @@ study(name: 'CodeClone') {
 
         dependsOn 'generateCodeLlama'
         include '*'
-        profile('nicad:6.2')
+        profile('nicad:6.2.1')
     }
 
     action(name: 'test', type: 'Arena') { // run all collected stimulus sheets on all impls in arena

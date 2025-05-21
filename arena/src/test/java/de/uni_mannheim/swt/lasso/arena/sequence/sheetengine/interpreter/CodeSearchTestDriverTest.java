@@ -66,6 +66,25 @@ public class CodeSearchTestDriverTest {
     }
 
     @Test
+    public void test_getClassesDirectly_mavenCentral2025() throws IOException {
+        CodeSearch codeSearch = new CodeSearch(SolrInstance.mavenCentral2025());
+
+        String mql = "Stack{\n" +
+                "Stack(int)\n" +
+                "push(java.lang.Object)->java.lang.Object\n" +
+                "pop()->java.lang.Object\n" +
+                "peek()->java.lang.Object\n" +
+                "size()->int" +
+                "}"; // FIXME add support for range queries m_static_complexity_td:[5 TO *]
+
+        List<ClassUnderTest> classesUnderTest = codeSearch.queryForClassesDirectly(mql, 10, "class"); // retrieve classes
+
+        for(ClassUnderTest cut : classesUnderTest) {
+            System.out.println(ToStringBuilder.reflectionToString(cut.getImplementation().getCode()));
+        }
+    }
+
+    @Test
     public void test_Stack_empty_constructor() throws IOException, ClassNotFoundException {
         @Language("jsonl")
         String ssnJsonlStr = """

@@ -20,6 +20,15 @@
       "pass": "Y2E5ZjgzMGV",
       "name": "LASSO Maven Central 2023",
       "description": "Code search index for Maven Central 2023"
+    },
+    {
+      "type": "solr",
+      "id": "mavenCentral2025",
+      "host": "https://odisse.informatik.uni-mannheim.de/solr/mavenCentral2025/",
+      "user": "",
+      "pass": "",
+      "name": "LASSO Maven Central 2025 (Snapshot May)",
+      "description": "Code search index"
     }
   ],
   "artifactRepository": {

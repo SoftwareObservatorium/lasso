@@ -76,6 +76,10 @@ public class SolrInstance {
         return new SolrInstance("mavencentral2023", "", "", "https://odisse.informatik.uni-mannheim.de/solr/mavencentral2023/");
     }
 
+    public static SolrInstance mavenCentral2025() {
+        return new SolrInstance("mavenCentral2025", "", "", "https://odisse.informatik.uni-mannheim.de/solr/mavenCentral2025/");
+    }
+
     public static SolrInstance secorpora2022() {
         return new SolrInstance("secorpora2022", "", "", "http://lassohp10.informatik.uni-mannheim.de:8983/solr/secorpora2022/");
     }
