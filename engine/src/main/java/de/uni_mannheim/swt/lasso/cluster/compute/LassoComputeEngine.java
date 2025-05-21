@@ -469,6 +469,16 @@ public class LassoComputeEngine extends LassoEngine {
                             abstraction.getSpecification().setDependencies(abstractionSpec.getDependencies());
                         }
 
+                        // store executables for LSL action
+                        Systems executables = Systems.fromAbstraction(abstraction, finalProducerAction.getName());
+
+                        if(LOG.isDebugEnabled()) {
+                            LOG.debug("Storing executables for '{}' '{}'", lslExecutionContext.getExecutionId(), finalProducerAction.getName());
+                        }
+
+                        LassoOperations lassoOperations = lslExecutionContext.getLassoOperations();
+                        lassoOperations.putExecutables(lslExecutionContext.getExecutionId(), finalProducerAction.getName(), executables);
+
                         // add to current action
                         actionSpec.getAbstractionContainerSpec().getAbstractions().put(abstraction.getName(), abstractionSpec);
 

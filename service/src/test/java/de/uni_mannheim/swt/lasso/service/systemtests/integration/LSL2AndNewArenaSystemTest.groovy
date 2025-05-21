@@ -470,6 +470,90 @@ public class StackTest {
     }
 
     @Test
+    void test_EXECUTE_tests_only() throws IOException, DataSourceNotFoundException {
+        @Language("Groovy")
+        String content = '''
+dataSource 'lasso_quickstart'
+def ollamaServers = ["http://bagdana.informatik.uni-mannheim.de:11434"]
+study(name: 'HelloWorld') {
+
+    action(name: 'create') {
+        execute {
+            // from JDK classes
+            stimulusMatrix('Stack', """Stack {
+                push(java.lang.Object)->java.lang.Object
+                pop()->java.lang.Object
+                peek()->java.lang.Object
+                size()->int
+                }""",
+                    [], [testFromJUnit("""package gemma327b;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
+public class StackTest {
+
+    @Test
+    void testPeekDoesNotRemove() {
+        Stack stack = new Stack();
+        Object item = new Object();
+        stack.push(item);
+        assertEquals(item, stack.peek());
+        // Call peek again to ensure it doesn't remove
+        assertEquals(item, stack.peek());
+        assertEquals(item, stack.pop());
+        assertEquals(0, stack.size());
+    }
+}
+""")])
+        }
+    }
+    
+    action(name: 'generateTestsLlama', type: 'GenerateTestsOllama') {
+        // pipeline specific
+        dependsOn 'create'
+        include '*'
+        profile('java17Profile')
+
+        // action configuration block
+        servers = ollamaServers
+        model = "gemma3:27b"
+        samples = 1
+
+        prompt { stimulusMatrix ->
+            def prompt = [:] // create prompt model
+            prompt.promptContent = """write a junit test class to test the functionality of the following interface specification: ```${stimulusMatrix.lql}```. Assume that the specification is encapsulated in a class that uses the same naming as in the interface specification. Only output the JUnit test class and nothing else."""
+            prompt.id = "lql_prompt"
+            return [prompt] // list of prompts is expected
+        }
+    }
+}
+        '''
+
+        //
+        LSLScript scriptUnderTest = createScript(content)
+
+
+        // DO EXECUTE
+        LSLExecutionResult lslExecutionResult = lassoEngine.execute(scriptUnderTest);
+        LSLExecutionContext lslExecutionContext = lassoEngine.getLastContext();
+
+        // assertions
+        //verifyAbstraction(lslExecutionContext, 'select', 'Base64', 1)
+        //verifyAbstraction(lslExecutionContext, 'execute', 'Base64', 1)
+
+        // TODO verify SRM
+        // put
+        ClusterEngine clusterEngine = lslExecutionContext.getConfiguration().getService(ClusterEngine.class);
+
+        // also make sure that the SRM is initialized (otherwise the client has no way to put cells)
+        ClusterSRMRepository srmRepository = clusterEngine.getClusterSRMRepository();
+        Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
+        System.out.println(table.printAll());
+
+        Warehouse.writeRawSrmToFile(lslExecutionContext.getExecutionId(), new File("/tmp/helloworld.parquet"));
+    }
+
+    @Test
     void test_EXECUTE_Stack_manualjdk() throws IOException, DataSourceNotFoundException {
         @Language("Groovy")
         String content = '''
