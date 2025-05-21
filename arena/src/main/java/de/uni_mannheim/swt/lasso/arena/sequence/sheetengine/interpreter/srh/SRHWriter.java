@@ -5,6 +5,7 @@ import de.uni_mannheim.swt.lasso.arena.ArenaUtils;
 import de.uni_mannheim.swt.lasso.arena.ClassUnderTest;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
 import de.uni_mannheim.swt.lasso.arena.classloader.coverage.pitest.Pitest;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.ExecutedInvocations;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.TestInvocation;
 import de.uni_mannheim.swt.lasso.cluster.LassoClusterClient;
@@ -266,6 +267,32 @@ public class SRHWriter {
                 }
 
             }
+        }
+    }
+
+    public void storeRuntimeMetrics(ArenaJob arenaJob, String arenaId, AdaptedImplementation adaptedImplementation, Test test, TestInvocation testInvocation, ExecutedInvocations executedInvocations) {
+        Map<CellId, CellValue> cells = new LinkedHashMap<>();
+
+        // sheetId
+        String sheetId = test.getSignature().getName() + "(" + testInvocation.getInvocationExpression() + ")";
+
+        try {
+            long executionTimeNanos = executedInvocations.getExecutionTime();
+
+            CellId cellId = ArenaUtils.cellIdOf(sheetId, -1, -1, "executionTimeNanos", adaptedImplementation);
+            CellValue cellValue = new CellValue();
+            cellValue.setValue(String.valueOf(executionTimeNanos));
+            cellValue.setRawValue(String.valueOf(executionTimeNanos));
+            //cellValue.setValueType();
+            //cellValue.setExecutionTime();
+            cellValue.setLastModified(new Date());
+
+            cells.put(cellId, cellValue);
+
+            // store
+            store(cells, arenaJob, arenaId);
+        } catch (RuntimeException e) {
+            throw new RuntimeException(e);
         }
     }
 

@@ -515,12 +515,21 @@ public class SSNExecute extends Task {
 //                    LOG.debug("JSON adaptedActuationSheet\n{}", adaptedActuationSheetData.toJsonl());
 
                     try {
-                        LOG.info("Storing jacoco sheet in SRH for 'codeUnit {} adapter {} variant {}'", adaptedImplementation.getAdaptee().getId(), adaptedImplementation.getAdapterId(), adaptedImplementation.getAdaptee().getVariantId());
+                        LOG.info("Storing actuation sheet in SRH for 'codeUnit {} adapter {} variant {}'", adaptedImplementation.getAdaptee().getId(), adaptedImplementation.getAdapterId(), adaptedImplementation.getAdaptee().getVariantId());
 
                         // store actuation sheet
                         writer.storeActuationSheet(arenaJob, arenaId, adaptedImplementation, test, testInvocation, adaptedActuationSheetData);
                     } catch (Throwable e) {
-                        LOG.warn("Storing jacoco sheet in SRH failed", e);
+                        LOG.warn("Storing actuation sheet in SRH failed", e);
+                    }
+
+                    try {
+                        LOG.info("Storing runtime metrics in SRH for 'codeUnit {} adapter {} variant {}'", adaptedImplementation.getAdaptee().getId(), adaptedImplementation.getAdapterId(), adaptedImplementation.getAdaptee().getVariantId());
+
+                        // store actuation sheet
+                        writer.storeRuntimeMetrics(arenaJob, arenaId, adaptedImplementation, test, testInvocation, executedInvocations);
+                    } catch (Throwable e) {
+                        LOG.warn("Storing runtime metrics in SRH failed", e);
                     }
                 } catch (Throwable e) {
                     LOG.warn("execution failed", e);
