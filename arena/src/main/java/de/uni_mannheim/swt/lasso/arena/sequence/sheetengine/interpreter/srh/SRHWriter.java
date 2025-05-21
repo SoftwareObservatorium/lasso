@@ -4,8 +4,6 @@ import com.google.common.collect.Table;
 import de.uni_mannheim.swt.lasso.arena.ArenaUtils;
 import de.uni_mannheim.swt.lasso.arena.ClassUnderTest;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
-import de.uni_mannheim.swt.lasso.arena.classloader.coverage.pitest.Pitest;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.ExecutedInvocations;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.TestInvocation;
 import de.uni_mannheim.swt.lasso.cluster.LassoClusterClient;
@@ -13,7 +11,6 @@ import de.uni_mannheim.swt.lasso.cluster.client.ArenaJob;
 import de.uni_mannheim.swt.lasso.srm.CellId;
 import de.uni_mannheim.swt.lasso.srm.CellValue;
 import org.apache.commons.collections4.MapUtils;
-import org.pitest.mutationtest.engine.MutationDetails;
 
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -270,19 +267,45 @@ public class SRHWriter {
         }
     }
 
-    public void storeRuntimeMetrics(ArenaJob arenaJob, String arenaId, AdaptedImplementation adaptedImplementation, Test test, TestInvocation testInvocation, ExecutedInvocations executedInvocations) {
+    public void storeRuntimeMetric(ArenaJob arenaJob, String arenaId, AdaptedImplementation adaptedImplementation, String metricId, Number measure) {
         Map<CellId, CellValue> cells = new LinkedHashMap<>();
 
-        // sheetId
-        String sheetId = test.getSignature().getName() + "(" + testInvocation.getInvocationExpression() + ")";
+//        // sheetId
+//        String sheetId = test.getSignature().getName() + "(" + testInvocation.getInvocationExpression() + ")";
+//
+//        try {
+//            long executionTimeNanos = executedInvocations.getExecutionTime();
+//
+//            CellId cellId = ArenaUtils.cellIdOf(sheetId, -1, -1, "executionTimeNanos", adaptedImplementation);
+//            CellValue cellValue = new CellValue();
+//            cellValue.setValue(String.valueOf(executionTimeNanos));
+//            cellValue.setRawValue(String.valueOf(executionTimeNanos));
+//            //cellValue.setValueType();
+//            //cellValue.setExecutionTime();
+//            cellValue.setLastModified(new Date());
+//
+//            cells.put(cellId, cellValue);
+//
+//            // store
+//            store(cells, arenaJob, arenaId);
+//        } catch (RuntimeException e) {
+//            throw new RuntimeException(e);
+//        }
 
+        // make compatible with other metrics
         try {
-            long executionTimeNanos = executedInvocations.getExecutionTime();
+            CellId cellId = new CellId();
+            cellId.setSheetId("runtimeMetrics");
+            cellId.setX(-1);
+            cellId.setY(-1);
+            cellId.setType(metricId);
+            cellId.setSystemId(adaptedImplementation.getAdaptee().getId());
+            cellId.setVariantId(adaptedImplementation.getAdaptee().getVariantId());
+            cellId.setAdapterId(adaptedImplementation.getAdapterId());
 
-            CellId cellId = ArenaUtils.cellIdOf(sheetId, -1, -1, "executionTimeNanos", adaptedImplementation);
             CellValue cellValue = new CellValue();
-            cellValue.setValue(String.valueOf(executionTimeNanos));
-            cellValue.setRawValue(String.valueOf(executionTimeNanos));
+            cellValue.setValue(String.valueOf(measure));
+            //cellValue.setRawValue(cell.getValue());
             //cellValue.setValueType();
             //cellValue.setExecutionTime();
             cellValue.setLastModified(new Date());

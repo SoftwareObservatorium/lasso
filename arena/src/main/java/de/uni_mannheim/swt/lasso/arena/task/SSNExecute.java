@@ -522,19 +522,30 @@ public class SSNExecute extends Task {
                     } catch (Throwable e) {
                         LOG.warn("Storing actuation sheet in SRH failed", e);
                     }
-
-                    try {
-                        LOG.info("Storing runtime metrics in SRH for 'codeUnit {} adapter {} variant {}'", adaptedImplementation.getAdaptee().getId(), adaptedImplementation.getAdapterId(), adaptedImplementation.getAdaptee().getVariantId());
-
-                        // store actuation sheet
-                        writer.storeRuntimeMetrics(arenaJob, arenaId, adaptedImplementation, test, testInvocation, executedInvocations);
-                    } catch (Throwable e) {
-                        LOG.warn("Storing runtime metrics in SRH failed", e);
-                    }
                 } catch (Throwable e) {
                     LOG.warn("execution failed", e);
 
                     throw new RuntimeException(e);
+                }
+            }
+        }
+
+        boolean measureRuntimeMetrics = true;
+        if(measureRuntimeMetrics) {
+            for (AdaptedImplementation adaptedImplementation : stimulusResponseMatrix.getColumns()) {
+                long executionTime = 0;
+                for(Test test : stimulusResponseMatrix.getRows()) {
+                    ExecutedInvocations executedInvocations = stimulusResponseMatrix.get(test, adaptedImplementation);
+                    executionTime += executedInvocations.getExecutionTime();
+                }
+
+                try {
+                    LOG.info("Storing executionTime in SRH for 'codeUnit {} adapter {} variant {}'", adaptedImplementation.getAdaptee().getId(), adaptedImplementation.getAdapterId(), adaptedImplementation.getAdaptee().getVariantId());
+
+                    // store actuation sheet
+                    writer.storeRuntimeMetric(arenaJob, arenaId, adaptedImplementation, "executionTimeNanos", executionTime);
+                } catch (Throwable e) {
+                    LOG.warn("Storing runtime metrics in SRH failed", e);
                 }
             }
         }
