@@ -241,7 +241,7 @@ public class LassoComputeEngine extends LassoEngine {
                                 Abstraction abstraction = new Abstraction();
                                 abstraction.setName(abstractionName);
                                 abstraction.setImplementations(executables.getExecutables());
-                                // TODO abstraction.setSpecification();
+                                abstraction.setSpecification(executables.getSpecification());
                                 abstractionSpec.setAbstraction(abstraction);
 
                                 lassoContext.registerAbstraction(abstractionSpec);
