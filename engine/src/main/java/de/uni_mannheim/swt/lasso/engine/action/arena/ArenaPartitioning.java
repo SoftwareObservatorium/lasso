@@ -687,7 +687,7 @@ public class ArenaPartitioning extends DefaultAction {
     }
 
     private void collectSequences(LSLExecutionContext context, Systems executables) {
-        //
+        // TODO remove (deprecated)
         for (System executable : executables.getExecutables()) {
             // make tests available in filesystem
             List<File> testClasses = executable.getProject().getFiles(executable.getProject().getSrcTest(), "java");

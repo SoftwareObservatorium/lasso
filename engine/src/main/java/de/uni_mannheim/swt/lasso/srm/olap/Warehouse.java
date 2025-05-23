@@ -28,7 +28,7 @@ public class Warehouse {
         JDBC jdbc = new JDBC();
         //ArrowOlap olap = new ArrowOlap();
 
-        String sql1 = "SELECT distinct(type) FROM srm.cellvalue where type = 'interface' and executionid = ? and actionid = ? and abstractionid = ?";
+        String sql1 = "SELECT value FROM srm.cellvalue where type = 'interface' and executionid = ? and actionid = ? and abstractionid = ? LIMIT 1";
 
         Table table1 = jdbc.sqlToTable(sql1, new Object[]{executionId, actionId, abstractionId});
         String interfaceLql = (String) table1.get(0,0);
