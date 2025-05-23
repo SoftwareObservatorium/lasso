@@ -68,7 +68,7 @@ class MavenQuery extends LassoSpec {
      */
     //public static String[] CONSTRAINTS = ["doctype_s:class", "type:c", /*"!classifier_s:tests",*/ "{!collapse field=hash nullPolicy=expand sort='versionHead_ti asc'}"]
     // XXX disabled collapsing (not needed anymore)
-    public static String[] CONSTRAINTS = ["doctype_s:class", "type:c"]
+    public static String[] CONSTRAINTS = ["doctype_s:class", "type:c", "lang:java"]
 
     String query = ''
     String queryType = 'class'
@@ -115,11 +115,30 @@ class MavenQuery extends LassoSpec {
         options.setFullyQualified(fullyQualified)
     }
 
+    def unitType(String type) {
+        if (type.equals("module_or_class")) {
+            constraints.removeAll({it.startsWith('doctype_s:')})
+            constraints << "!doctype_s:function" // NOT FUNCTION
+        } else {
+            docType(type)
+        }
+
+        // also remove class type (c = class, i = interface etc.)
+        constraints.removeAll({it.startsWith('type:')})
+    }
+
     def docType(String type) {
         // replace type
         constraints.removeAll({it.startsWith('doctype_s:')})
         String docType = "doctype_s:${type}"
         constraints << docType
+    }
+
+    def lang(String lang) {
+        // replace lang
+        constraints.removeAll({it.startsWith('lang:')})
+        String langType = "lang:${lang}"
+        constraints << langType
     }
 
     def excludeClassesByKeywords(List keywords) {

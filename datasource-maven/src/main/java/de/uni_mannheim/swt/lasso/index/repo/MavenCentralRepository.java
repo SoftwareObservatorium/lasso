@@ -99,7 +99,9 @@ public class MavenCentralRepository extends SolrRepository {
             "pid_s",
             // Henrik: mcall
             "mcall_exact",
-            "owner"
+            "owner",
+            // added for PLs
+            "lang"
     };
 
 

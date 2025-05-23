@@ -19,6 +19,7 @@
  */
 package de.uni_mannheim.swt.lasso.index.query.lql;
 
+import de.uni_mannheim.swt.lasso.core.model.CodeUnit;
 import de.uni_mannheim.swt.lasso.core.model.query.QueryResult;
 import de.uni_mannheim.swt.lasso.datasource.maven.MavenDataSource;
 import de.uni_mannheim.swt.lasso.datasource.maven.systemtests.HttpUtils;
@@ -37,22 +38,22 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  *
  * @author Marcus Kessel
  */
-public class LQL2LuceneIntegrationTest {
+public class JavaLQL2LuceneIntegrationTest {
 
     private static RandomMavenCentralRepository mavenCentralRepository;
     private static MavenCentralIndex mavenCentralIndex;
 
     @BeforeAll
     public static void before() {
-        HttpClient client = HttpUtils.createHttpClient("solr", "");
+        HttpClient client = HttpUtils.createHttpClient("", "");
 
-        SolrClient solrClient = new HttpSolrClient.Builder("http://lassohp10.informatik.uni-mannheim.de:8983/solr/mavencentral2023/")
+        SolrClient solrClient = new HttpSolrClient.Builder("https://odisse.informatik.uni-mannheim.de/solr/mavenCentral2025/")
                 .withHttpClient(client).build();
         mavenCentralRepository = new RandomMavenCentralRepository(solrClient);
 
@@ -63,7 +64,7 @@ public class LQL2LuceneIntegrationTest {
     }
 
     @Test
-    public void test_Base64_ext() throws IOException {
+    public void test_Base64_CLASS() throws IOException {
         MavenDataSource mavenDataSource = new MavenDataSource(mavenCentralIndex);
 
         MavenQuery mavenQuery = (MavenQuery) mavenDataSource.createQueryModelForLSL();
@@ -71,7 +72,7 @@ public class LQL2LuceneIntegrationTest {
         ctx.setLogger(new SimpleLogger());
         ctx.register(mavenQuery);
         mavenQuery.setDirectly(true);
-        mavenQuery.queryForClasses("Base64{encode(byte[])->java.lang.String}", "class-ext");
+        mavenQuery.queryForClasses("Base64{encode(byte[])->java.lang.String}", "class-simple");
         mavenQuery.setRows(25);
 
         QueryResult queryResult = mavenDataSource.query(mavenQuery);
@@ -79,11 +80,19 @@ public class LQL2LuceneIntegrationTest {
             System.out.println("--------");
             System.out.println(implementation.toFQName() + " ("+ implementation.getScore()+") " + "=>" + SignatureUtils.create(implementation).toLQL(true));
             System.out.println("--------");
+
+            assertEquals(CodeUnit.JAVA, implementation.getLang());
+            assertFalse(implementation.isPython());
+            assertTrue(implementation.isJava());
+
+            assertEquals(CodeUnit.CodeUnitType.CLASS, implementation.getUnitType());
         });
+
+        assertEquals(mavenQuery.getRows(), queryResult.getImplementations().size());
     }
 
     @Test
-    public void test_Stack_ext() throws IOException {
+    public void test_Stack_CLASS() throws IOException {
         MavenDataSource mavenDataSource = new MavenDataSource(mavenCentralIndex);
 
         MavenQuery mavenQuery = (MavenQuery) mavenDataSource.createQueryModelForLSL();
@@ -97,19 +106,26 @@ public class LQL2LuceneIntegrationTest {
                 "    pop()->java.lang.Object\n" +
                 "    peek()->java.lang.Object\n" +
                 "    size()->int\n" +
-                "}", "class-ext");
+                "}", "class-simple");
         mavenQuery.setRows(25);
 
         QueryResult queryResult = mavenDataSource.query(mavenQuery);
         queryResult.getImplementations().forEach(implementation -> {
             System.out.println("--------");
             System.out.println(implementation.toFQName() + " ("+ implementation.getScore()+") " + "=>" + SignatureUtils.create(implementation).toLQL(true));
-            System.out.println("--------");
+
+            assertEquals(CodeUnit.JAVA, implementation.getLang());
+            assertFalse(implementation.isPython());
+            assertTrue(implementation.isJava());
+
+            assertEquals(CodeUnit.CodeUnitType.CLASS, implementation.getUnitType());
         });
+
+        assertEquals(mavenQuery.getRows(), queryResult.getImplementations().size());
     }
 
     @Test
-    public void test_MultiMap_ext() throws IOException {
+    public void test_MultiMap_CLASS() throws IOException {
         MavenDataSource mavenDataSource = new MavenDataSource(mavenCentralIndex);
 
         MavenQuery mavenQuery = (MavenQuery) mavenDataSource.createQueryModelForLSL();
@@ -121,7 +137,7 @@ public class LQL2LuceneIntegrationTest {
                 "    put(java.lang.Object,java.lang.Object)->java.lang.Object\n" +
                 "    getValues(java.lang.Object)->java.util.List\n" +
                 "    size()->int\n" +
-                "}", "class-ext");
+                "}", "class-simple");
         mavenQuery.setRows(25);
 
         QueryResult queryResult = mavenDataSource.query(mavenQuery);
@@ -129,11 +145,19 @@ public class LQL2LuceneIntegrationTest {
             System.out.println("--------");
             System.out.println(implementation.toFQName() + " ("+ implementation.getScore()+") " + "=>" + SignatureUtils.create(implementation).toLQL(true));
             System.out.println("--------");
+
+            assertEquals(CodeUnit.JAVA, implementation.getLang());
+            assertFalse(implementation.isPython());
+            assertTrue(implementation.isJava());
+
+            assertEquals(CodeUnit.CodeUnitType.CLASS, implementation.getUnitType());
         });
+
+        assertEquals(mavenQuery.getRows(), queryResult.getImplementations().size());
     }
 
     @Test
-    public void test_StringComparator_ext() throws IOException {
+    public void test_StringComparator_CLASS() throws IOException {
         MavenDataSource mavenDataSource = new MavenDataSource(mavenCentralIndex);
 
         MavenQuery mavenQuery = (MavenQuery) mavenDataSource.createQueryModelForLSL();
@@ -142,7 +166,7 @@ public class LQL2LuceneIntegrationTest {
         ctx.register(mavenQuery);
         mavenQuery.setDirectly(true);
         mavenQuery.queryForClasses("StringComparator {\n" +
-                "            compare(java.lang.String,java.lang.String)->int}", "class-ext");
+                "            compare(java.lang.String,java.lang.String)->int}", "class-simple");
         mavenQuery.setRows(25);
 
         QueryResult queryResult = mavenDataSource.query(mavenQuery);
@@ -150,6 +174,14 @@ public class LQL2LuceneIntegrationTest {
             System.out.println("--------");
             System.out.println(implementation.toFQName() + " ("+ implementation.getScore()+") " + "=>" + SignatureUtils.create(implementation).toLQL(true));
             System.out.println("--------");
+
+            assertEquals(CodeUnit.JAVA, implementation.getLang());
+            assertFalse(implementation.isPython());
+            assertTrue(implementation.isJava());
+
+            assertEquals(CodeUnit.CodeUnitType.CLASS, implementation.getUnitType());
         });
+
+        assertEquals(mavenQuery.getRows(), queryResult.getImplementations().size());
     }
 }
