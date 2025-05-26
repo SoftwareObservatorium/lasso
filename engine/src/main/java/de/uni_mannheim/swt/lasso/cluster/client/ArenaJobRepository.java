@@ -25,7 +25,10 @@ package de.uni_mannheim.swt.lasso.cluster.client;
  */
 public interface ArenaJobRepository {
 
-    public static final String ARENAJOBS = "arenajobs";
+    String ARENAJOBS = "arenajobs";
+    String ARENAJOBS_JSON = "arenajobs_json";
+
+    String ARENAJOBS_STATUS = "arenajobs_status";
 
     void put(String id, ArenaJob job);
 

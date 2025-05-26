@@ -25,7 +25,7 @@ import de.uni_mannheim.swt.lasso.classloader.Containers;
 import de.uni_mannheim.swt.lasso.classloader.resolver.MavenDependencyResolver;
 import de.uni_mannheim.swt.lasso.corpus.ExecutableCorpus;
 import de.uni_mannheim.swt.lasso.engine.LSLExecutionContext;
-import de.uni_mannheim.swt.lasso.engine.action.arena.ArenaProjectManager;
+import de.uni_mannheim.swt.lasso.engine.action.arena.JavaArenaProjectManager;
 import org.apache.commons.collections4.CollectionUtils;
 import org.codehaus.plexus.classworlds.realm.NoSuchRealmException;
 import org.eclipse.aether.artifact.DefaultArtifact;
@@ -61,7 +61,7 @@ public class ClazzContainerUtils {
                 ExecutableCorpus corpus = context.getConfiguration().getExecutableCorpus();
                 String mavenRepoUrl = corpus.getArtifactRepository().getUrl();
 
-                ArenaProjectManager manager = new ArenaProjectManager(context);
+                JavaArenaProjectManager manager = new JavaArenaProjectManager(context);
                 MavenDependencyResolver dependencyResolver = new MavenDependencyResolver(mavenRepoUrl,
                         manager.getRepository().getAbsolutePath());
 

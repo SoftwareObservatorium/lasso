@@ -343,6 +343,17 @@ class ActionSpec extends LassoSpec {
         return system
     }
 
+    System pyImplementationFromSource(String id, String className, String content) {
+        // FIXME use some placeholder artifact
+        String EXAMPLES_LASSO_EXAMPLES_1_0_0_SNAPSHOT = "commons-codec:commons-codec:1.15";
+
+        System system = implementation(id, className, EXAMPLES_LASSO_EXAMPLES_1_0_0_SNAPSHOT)
+        system.code.content = content
+        system.code.lang = CodeUnit.PYTHON
+
+        return system
+    }
+
     /**
      * Manually specify JUnit tests
      *

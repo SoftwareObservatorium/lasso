@@ -26,47 +26,35 @@ import de.uni_mannheim.swt.lasso.cluster.ClusterEngine;
 import de.uni_mannheim.swt.lasso.cluster.client.ArenaJob;
 import de.uni_mannheim.swt.lasso.cluster.client.ClusterArenaJobRepository;
 import de.uni_mannheim.swt.lasso.cluster.client.JobStatus;
-import de.uni_mannheim.swt.lasso.cluster.data.repository.ExecKey;
 import de.uni_mannheim.swt.lasso.core.dto.srm.Sheet;
 import de.uni_mannheim.swt.lasso.core.model.System;
 import de.uni_mannheim.swt.lasso.core.model.*;
 import de.uni_mannheim.swt.lasso.corpus.ExecutableCorpus;
 import de.uni_mannheim.swt.lasso.engine.LSLExecutionContext;
-import de.uni_mannheim.swt.lasso.engine.LassoUtils;
 import de.uni_mannheim.swt.lasso.engine.action.DefaultAction;
 import de.uni_mannheim.swt.lasso.engine.action.annotations.LassoAction;
 import de.uni_mannheim.swt.lasso.engine.action.annotations.LassoInput;
 import de.uni_mannheim.swt.lasso.engine.action.annotations.Stable;
 import de.uni_mannheim.swt.lasso.engine.action.annotations.Tester;
-import de.uni_mannheim.swt.lasso.engine.action.test.evosuite.EvoSuite;
-import de.uni_mannheim.swt.lasso.engine.action.maven.support.MavenProjectManager;
-import de.uni_mannheim.swt.lasso.engine.action.test.TestUtils;
 import de.uni_mannheim.swt.lasso.engine.action.utils.SequenceUtils;
 import de.uni_mannheim.swt.lasso.engine.adaptation.SystemAdapterReport;
-import de.uni_mannheim.swt.lasso.engine.dag.ActionNode;
-import de.uni_mannheim.swt.lasso.engine.environment.ArenaExecutionEnvironment;
+import de.uni_mannheim.swt.lasso.engine.environment.ExecutionEnvironment;
 import de.uni_mannheim.swt.lasso.engine.environment.ExecutionEnvironmentManager;
-import de.uni_mannheim.swt.lasso.engine.matcher.TestMatcher;
-import de.uni_mannheim.swt.lasso.engine.project.ProjectHelper;
-import de.uni_mannheim.swt.lasso.sandbox.container.support.ArenaContainer;
+import de.uni_mannheim.swt.lasso.engine.langsupport.LangSupport;
 import de.uni_mannheim.swt.lasso.srm.ClusterSRMRepository;
 import de.uni_mannheim.swt.lasso.srm.olap.Warehouse;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tech.tablesaw.api.Table;
 
-import javax.cache.Cache;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Arena action which supports splitting of implementations.
@@ -81,7 +69,7 @@ public class ArenaPartitioning extends DefaultAction {
     private static final Logger LOG = LoggerFactory
             .getLogger(ArenaPartitioning.class);
 
-    protected static final String ARENA_LOG_TXT = "arena_log.txt";
+
 
     public static String POM_TEMPLATE = "pom.template";
 
@@ -94,16 +82,8 @@ public class ArenaPartitioning extends DefaultAction {
     @LassoInput(desc = "Process reference implementation only", optional = true)
     public boolean referenceImplementationOnly = false;
 
-    // TODO remove, use sequences instead
-    @Deprecated
-    @LassoInput(desc = "Sheets (deprecated, use 'sequences' instead)", optional = true)
-    public Map<String, Object> sheets;
-
     @LassoInput(desc = "Provide Sequence Sheets", optional = true)
     public Map<String, Object> sequences;
-
-    @LassoInput(desc = "Provide JUnit test classes (currently mutually exclusive to 'sequences')", optional = true)
-    public Map<String, String> testClasses;
 
     @LassoInput(desc = "Use Sequences provided by benchmark with given id", optional = true)
     public String benchmark;
@@ -112,9 +92,6 @@ public class ArenaPartitioning extends DefaultAction {
 
     @LassoInput(desc = "Obtain stored Sequences from the following actions", optional = true)
     public List<String> sequenceActions = Collections.emptyList();
-
-    @LassoInput(desc = "Mine tests from given action (abstraction name is assumed to be the same, adds all tests to all systems)", optional = true)
-    public String populateTestsFromAction = null;
 
     @LassoInput(desc = "Fully-qualified class name of CUT", optional = false)
     public String cut = "";
@@ -168,223 +145,38 @@ public class ArenaPartitioning extends DefaultAction {
         // set scope
         scope = actionConfiguration.getScope();
 
-        MavenProjectManager testAdaptationManager = new MavenProjectManager(context);
-
         Systems executables = null;
 
-        // found reference implementation
-        System referenceImpl;
-        if(LassoUtils.isValidReferenceImplementation(actionConfiguration.getAbstraction())) {
-            referenceImpl = getEvoSuiteReferenceImplementation(context, LassoUtils.getReferenceImplementationFromAlternatives(actionConfiguration.getAbstraction()));
+        // lang
+        ArenaProjectManager arenaProjectManager = null;
 
-            LOG.info("Found reference implementation '{}'", referenceImpl);
-
-            // add to abstraction
-            actionConfiguration.getAbstraction().getSystems().add(referenceImpl);
-        } else {
-            referenceImpl = null;
-        }
-
-        final Systems fromAbstraction;
-        if(StringUtils.isNotBlank(populateTestsFromAction)) {
-            fromAbstraction = context.getLassoOperations().getExecutables(
-                    context.getExecutionId(), actionConfiguration.getAbstraction().getName(), populateTestsFromAction);
-        } else {
-            fromAbstraction = null;
-        }
-
-        ActionNode ancestorNode = context.getExecutionPlan().getAction(actionConfiguration.getDependsOn());
-
-
-        // FIXME for now, set existing to null if fromAbstraction set
-
-        // check if ancestor action supports testing (i.e handles tests)
-        if (fromAbstraction == null && context.getActionManager().isTester(ancestorNode.getType())) {
-            // existing executables
-            final Systems existingExecutables = context.getLassoOperations().getExecutables(
-                    context.getExecutionId(), actionConfiguration.getAbstraction().getName(), ancestorNode.getName());
-            // reject any not in actionConfiguration
-            if(existingExecutables.hasExecutables()) {
-                // reject any not part of the "partition block" received by this action
-                existingExecutables.getExecutables()
-                        .removeIf(executable -> actionConfiguration.getAbstraction().getImplementations().stream().noneMatch(impl -> executable.getId().equals(impl.getId())));
-            }
-
-            if (LOG.isDebugEnabled()) {
-                existingExecutables.getExecutables().forEach(e -> LOG.debug("Existing for {} {}", ancestorNode.getName(), e.getId()));
-            }
-
-            //
-            executables = testAdaptationManager.initNew(this,
+        if(LangSupport.isJava(actionConfiguration)) {
+            arenaProjectManager = new JavaArenaProjectManager(context);
+            executables = arenaProjectManager.initNew(this,
                     getInstanceId(),
                     actionConfiguration.getAbstraction(),
                     POM_TEMPLATE,
-                    (system, candidate, valueMap) -> {
-                        // for methods only
-                        if (system.getUnitType() == CodeUnit.CodeUnitType.METHOD) {
-                            // limit permutations to method signature only
-                            valueMap.put("bytecodename", system.getBytecodeName());
-                        } else {
-                            valueMap.put("bytecodename", "");
-                        }
-                    },
-                    executable -> {
-//                        // reject alt impls
-//                        if(referenceImplementationOnly && !StringUtils.equals(executable.getId(), actionConfiguration.getAbstraction().getName())) {
-//                            if(LOG.isWarnEnabled()) {
-//                                LOG.warn("Rejecting '{}', since it is not a reference implementation.", executable.getId());
-//                            }
-//
-//                            return false;
-//                        }
+                    (system, candidate, valueMap) -> {}, executable -> true);
+        }
 
-                        // TODO transfer project
-                        //executable.getImplementation().getWorkerNodeId();
-
-                        // copy from previous "Tester"
-                        // TODO we don't need it anymore, since System.getProject ships with it
-                        System existingExecutable = null;
-                        try {
-                            existingExecutable = existingExecutables.getExecutable(executable.getId());
-                        } catch (Throwable e) {
-                            //
-                            if (LOG.isWarnEnabled()) {
-                                LOG.warn("Did not find existing executable for '{}'", executable.getId());
-                                LOG.warn("Exception thrown", e);
-                            }
-
-                            // check if it is the ref impl.
-                            if(referenceImpl != null && executable.getId().equals(referenceImpl.getId())) {
-                                existingExecutable = referenceImpl;
-                            } else {
-                                return false;
-                            }
-                        }
-
-//                        //
-//                        if (existingExecutable.hasExecutionSignatures()) {
-//                            // copy over best match json
-//                            try {
-//                                TestAdaptationManager.copyBestMatchReport(existingExecutable, executable, context);
-//                            } catch (Throwable e) {
-//                                LOG.warn("Stack trace:", e);
-//                            }
-//
-//                            // set best match in model
-//                            try {
-//                                executable.setExecutionSignatures(Arrays.asList(AdaptationUtils.getBestMatches(existingExecutable)));
-//                            } catch (Throwable e) {
-//                                LOG.warn("Stack trace:", e);
-//                            }
-//                        }
-
-                        // if remote project
-                        boolean remote = true;
-                        if (remote) {
-                            LOG.info("Copying tests from executable '{}'", executable.getId());
-                            try {
-                                ProjectHelper.copyTestsFromRemote(context, actionConfiguration, executable, existingExecutable);
-                            } catch (Throwable e) {
-                                LOG.warn("Stack trace:", e);
-
-                                return false;
-                            }
-                        } else {
-                            // local project
-
-                            // copy adapter class source + test class source (only in case of EvoSuite)
-                            try {
-                                executable.getProject().copySrcFrom(existingExecutable.getProject(), true);
-                            } catch (Throwable e) {
-                                LOG.warn("Stack trace:", e);
-                            }
-
-                            // check test pattern
-                            if (actionConfiguration.hasIncludeTestsPattern()) {
-                                TestMatcher testMatcher = new TestMatcher();
-                                List<File> testClasses = testMatcher.findMatches(actionConfiguration.getIncludeTestsPattern(), executable.getProject().getSrcTest());
-
-                                if (CollectionUtils.isEmpty(testClasses)) {
-                                    LOG.warn("No test classes matched for pattern '{}' on executable '{}'", actionConfiguration.getIncludeTestsPattern(), executable.getId());
-
-                                    return false;
-                                }
-
-                                List<File> ftbr = testMatcher
-                                        .findMismatches(actionConfiguration.getIncludeTestsPattern(), executable.getProject().getSrcTest());
-                                ftbr.stream().peek(f -> LOG.debug("deleting test class mismatch '{}'. Pattern '{}'", f, actionConfiguration.getIncludeTestsPattern()))
-                                        .forEach(FileUtils::deleteQuietly);
-                            }
-                        }
-
-                        return true;
-                    });
-        } else {
-            // empty projects
-            executables = testAdaptationManager.initNew(this,
+        if(LangSupport.isPython(actionConfiguration)) {
+            // FIXME
+            arenaProjectManager = new PythonArenaProjectManager(context);
+            executables = arenaProjectManager.initNew(this,
                     getInstanceId(),
                     actionConfiguration.getAbstraction(),
-                    POM_TEMPLATE,
-                    (implementation, candidate, valueMap) -> {
-                        // for methods only
-                        if (implementation.getUnitType() == CodeUnit.CodeUnitType.METHOD) {
-                            // limit permutations to method signature only
-                            valueMap.put("bytecodename", implementation.getBytecodeName());
-                        } else {
-                            valueMap.put("bytecodename", "");
-                        }
-                    },
-                    executable -> {
-                        // read test classes
-                        if (MapUtils.isNotEmpty(testClasses) && testClasses.containsKey(executable.getId())) {
-                            LOG.info("Copying tests from testClasses map for executable '{}'", executable.getId());
-                            try {
-                                TestUtils.setUpTestClass(executable, testClasses.get(executable.getId()));
-                            } catch (Throwable e) {
-                                LOG.warn("Setting up test classes for '{}' failed", executable.getId());
-                                LOG.warn("Stack trace:", e);
-
-                                return false;
-                            }
-                        }
-
-                        // read from given systems
-                        if(fromAbstraction != null) {
-                            LOG.info("Populating tests from given abstraction '{}' from action '{}'", fromAbstraction.getAbstractionName(), populateTestsFromAction);
-
-                            for(System system : fromAbstraction.getExecutables()) {
-                                try {
-                                    ProjectHelper.copyTestsFromRemoteWithPostfix(context, actionConfiguration, executable, system);
-                                } catch (Throwable e) {
-                                    LOG.warn("Stack trace:", e);
-
-                                    //return false;
-                                }
-                            }
-                        }
-
-                        // copy from reference impl.
-                        if(referenceImpl != null && referenceImpl.getId().equals(executable.getId())) {
-                            LOG.info("Copying tests from executable '{}'", executable.getId());
-                            try {
-                                ProjectHelper.copyTestsFromRemote(context, actionConfiguration, executable, referenceImpl);
-                            } catch (Throwable e) {
-                                LOG.warn("Stack trace:", e);
-
-                                return false;
-                            }
-                        }
-
-                        return true;
-                    });
+                    "FIXME", // FIXME project template for python projects
+                    (system, candidate, valueMap) -> {}, executable -> true);
         }
+
+        Validate.notNull(arenaProjectManager, "No project manager identified");
 
         Validate.notNull(executables, "Executables are null");
 
         // set
         setExecutables(executables);
 
-        if(executables.getExecutables().size() < 1) {
+        if(executables.getExecutables().isEmpty()) {
             LOG.warn("No executables to process. Returning ...");
 
             return;
@@ -399,6 +191,9 @@ public class ArenaPartitioning extends DefaultAction {
         ClusterEngine clusterEngine = context.getConfiguration().getService(ClusterEngine.class);
         ClusterArenaJobRepository jobRepository = clusterEngine.getArenaJobRepository();
         jobRepository.put(job.getId(), job);
+
+//        ObjectMapper objectMapper = new ObjectMapper();
+//        java.lang.System.out.println(objectMapper.writeValueAsString(job));
 
         // also make sure that the SRM is initialized (otherwise the client has no way to put cells)
         ClusterSRMRepository srmRepository = clusterEngine.getClusterSRMRepository();
@@ -415,97 +210,10 @@ public class ArenaPartitioning extends DefaultAction {
         // executable corpus
         ExecutableCorpus corpus = context.getConfiguration().getExecutableCorpus();
 
-        // args passed to arena
-        List<String> args = new ArrayList<>(Arrays.asList(
-                "java",
-                "-Xmx4096m", // memory
-                "-XX:+IgnoreUnrecognizedVMOptions", // issue #417
-                "-Dsun.misc.URLClassPath.disableJarChecking=true", // prevents classloading problems with java11
-                // required for Java >= 17
-//                "--add-opens=jdk.management/com.sun.management.internal=ALL-UNNAMED",
-//                "--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED",
-//                "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
-//                "--add-opens=java.management/com.sun.jmx.mbeanserver=ALL-UNNAMED",
-//                "--add-opens=jdk.internal.jvmstat/sun.jvmstat.monitor=ALL-UNNAMED",
-//                "--add-opens=java.base/sun.reflect.generics.reflectiveObjects=ALL-UNNAMED",
-//                "--add-opens=java.base/java.io=ALL-UNNAMED",
-//                "--add-opens=java.base/java.nio=ALL-UNNAMED",
-//                "--add-opens=java.base/java.util=ALL-UNNAMED",
-//                "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
-//                "--add-opens=java.base/java.util.concurrent.locks=ALL-UNNAMED",
-//                "--add-opens=java.base/java.lang=ALL-UNNAMED",
-                // see https://ignite.apache.org/docs/latest/quick-start/java
-                "--add-opens=java.base/jdk.internal.access=ALL-UNNAMED",
-                "--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED",
-                "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
-                "--add-opens=java.base/sun.util.calendar=ALL-UNNAMED",
-                "--add-opens=java.management/com.sun.jmx.mbeanserver=ALL-UNNAMED",
-                "--add-opens=jdk.internal.jvmstat/sun.jvmstat.monitor=ALL-UNNAMED",
-                "--add-opens=java.base/sun.reflect.generics.reflectiveObjects=ALL-UNNAMED",
-                "--add-opens=jdk.management/com.sun.management.internal=ALL-UNNAMED",
-                "--add-opens=java.base/java.io=ALL-UNNAMED",
-                "--add-opens=java.base/java.nio=ALL-UNNAMED",
-                "--add-opens=java.base/java.net=ALL-UNNAMED",
-                "--add-opens=java.base/java.util=ALL-UNNAMED",
-                "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
-                "--add-opens=java.base/java.util.concurrent.locks=ALL-UNNAMED",
-                "--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED",
-                "--add-opens=java.base/java.lang=ALL-UNNAMED",
-                "--add-opens=java.base/java.lang.invoke=ALL-UNNAMED",
-                "--add-opens=java.base/java.math=ALL-UNNAMED",
-                "--add-opens=java.sql/java.sql=ALL-UNNAMED",
-                "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
-                "--add-opens=java.base/java.time=ALL-UNNAMED",
-                "--add-opens=java.base/java.text=ALL-UNNAMED",
-                "--add-opens=java.management/sun.management=ALL-UNNAMED",
-                "--add-opens java.desktop/java.awt.font=ALL-UNNAMED",
-                // -- end Java >= 17
-                "-jar",
-                "/var/arena/support/arena-1.0.0-SNAPSHOT.jar",
-                "--mode", "distributed",
-                "--lasso-addresses", "127.0.0.1:10800",
-                "--lasso-job", job.getId(),
-                "--work-dir", "/var/arena",
-                //"--generate-junit", "/var/arena",
-                //"--output-csv", "/var/arena/mycsv_"+System.currentTimeMillis()+".csv",
-                "--input", ArenaContainer.WD_DEFAULT,
-                "--output", ArenaContainer.WD_DEFAULT,
-                "--repository-url", corpus.getArtifactRepository().getUrl(),
-                "&>" + ARENA_LOG_TXT
-        ));
-
-        if (CollectionUtils.isNotEmpty(features)) {
-            args.add("--features");
-            args.add(features.stream().collect(Collectors.joining(",")));
-        }
-
-        if (StringUtils.isNotBlank(task)) {
-            args.add("--task");
-            args.add(task);
-        }
-
-        // set default commands (use copy!)
-        Environment environment = actionConfiguration.getProfile().getEnvironment().copy();
-        if (CollectionUtils.isEmpty(environment.getCommandArgsList())) {
-            environment.setCommandArgsList(new LinkedList<>());
-        }
-
-        environment.getCommandArgsList().add(args);
-
-        ArenaProjectManager manager = new ArenaProjectManager(context);
-        ArenaExecutionEnvironment arenaExecutionEnvironment = manager.createExecutionEnvironment(this, actionConfiguration, environment);
-        // set container timeout
-        if(LOG.isInfoEnabled()) {
-            LOG.info("Setting arena container timeout to '{}'", containerTimeout);
-        }
-        arenaExecutionEnvironment.setExecutionTimeout(containerTimeout);
-
-        if(LOG.isInfoEnabled()) {
-            LOG.info("Setting arena args to '{}'", String.join(",", args));
-        }
+        ExecutionEnvironment executionEnvironment = arenaProjectManager.createExecutionEnvironment(this, actionConfiguration, job, corpus, task, features, containerTimeout);
 
         ExecutionEnvironmentManager executionEnvironmentManager = context.getExecutionEnvironmentManager();
-        executionEnvironmentManager.run(arenaExecutionEnvironment);
+        executionEnvironmentManager.run(executionEnvironment);
 
         // collect data
 
@@ -527,21 +235,6 @@ public class ArenaPartitioning extends DefaultAction {
             LOG.warn("Arena job failed");
         }
 
-//        // FIXME do filtering on failed ones
-//        List<Executable> executableList = actionConfiguration.getAbstraction().getImplementations().stream()
-//                .map(impl -> {
-//                    Executable executable = new Executable();
-//                    executable.setImplementation(impl);
-//                    return executable;
-//                }).collect(Collectors.toList());
-//
-//        // set setExecutables() to be compliant with other actions
-//        Executables executables = new Executables();
-//        executables.setExecutables(executableList);
-//        executables.setAbstractionName(actionConfiguration.getAbstraction().getName());
-//        executables.setActionInstanceId(getInstanceId());
-//        setExecutables(executables);
-
         // collect sequences
         collectSequences(context, executables);
 
@@ -559,51 +252,13 @@ public class ArenaPartitioning extends DefaultAction {
                 LOG.warn("Export CSV failed", e);
             }
         }
-
-        // FIXME do filtering of executables after execution
-        // either signaling or timestamps of files etc.
-
-        // FIXME set "sequences"
-    }
-
-    private System getEvoSuiteReferenceImplementation(LSLExecutionContext context, String refImplId) {
-        ActionNode evosuiteNode = context.getExecutionPlan().getAncestor(this, EvoSuite.class);
-        Cache.Entry<ExecKey, System> executableEntry = null;
-        try {
-            executableEntry = context.getLassoOperations().getExecutableFromAction(context.getExecutionId(), evosuiteNode.getName(), refImplId);
-        } catch (Throwable e) {
-            //throw new RuntimeException(e);
-
-            // try other actions
-            List<ActionNode> actionNodes = context.getExecutionPlan().queryActionsByType(EvoSuite.class);
-
-            for(ActionNode node : actionNodes) {
-                LOG.debug("Trying action node '{}'", node.getName());
-                try {
-                    executableEntry = context.getLassoOperations().getExecutableFromAction(context.getExecutionId(), node.getName(), refImplId);
-                    if(executableEntry != null) {
-                        break;
-                    }
-                } catch (Exception ex) {
-                    //throw new RuntimeException(e);
-                }
-            }
-        }
-
-        return executableEntry.getValue();
     }
 
     private void processSheets(LSLExecutionContext context, ActionConfiguration actionConfiguration, Systems executables) {
-        //
-        if(sequences != null) {
-            LOG.warn("Overriding sheets with sequences");
-            sheets = sequences;
-        }
-
         // write manual sheets
-        if (MapUtils.isNotEmpty(sheets)) {
+        if (MapUtils.isNotEmpty(sequences)) {
             try {
-                stimulusSheets.addAll(SequenceUtils.toSheetsJSONL(sheets, actionConfiguration.getAbstraction().getSpecification().getInterfaceSpecification().getLqlQuery()));
+                stimulusSheets.addAll(SequenceUtils.toSheetsJSONL(sequences, actionConfiguration.getAbstraction().getSpecification().getInterfaceSpecification().getLqlQuery()));
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -687,23 +342,23 @@ public class ArenaPartitioning extends DefaultAction {
     }
 
     private void collectSequences(LSLExecutionContext context, Systems executables) {
-        // TODO remove (deprecated)
-        for (System executable : executables.getExecutables()) {
-            // make tests available in filesystem
-            List<File> testClasses = executable.getProject().getFiles(executable.getProject().getSrcTest(), "java");
-            testClasses.forEach(file -> {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Writing test to remote filesystem '{}'", file.getAbsolutePath());
-                }
-
-                try {
-                    context.getLassoFileSystem().write(file.getAbsolutePath(), file);
-                } catch (Throwable e) {
-                    LOG.warn("Failed to write test '{}'", file.getAbsolutePath());
-                    LOG.warn("Stack trace:", e);
-                }
-            });
-        }
+//        // remove (deprecated)
+//        for (System executable : executables.getExecutables()) {
+//            // make tests available in filesystem
+//            List<File> testClasses = executable.getProject().getFiles(executable.getProject().getSrcTest(), "java");
+//            testClasses.forEach(file -> {
+//                if (LOG.isDebugEnabled()) {
+//                    LOG.debug("Writing test to remote filesystem '{}'", file.getAbsolutePath());
+//                }
+//
+//                try {
+//                    context.getLassoFileSystem().write(file.getAbsolutePath(), file);
+//                } catch (Throwable e) {
+//                    LOG.warn("Failed to write test '{}'", file.getAbsolutePath());
+//                    LOG.warn("Stack trace:", e);
+//                }
+//            });
+//        }
 
         // read sheets from arena: Sheets
         try {

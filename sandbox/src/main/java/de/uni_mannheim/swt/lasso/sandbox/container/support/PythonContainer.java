@@ -62,6 +62,7 @@ public class PythonContainer extends Container {
 
         CreateContainerCmd command = containerService.createContainer(containerName, image, null)
                 .withUser(user) // default user and group id (e.g., someuser:someuser)
+                .withNetworkMode("host") // require to access local services on the host
                 .withBinds(binds);
 
         // create copy

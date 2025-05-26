@@ -20,6 +20,7 @@
 package de.uni_mannheim.swt.lasso.cluster.client;
 
 import de.uni_mannheim.swt.lasso.cluster.LassoClusterClient;
+import org.apache.commons.lang3.EnumUtils;
 import org.apache.ignite.client.ClientCache;
 
 import org.slf4j.Logger;
@@ -38,21 +39,31 @@ public class ClientArenaJobRepository implements ArenaJobRepository {
     private final LassoClusterClient clusterClient;
 
     private ClientCache<String, ArenaJob> jobsCache;
+    private ClientCache<String, String> jobsCacheStatus;
 
     public ClientArenaJobRepository(LassoClusterClient clusterClient) {
         this.clusterClient = clusterClient;
 
         jobsCache = clusterClient.getClient().cache(ARENAJOBS);
+        jobsCacheStatus = clusterClient.getClient().cache(ARENAJOBS_STATUS);
     }
 
     @Override
     public void put(String id, ArenaJob job) {
+        this.jobsCacheStatus.put(id, job.getStatus().name());
+
         jobsCache.put(id, job);
     }
 
     @Override
     public ArenaJob get(String id) {
-        return jobsCache.get(id);
+        String status = this.jobsCacheStatus.get(id);
+        JobStatus jobStatus = EnumUtils.getEnum(JobStatus.class, status);
+
+        ArenaJob job = jobsCache.get(id);
+        job.setStatus(jobStatus);
+
+        return job;
     }
 
     @Override
