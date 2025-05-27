@@ -36,7 +36,7 @@ implement a java class with the following interface specification, but do not in
                 """);
 
         ContentParser contentParser = new ContentParser();
-        List<String> generatedCode = contentParser.extractCode(chatResponse);
+        List<String> generatedCode = contentParser.extractCode(chatResponse, "java");
 
         List<ClassUnderTest> classesUnderTest = new LinkedList<>();
         for(String sourceCode : generatedCode) {
@@ -81,7 +81,7 @@ implement a java class with the following interface specification, but do not in
         ContentParser contentParser = new ContentParser();
         List<String> generatedCode = new LinkedList<>();
         for(Choice choice : response.getChoices()) {
-            List<String> codeMatches = contentParser.extractCode(choice.getMessage().getContent());
+            List<String> codeMatches = contentParser.extractCode(choice.getMessage().getContent(), "java");
             generatedCode.addAll(codeMatches);
         }
 

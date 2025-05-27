@@ -160,7 +160,6 @@ public class ArenaPartitioning extends DefaultAction {
         }
 
         if(LangSupport.isPython(actionConfiguration)) {
-            // FIXME
             arenaProjectManager = new PythonArenaProjectManager(context);
             executables = arenaProjectManager.initNew(this,
                     getInstanceId(),

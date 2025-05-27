@@ -94,6 +94,8 @@ public abstract class LangChainAction extends DefaultAction {
         return IteratorUtils.loopingListIterator(servers);
     }
 
+    // deprecated: see BuildManager
+    @Deprecated
     protected CodeUnit parse(String code, String pkg) {
         if (LOG.isInfoEnabled()) {
             LOG.info("Parsing code\n{}", code);

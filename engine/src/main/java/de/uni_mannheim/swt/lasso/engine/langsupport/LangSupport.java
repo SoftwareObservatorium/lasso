@@ -1,7 +1,9 @@
 package de.uni_mannheim.swt.lasso.engine.langsupport;
 
 import de.uni_mannheim.swt.lasso.core.model.ActionConfiguration;
+import de.uni_mannheim.swt.lasso.core.model.CodeUnit;
 import de.uni_mannheim.swt.lasso.core.model.System;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Optional;
 
@@ -17,9 +19,17 @@ public class LangSupport {
         return system.isPresent() && system.get().getCode().isJava();
     }
 
+    public static boolean isJava(String lang) {
+        return StringUtils.equalsIgnoreCase(lang, CodeUnit.JAVA);
+    }
+
     public static boolean isPython(ActionConfiguration actionConfiguration) {
         Optional<System> system = actionConfiguration.getAbstraction().getImplementations().stream().findAny();
 
         return system.isPresent() && system.get().getCode().isPython();
+    }
+
+    public static boolean isPython(String lang) {
+        return StringUtils.equalsIgnoreCase(lang, CodeUnit.PYTHON);
     }
 }

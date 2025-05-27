@@ -46,7 +46,7 @@ class PythonSystemTest extends AbstractGroovySystemTest {
     LassoTestEngine lassoEngine
 
     @Test
-    void test_base64_function() throws IOException, DataSourceNotFoundException {
+    void test_base64_function_fromImplementation() throws IOException, DataSourceNotFoundException {
         @Language("Groovy")
         String content = '''
 dataSource "mavenCentral2023" // default dataSource
@@ -94,6 +94,97 @@ def encode(string):
         dependsOn 'createStimulusMatrix'
         include '*'
         profile('pythonProfile')
+    }
+}
+        '''
+
+        //
+        LSLScript scriptUnderTest = createScript(content)
+
+
+        // DO EXECUTE
+        LSLExecutionResult lslExecutionResult = lassoEngine.execute(scriptUnderTest);
+        LSLExecutionContext lslExecutionContext = lassoEngine.getLastContext();
+
+        // assertions
+        //verifyAbstraction(lslExecutionContext, 'select', 'Base64', 1)
+        //verifyAbstraction(lslExecutionContext, 'execute', 'Base64', 1)
+
+        // TODO verify SRM
+        // put
+        ClusterEngine clusterEngine = lslExecutionContext.getConfiguration().getService(ClusterEngine.class);
+
+        // also make sure that the SRM is initialized (otherwise the client has no way to put cells)
+        ClusterSRMRepository srmRepository = clusterEngine.getClusterSRMRepository();
+        Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
+        System.out.println(table.printAll());
+    }
+
+    @Test
+    void test_base64_function_GAI() throws IOException, DataSourceNotFoundException {
+        @Language("Groovy")
+        String content = '''
+dataSource 'lasso_quickstart'
+study(name: 'Python') {
+
+    profile('arenaPythonProfile') {
+        scope('class') { type = 'class' }
+        environment('python-arena') {
+            image = 'swtrepo.informatik.uni-mannheim.de:5050/docker/lasso/arena-python:latest' // arena-python
+        }
+    }
+    
+    profile('analyzerPythonProfile') {
+        scope('class') { type = 'class' }
+        environment('python-analyzer') {
+            image = 'swtrepo.informatik.uni-mannheim.de:5050/docker/lasso/analyzer-python:latest' // arena-analyzer
+        }
+    }
+    
+    action(name: 'createStimulusMatrix') {
+        execute {
+            stimulusMatrix('myAb', """Base64 {
+    encode(str)->str
+}""", [], [
+  test(name: 'testEncode()') {
+    row '', 'create', 'Base64'
+    row '', 'encode', 'A1', '"Hello World!"'
+  }
+])
+        }
+    }
+
+    action(name: 'generateCodeLlama', type: 'GenerateCodeOllama') {
+        // pipeline specific
+        dependsOn 'createStimulusMatrix'
+        include '*'
+        profile('analyzerPythonProfile')
+
+        // action configuration block
+        servers = ["http://localhost:11434"]
+        model = "llama3.1:latest"
+        samples = 1
+        
+        // lang to python
+        lang = "python"
+
+        // custom DSL command offered by the action (for each stimulus matrix, create one prompt to obtain impls)
+        prompt { stimulusMatrix ->
+            // can by for any prompts: FA, impls, models etc.
+            def prompt = [:] // create prompt model
+            prompt.promptContent = """implement a python function with the following signature: ```${stimulusMatrix.lql}```. Only output the python code and nothing else."""
+            prompt.id = "lql_prompt"
+            return [prompt] // list of prompts is expected
+        }
+    }
+    
+    /* filter candidates by two tests (test-driven code filtering) */
+    action(name: 'filter', type: 'Arena') { // filter by tests
+        maxAdaptations = 1 // how many adaptations to try
+
+        dependsOn 'generateCodeLlama'
+        include '*'
+        profile('arenaPythonProfile')
     }
 }
         '''

@@ -35,7 +35,15 @@ public class ContentParser {
 
     private String regex = "```[\\s\\S]*?```";
 
-    public List<String> extractCode(String content) {
+    public List<String> extractJavaCode(String content) {
+        return extractCode(content, "java");
+    }
+
+    public List<String> extractPythonCode(String content) {
+        return extractCode(content, "python");
+    }
+
+    public List<String> extractCode(String content, String lang) {
         // FIXME move
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(content);
@@ -44,7 +52,7 @@ public class ContentParser {
 
         while (matcher.find()) {
             String codeBlock = matcher.group();
-            matches.add(StringUtils.replaceEach(codeBlock, new String[]{"```java\n", "```"}, new String[]{"", ""}));
+            matches.add(StringUtils.replaceEach(codeBlock, new String[]{"```"+lang+"\n", "```"}, new String[]{"", ""}));
         }
 
         return matches;

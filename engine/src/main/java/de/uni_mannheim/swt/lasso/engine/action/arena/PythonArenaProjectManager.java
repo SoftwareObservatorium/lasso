@@ -27,12 +27,10 @@ import de.uni_mannheim.swt.lasso.datasource.maven.build.Candidate;
 import de.uni_mannheim.swt.lasso.engine.LSLExecutionContext;
 import de.uni_mannheim.swt.lasso.engine.LassoUtils;
 import de.uni_mannheim.swt.lasso.engine.action.DefaultAction;
-import de.uni_mannheim.swt.lasso.engine.environment.ArenaExecutionEnvironment;
+import de.uni_mannheim.swt.lasso.engine.build.PythonProjectBuildManager;
 import de.uni_mannheim.swt.lasso.engine.environment.ExecutionEnvironment;
-import de.uni_mannheim.swt.lasso.engine.environment.ExecutionEnvironmentManager;
 import de.uni_mannheim.swt.lasso.engine.environment.PythonBasicExecutionEnvironment;
 import de.uni_mannheim.swt.lasso.engine.workspace.Workspace;
-import de.uni_mannheim.swt.lasso.sandbox.container.support.ArenaContainer;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
@@ -167,7 +165,7 @@ public class PythonArenaProjectManager implements ArenaProjectManager {
 
         environment.getCommandArgsList().add(args);
 
-        PythonBasicExecutionEnvironment arenaExecutionEnvironment = createExecutionEnvironment(action, actionConfiguration, environment);
+        PythonBasicExecutionEnvironment arenaExecutionEnvironment = PythonProjectBuildManager.createExecutionEnvironment(action, lslExecutionContext, actionConfiguration, environment);
         // set container timeout
         if(LOG.isInfoEnabled()) {
             LOG.info("Setting python arena container timeout to '{}'", containerTimeout);
@@ -179,25 +177,6 @@ public class PythonArenaProjectManager implements ArenaProjectManager {
         }
 
         return arenaExecutionEnvironment;
-    }
-
-    public PythonBasicExecutionEnvironment createExecutionEnvironment(DefaultAction action, ActionConfiguration configuration, Environment environment) {
-        //
-        ExecutionEnvironmentManager executionEnvironmentManager = lslExecutionContext.getExecutionEnvironmentManager();
-
-        PythonBasicExecutionEnvironment executionEnvironment =
-                (PythonBasicExecutionEnvironment) executionEnvironmentManager.createExecutionEnvironment(ExecutionEnvironmentManager.PYTHON);
-
-        //
-        File projectRoot = workspace.getRoot(action.getInstanceId(), configuration.getAbstraction());
-
-        // configure environment
-        executionEnvironment.setImage(environment.getImage());
-
-        executionEnvironment.setProjectRoot(workspace, projectRoot);
-        executionEnvironment.setCommands(environment.getCommandArgsList().get(0));
-
-        return executionEnvironment;
     }
 
     public LSLExecutionContext getLslExecutionContext() {

@@ -89,6 +89,9 @@ public class GenerateTestsOllama extends LangChainAction {
     @LassoInput(desc = "how many coding solutions to obtain", optional = true)
     public int samples = 1;
 
+    @LassoInput(desc = "Programming Language (java, python)", optional = true)
+    public String lang = "java";
+
 //    @LassoInput(desc = "number of prompts to fire", optional = true)
 //    public int noOfPrompts = 1;
 
@@ -155,7 +158,7 @@ public class GenerateTestsOllama extends LangChainAction {
 
                         ContentParser contentParser = new ContentParser();
                         List<String> generatedCode = new LinkedList<>();
-                        List<String> codeMatches = contentParser.extractCode(response);
+                        List<String> codeMatches = contentParser.extractCode(response, lang);
                         generatedCode.addAll(codeMatches);
 
                         // useful package names (human readable)
