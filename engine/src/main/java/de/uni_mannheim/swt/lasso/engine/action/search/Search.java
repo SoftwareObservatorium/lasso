@@ -157,7 +157,7 @@ public class Search extends DefaultAction {
             // get query model
             CodeQuery myQuery = new CodeQuery();
             context.getLassoContext().register(myQuery);
-            List<Map> queryMaps = (List<Map>) context.getLassoContext().getActionContainerSpec().getActions().get(getName()).applyCustomCommand(closure, myQuery, new Object[]{actionConfiguration.getAbstraction()});
+            List<Map> queryMaps = (List<Map>) context.getLassoContext().getActionContainerSpec().getActions().get(getName()).applyCustomCommand(closure, myQuery, actionConfiguration.getAbstraction());
 
             LOG.debug("FOUND QUERY MODELS " + queryMaps);
 
