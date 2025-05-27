@@ -210,4 +210,80 @@ study(name: 'Python') {
         Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
         System.out.println(table.printAll());
     }
+
+    // NOTE: works only if lasso_quickstart already contains candidates ...
+    @Test
+    void test_base64_function_SEARCH() throws IOException, DataSourceNotFoundException {
+        @Language("Groovy")
+        String content = '''
+dataSource 'lasso_quickstart'
+study(name: 'Python') {
+
+    profile('arenaPythonProfile') {
+        scope('class') { type = 'class' }
+        environment('python-arena') {
+            image = 'swtrepo.informatik.uni-mannheim.de:5050/docker/lasso/arena-python:latest' // arena-python
+        }
+    }
+    
+    action(name: 'createStimulusMatrix') {
+        execute {
+            stimulusMatrix('myAb', """Base64 {
+    encode(str)->str
+}""", [], [
+  test(name: 'testEncode()') {
+    row '', 'create', 'Base64'
+    row '', 'encode', 'A1', '"Hello World!"'
+  }
+])
+        }
+    }
+    
+    /* select class candidates using interface-driven code search */
+    action(name: 'search', type: 'Search') {
+        dependsOn 'createStimulusMatrix'
+        include '*'
+
+        query { stimulusMatrix ->
+            def query = [:] // create query model
+            query.queryContent = stimulusMatrix.lql
+            query.rows = 10
+            // lang to python
+            query.lang = "python"
+            return [query] // list of queries is expected
+        }
+    }
+    
+    /* filter candidates by two tests (test-driven code filtering) */
+    action(name: 'filter', type: 'Arena') { // filter by tests
+        maxAdaptations = 1 // how many adaptations to try
+
+        dependsOn 'search'
+        include '*'
+        profile('arenaPythonProfile')
+    }
+}
+        '''
+
+        //
+        LSLScript scriptUnderTest = createScript(content)
+
+
+        // DO EXECUTE
+        LSLExecutionResult lslExecutionResult = lassoEngine.execute(scriptUnderTest);
+        LSLExecutionContext lslExecutionContext = lassoEngine.getLastContext();
+
+        // assertions
+        //verifyAbstraction(lslExecutionContext, 'select', 'Base64', 1)
+        //verifyAbstraction(lslExecutionContext, 'execute', 'Base64', 1)
+
+        // TODO verify SRM
+        // put
+        ClusterEngine clusterEngine = lslExecutionContext.getConfiguration().getService(ClusterEngine.class);
+
+        // also make sure that the SRM is initialized (otherwise the client has no way to put cells)
+        ClusterSRMRepository srmRepository = clusterEngine.getClusterSRMRepository();
+        Table table = srmRepository.sqlToTable("SELECT * FROM CELLVALUE WHERE executionId = ?", lslExecutionContext.getExecutionId());
+        System.out.println(table.printAll());
+    }
 }
