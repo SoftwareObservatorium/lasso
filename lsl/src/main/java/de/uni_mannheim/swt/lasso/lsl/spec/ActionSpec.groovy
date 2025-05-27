@@ -311,6 +311,7 @@ class ActionSpec extends LassoSpec {
 
         CodeUnit codeUnit = new CodeUnit()
         codeUnit.setUnitType(CodeUnit.CodeUnitType.CLASS)
+        codeUnit.setLang(CodeUnit.JAVA)
         codeUnit.setName(StringUtils.substringAfterLast(className, "."))
         codeUnit.setPackagename(StringUtils.substringBeforeLast(className, "."))
         codeUnit.setId(id)

@@ -26,7 +26,6 @@ import de.uni_mannheim.swt.lasso.engine.LSLExecutionResult
 import de.uni_mannheim.swt.lasso.engine.LSLScript
 import de.uni_mannheim.swt.lasso.service.systemtests.util.LassoTestEngine
 import de.uni_mannheim.swt.lasso.srm.ClusterSRMRepository
-import de.uni_mannheim.swt.lasso.srm.olap.Warehouse
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -39,61 +38,52 @@ import tech.tablesaw.api.Table
  * @author mkessel
  */
 
-class PythonSystemTest extends AbstractGroovySystemTest {
+class JavaSystemTest extends AbstractGroovySystemTest {
 
     @Autowired
     @Qualifier("testLassoEngine")
     LassoTestEngine lassoEngine
 
     @Test
-    void test_base64_function_fromImplementation() throws IOException, DataSourceNotFoundException {
+    void test_base64_method_fromImplementation() throws IOException, DataSourceNotFoundException {
         @Language("Groovy")
         String content = '''
-dataSource "mavenCentral2023" // default dataSource
-study(name: 'Python') {
+dataSource 'lasso_quickstart'
+study(name: 'Base64encodedecode') {
 
-    profile('pythonProfile') {
-        scope('class') { type = 'class' }
-        environment('python-arena') {
-            image = 'swtrepo.informatik.uni-mannheim.de:5050/docker/lasso/arena-python:latest' // arena-python
-        }
-    }
-      
-    action(name: 'createStimulusMatrix') {
+    action(name: 'create') {
         execute {
-            stimulusMatrix('myAb', """Base64 {
-    encode(str)->str
-}""", [pyImplementationFromSource("1", "SomeName", """
-import base64
-
-def encode(string):
-    # Convert the string to bytes
-    string_bytes = string.encode('utf-8')
-    
-    # Encode the bytes into Base64
-    base64_encoded = base64.b64encode(string_bytes)
-    
-    # Decode the bytes back into a string
-    base64_string = base64_encoded.decode('utf-8')
-    
-    return base64_string
-
-""")], [
-  test(name: 'testEncode()') {
-    row '', 'create', 'Base64'
-    row '', 'encode', 'A1', '"Hello World!"'
-  }
-])
+            // from known maven artifact (assuming maven repository is able to provide the artifact)
+            stimulusMatrix('Base64', """Base64{
+                    encode(byte[])->byte[]
+                    decode(java.lang.String)->byte[]
+                }
+                """, [
+                    implementation("1", "org.apache.commons.codec.binary.Base64", "commons-codec:commons-codec:1.15"),
+            ], [ // tests
+                 test(name: 'testEncode()') {
+                     row '', 'create', 'Base64'
+                     row '"dXNlcjpwYXNz".getBytes()', 'encode', 'A1', '"user:pass".getBytes()'
+                 },
+                 test(name: 'testEncode_padding()') {
+                     row '', 'create', 'Base64'
+                     row '"SGVsbG8gV29ybGQ=".getBytes()', 'encode', 'A1', '"Hello World".getBytes()'
+                 }])
         }
     }
 
-    /* filter candidates by two tests (test-driven code filtering) */
-    action(name: 'filter', type: 'Arena') { // filter by tests
+    action(name: 'test', type: 'Arena') {
+        features = ['cc'] // enable code coverage measurement (class scope)
         maxAdaptations = 1 // how many adaptations to try
 
-        dependsOn 'createStimulusMatrix'
-        include '*'
-        profile('pythonProfile')
+        dependsOn 'create'
+        include 'Base64'
+        profile('java17Profile') {
+            scope('class') { type = 'class' }
+            environment('java17') {
+                image = 'maven:3.9-eclipse-temurin-17' // docker image (JDK 17)
+            }
+        }
     }
 }
         '''
@@ -121,34 +111,31 @@ def encode(string):
     }
 
     @Test
-    void test_base64_function_GAI() throws IOException, DataSourceNotFoundException {
+    void test_base64_method_GAI() throws IOException, DataSourceNotFoundException {
         @Language("Groovy")
         String content = '''
+// LSL generated
 dataSource 'lasso_quickstart'
-study(name: 'Python') {
+def ollamaServers = ["http://localhost:11434"]
+study(name: 'GenOllama') {
 
-    profile('arenaPythonProfile') {
+    // target profile
+    profile('java17Profile') {
         scope('class') { type = 'class' }
-        environment('python-arena') {
-            image = 'swtrepo.informatik.uni-mannheim.de:5050/docker/lasso/arena-python:latest' // arena-python
+        environment('java17') {
+            image = 'maven:3.9-eclipse-temurin-17'
         }
     }
-    
-    profile('analyzerPythonProfile') {
-        scope('class') { type = 'class' }
-        environment('python-analyzer') {
-            image = 'swtrepo.informatik.uni-mannheim.de:5050/docker/lasso/analyzer-python:latest' // arena-analyzer
-        }
-    }
-    
+
     action(name: 'createStimulusMatrix') {
         execute {
             stimulusMatrix('myAb', """Base64 {
-    encode(str)->str
-}""", [], [
+    encode(byte[])->byte[]
+    decode(java.lang.String)->byte[]
+}""", [/*impls*/], [
   test(name: 'testEncode()') {
     row '', 'create', 'Base64'
-    row '', 'encode', 'A1', '"Hello World!"'
+    row '"SGVsbG8gV29ybGQh".getBytes()', 'encode', 'A1', '"Hello World!".getBytes()'
   }
 ])
         }
@@ -158,33 +145,30 @@ study(name: 'Python') {
         // pipeline specific
         dependsOn 'createStimulusMatrix'
         include '*'
-        profile('analyzerPythonProfile')
+        profile('java17Profile')
 
         // action configuration block
-        servers = ["http://localhost:11434"]
+        servers = ollamaServers
         model = "llama3.1:latest"
         samples = 1
-        
-        // lang to python
-        lang = "python"
 
         // custom DSL command offered by the action (for each stimulus matrix, create one prompt to obtain impls)
         prompt { stimulusMatrix ->
             // can by for any prompts: FA, impls, models etc.
             def prompt = [:] // create prompt model
-            prompt.promptContent = """implement a python function with the following signature: ```${stimulusMatrix.lql}```. Only output the python code and nothing else."""
+            prompt.promptContent = """implement a java class with the following interface specification, but do not inherit a java interface: ```${stimulusMatrix.lql}```. Only output the java class and nothing else."""
             prompt.id = "lql_prompt"
             return [prompt] // list of prompts is expected
         }
     }
-    
-    /* filter candidates by two tests (test-driven code filtering) */
-    action(name: 'filter', type: 'Arena') { // filter by tests
+
+    action(name: 'execute', type: 'Arena') {
         maxAdaptations = 1 // how many adaptations to try
+        features = ['cc']
 
         dependsOn 'generateCodeLlama'
         include '*'
-        profile('arenaPythonProfile')
+        profile('java17Profile')
     }
 }
         '''
@@ -211,58 +195,56 @@ study(name: 'Python') {
         System.out.println(table.printAll());
     }
 
-    // NOTE: works only if lasso_quickstart already contains candidates ...
     @Test
-    void test_base64_function_SEARCH() throws IOException, DataSourceNotFoundException {
+    void test_base64_method_SEARCH() throws IOException, DataSourceNotFoundException {
         @Language("Groovy")
         String content = '''
-dataSource 'lasso_quickstart'
-study(name: 'Python') {
+dataSource "mavenCentral2023" // default dataSource
+study(name: 'TDSGenerated') {
 
-    profile('arenaPythonProfile') {
-        scope('class') { type = 'class' }
-        environment('python-arena') {
-            image = 'swtrepo.informatik.uni-mannheim.de:5050/docker/lasso/arena-python:latest' // arena-python
-        }
+    profile('java17Profile') {
+    scope('class') { type = 'class' }
+    environment('java17') {
+        image = 'maven:3.9-eclipse-temurin-17' // docker image (JDK 17)
     }
-    
+    }
+      
     action(name: 'createStimulusMatrix') {
         execute {
             stimulusMatrix('myAb', """Base64 {
-    encode(str)->str
-}""", [], [
-  test(name: 'testEncode()') {
+    encode(byte[])->byte[]
+    decode(java.lang.String)->byte[]
+}""", [/*impls*/], [
+  test(name: 'testEncode(p1=byte[], p2=byte[])', p1:'"Hello World!".getBytes()', p2:'"SGVsbG8gV29ybGQh".getBytes()') {
     row '', 'create', 'Base64'
-    row '', 'encode', 'A1', '"Hello World!"'
-  }
+    row '?p2', 'encode', 'A1', '?p1'
+  },
+  test(name: 'testEncode(p1=byte[], p2=byte[])', p1:'"Hello World".getBytes()', p2:'"SGVsbG8gV29ybGQ=".getBytes()')
 ])
         }
     }
-    
+
     /* select class candidates using interface-driven code search */
-    action(name: 'search', type: 'Search') {
+    action(name: 'select', type: 'Search') {
         dependsOn 'createStimulusMatrix'
         include '*'
 
         query { stimulusMatrix ->
             def query = [:] // create query model
             query.queryContent = stimulusMatrix.lql
-            query.rows = 10
-            // lang to python
-            query.lang = "python"
+            query.rows = 5
+
             return [query] // list of queries is expected
         }
     }
-    
     /* filter candidates by two tests (test-driven code filtering) */
     action(name: 'filter', type: 'Arena') { // filter by tests
         maxAdaptations = 1 // how many adaptations to try
-        
-        features = ['cc'] // enable code coverage measurement
+        features = ['cc']
 
-        dependsOn 'search'
+        dependsOn 'select'
         include '*'
-        profile('arenaPythonProfile')
+        profile('java17Profile')
     }
 }
         '''

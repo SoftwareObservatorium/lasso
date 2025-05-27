@@ -142,6 +142,15 @@ public class ArenaPartitioning extends DefaultAction {
             LOG.info("Executing " + this.getClass());
         }
 
+        if(CollectionUtils.isEmpty(actionConfiguration.getAbstraction().getImplementations())) {
+            // nothing to do
+            setExecutables(Systems.fromAbstraction(actionConfiguration.getAbstraction(), getName()));
+
+            LOG.info("No implementations. Returning .. ");
+
+            return;
+        }
+
         // set scope
         scope = actionConfiguration.getScope();
 
