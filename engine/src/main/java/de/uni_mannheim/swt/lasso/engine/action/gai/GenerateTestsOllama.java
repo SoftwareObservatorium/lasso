@@ -27,9 +27,14 @@ import de.uni_mannheim.swt.lasso.engine.action.annotations.LassoAction;
 import de.uni_mannheim.swt.lasso.engine.action.annotations.LassoInput;
 import de.uni_mannheim.swt.lasso.engine.action.annotations.Local;
 import de.uni_mannheim.swt.lasso.engine.action.annotations.Stable;
+import de.uni_mannheim.swt.lasso.engine.build.JavaProjectBuildManager;
+import de.uni_mannheim.swt.lasso.engine.build.ProjectBuildManager;
+import de.uni_mannheim.swt.lasso.engine.build.PythonProjectBuildManager;
+import de.uni_mannheim.swt.lasso.engine.langsupport.LangSupport;
 import de.uni_mannheim.swt.lasso.gai.openai.Prompt;
 import de.uni_mannheim.swt.lasso.gai.openai.util.ContentParser;
 import dev.langchain4j.model.ollama.OllamaChatModel;
+import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +43,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
-import java.util.stream.Collectors;
 
 /**
  * Generates tests with generative AI (GAI)
@@ -88,6 +92,9 @@ public class GenerateTestsOllama extends LangChainAction {
 
     @LassoInput(desc = "how many coding solutions to obtain", optional = true)
     public int samples = 1;
+
+    @LassoInput(desc = "Programming Language (java, python)", optional = true)
+    public String lang = CodeUnit.JAVA;
 
 //    @LassoInput(desc = "number of prompts to fire", optional = true)
 //    public int noOfPrompts = 1;
@@ -155,15 +162,27 @@ public class GenerateTestsOllama extends LangChainAction {
 
                         ContentParser contentParser = new ContentParser();
                         List<String> generatedCode = new LinkedList<>();
-                        List<String> codeMatches = contentParser.extractCode(response);
+                        List<String> codeMatches = contentParser.extractCode(response, lang);
                         generatedCode.addAll(codeMatches);
 
                         // useful package names (human readable)
                         String pkg = myPrompt.getModel().replaceAll("\\W", ""); //StringUtils.replaceEach(prompt.getModel(), new String[]{":", "-"}, new String[]{"_", "_"});
 
+                        // decide language
+                        final ProjectBuildManager projectBuildManager;
+                        if(LangSupport.isJava(lang)) {
+                            projectBuildManager = new JavaProjectBuildManager();
+                        } else if(LangSupport.isPython(lang)) {
+                            projectBuildManager = new PythonProjectBuildManager();
+                        } else {
+                            projectBuildManager = null;
+                        }
+
+                        Validate.notNull(projectBuildManager, "Unsupported language found");
+
                         // 2. parse code
                         LOG.info("Parsing code");
-                        List<CodeUnit> units = generatedCode.stream().map(c -> parse(c, pkg)).filter(Objects::nonNull).collect(Collectors.toList());
+                        List<CodeUnit> units = generatedCode.stream().map(c -> projectBuildManager.parse(c, pkg)).filter(Objects::nonNull).toList();
 
                         String testPrefix = pkg + sampleId;
 

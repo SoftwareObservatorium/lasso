@@ -34,6 +34,7 @@ import de.uni_mannheim.swt.lasso.engine.action.annotations.Local;
 import de.uni_mannheim.swt.lasso.engine.action.annotations.Stable;
 import de.uni_mannheim.swt.lasso.engine.data.ReportKey;
 import de.uni_mannheim.swt.lasso.engine.data.ReportOperations;
+import de.uni_mannheim.swt.lasso.engine.langsupport.LangSupport;
 import groovy.lang.Closure;
 import groovy.lang.GString;
 import org.apache.commons.collections4.CollectionUtils;
@@ -87,6 +88,11 @@ public class Search extends DefaultAction {
                 queryModel.queryForClasses(codeQuery.getQueryContent(), "class-simple");
                 queryModel.setRows(codeQuery.getRows());
                 codeQuery.getFilters().forEach(queryModel::filter);
+
+                if(LangSupport.isPython(codeQuery.getLang())) { // special handling for python
+                    queryModel.lang("python"); // set Python language
+                    queryModel.unitType("module"); // Python Module
+                }
 
                 // do query from data source
                 QueryResult queryResult = null;
@@ -183,6 +189,10 @@ public class Search extends DefaultAction {
                     codeQuery.setDataSource(m.get("dataSource").toString());
                 } else {
                     codeQuery.setDataSource(defaultDataSource);
+                }
+
+                if(m.containsKey("lang")) {
+                    codeQuery.setLang(m.get("lang").toString());
                 }
 
                 return codeQuery;

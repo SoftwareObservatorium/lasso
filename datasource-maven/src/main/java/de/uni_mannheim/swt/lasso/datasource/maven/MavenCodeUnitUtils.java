@@ -45,11 +45,25 @@ public class MavenCodeUnitUtils {
         CodeUnit i = new CodeUnit();
 
         i.setDocType((String) doc.getFieldValue("doctype_s"));
-        i.setUnitType("method".equals(i.getDocType()) ? CodeUnit.CodeUnitType.METHOD : CodeUnit.CodeUnitType.CLASS);
+
+        switch(i.getDocType()) {
+            case "method", "function":
+                i.setUnitType(CodeUnit.CodeUnitType.METHOD);
+                break;
+            case "class":
+                i.setUnitType(CodeUnit.CodeUnitType.CLASS);
+                break;
+            case "module":
+                i.setUnitType(CodeUnit.CodeUnitType.MODULE);
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown docType " + i.getDocType());
+        }
 
         i.setId((String) doc.getFirstValue("id"));
         i.setParentId((String) doc.getFirstValue("pid_s"));
         i.setName((String) doc.getFirstValue("name_sexact"));
+        i.setLang((String) doc.getFirstValue("lang"));
         i.setPackagename((String) doc.getFirstValue("packagename_sexact"));
         i.setBytecodeName((String) doc.getFirstValue("bytecodename_s"));
         i.setGroupId((String) doc.getFirstValue("groupId"));

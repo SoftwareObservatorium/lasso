@@ -78,10 +78,14 @@ public class TextualQueryStrategy extends QueryStrategy {
 
                 // copy over methods
                 List<String> methods = new LinkedList<>();
-                if(implementation.getUnitType() == CodeUnit.CodeUnitType.CLASS) {
-                    methods.addAll(((SolrCandidateDocument) c).getSolrDocument().getFieldValues("methodOrigSignatureFq_sigs_exact").stream().map(s -> (String)s ).collect(Collectors.toList()));
-                } else {
-                    methods.addAll(((SolrCandidateDocument) c).getSolrDocument().getFieldValues("methodOrigSignatureFq_ssigs_sexact").stream().map(s -> (String)s ).collect(Collectors.toList()));
+                try {
+                    if(implementation.getUnitType() == CodeUnit.CodeUnitType.CLASS) {
+                        methods.addAll(((SolrCandidateDocument) c).getSolrDocument().getFieldValues("methodOrigSignatureFq_sigs_exact").stream().map(s -> (String)s ).collect(Collectors.toList()));
+                    } else {
+                        methods.addAll(((SolrCandidateDocument) c).getSolrDocument().getFieldValues("methodOrigSignatureFq_ssigs_sexact").stream().map(s -> (String)s ).collect(Collectors.toList()));
+                    }
+                } catch (Throwable e) {
+                    LOG.warn("Failed to set methods for '{}'", implementation.getId(), e);
                 }
 
                 implementation.setMethods(methods);

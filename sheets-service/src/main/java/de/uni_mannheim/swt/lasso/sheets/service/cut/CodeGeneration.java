@@ -44,7 +44,7 @@ public class CodeGeneration {
         String chatResponse = ollamaChatModel.generate(request.getPrompt());
 
         ContentParser contentParser = new ContentParser();
-        List<String> generatedCode = contentParser.extractCode(chatResponse);
+        List<String> generatedCode = contentParser.extractCode(chatResponse, "java");
 
         // useful package names (human readable)
         String pkg = request.getModel().replaceAll("\\W", "");

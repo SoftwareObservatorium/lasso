@@ -37,6 +37,7 @@ public class ExecutionEnvironmentManager {
     public static final String MAVEN = "maven";
     public static final String BASIC = "basic";
     public static final String ARENA = "arena";
+    public static final String PYTHON = "python";
 
     private final String proxyRegistry;
     private final int pullTimeout;
@@ -70,6 +71,11 @@ public class ExecutionEnvironmentManager {
             }
             case ARENA: {
                 environment = new ArenaExecutionEnvironment(executionEnvironmentId, proxyRegistry, pullTimeout);
+
+                break;
+            }
+            case PYTHON: {
+                environment = new PythonBasicExecutionEnvironment(executionEnvironmentId, proxyRegistry, pullTimeout);
 
                 break;
             }

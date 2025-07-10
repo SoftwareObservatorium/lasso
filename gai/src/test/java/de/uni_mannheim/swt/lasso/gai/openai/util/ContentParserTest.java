@@ -62,7 +62,7 @@ public class ContentParserTest {
 
         ContentParser contentParser = new ContentParser();
 
-        List<String> matches = contentParser.extractCode(content);
+        List<String> matches = contentParser.extractCode(content, "java");
 
         assertEquals(1, matches.size());
 

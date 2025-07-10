@@ -26,6 +26,7 @@ import de.uni_mannheim.swt.lasso.datasource.maven.build.*;
 import de.uni_mannheim.swt.lasso.engine.LSLExecutionContext;
 import de.uni_mannheim.swt.lasso.engine.LassoUtils;
 import de.uni_mannheim.swt.lasso.core.model.System;
+import de.uni_mannheim.swt.lasso.engine.action.arena.ProjectManager;
 import de.uni_mannheim.swt.lasso.engine.environment.ExecutionEnvironmentManager;
 import de.uni_mannheim.swt.lasso.engine.environment.MavenExecutionEnvironment;
 import de.uni_mannheim.swt.lasso.core.model.Systems;
@@ -41,7 +42,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import de.uni_mannheim.swt.lasso.engine.action.maven.support.dependency.DependencyAnalyzer;
 
@@ -50,7 +50,7 @@ import de.uni_mannheim.swt.lasso.engine.action.maven.support.dependency.Dependen
  *
  * @author Marcus Kessel
  */
-public class MavenProjectManager {
+public class MavenProjectManager implements ProjectManager {
 
     private static final Logger LOG = LoggerFactory
             .getLogger(MavenProjectManager.class);
@@ -59,8 +59,6 @@ public class MavenProjectManager {
 
     private static final String SETTINGS_TEMPLATE_XML = "/mavenizer/settings.xml";
     private static final String EXTENSIONS_TEMPLATE_XML = "/mavenizer/extensions.xml";
-
-    public static final String LASSO_REPORTS_PATH = MavenProject.LASSO_REPORTS_PATH;
 
     private final LSLExecutionContext lslExecutionContext;
     private final Workspace workspace;
@@ -146,17 +144,7 @@ public class MavenProjectManager {
         }
     }
 
-    public static interface ExecutableFilter {
-
-        boolean accept(System executable);
-    }
-
-    public static interface MavenProjectPomHandler {
-
-        void onFillTemplate(CodeUnit implementation, Candidate candidate, Map<String, Object> valueMap);
-    }
-
-    public Systems initNew(Action action, String actionInstanceId, Abstraction abstraction, String pomTemplate, MavenProjectPomHandler mavenProjectPomHandler, ExecutableFilter executableFilter) throws IOException {
+    public Systems initNew(Action action, String actionInstanceId, Abstraction abstraction, String pomTemplate, ProjectManager.ProjectSettingsHandler mavenProjectPomHandler, ProjectManager.ExecutableFilter executableFilter) throws IOException {
         //
         File abstractionRoot = workspace.createDirectory(abstraction);
 
@@ -165,9 +153,7 @@ public class MavenProjectManager {
 
         Mavenizer mavenizer = new Mavenizer(abstractionRoot, mvnOptions);
 
-        // implementation -> candidate
-        Map<String, List<System>> executablesMap = new LinkedHashMap<>();
-        List<CodeUnit> impls = abstraction.getImplementations().stream().map(System::getCode).collect(Collectors.toList());
+        List<CodeUnit> impls = abstraction.getImplementations().stream().map(System::getCode).toList();
 
         List<System> execs = new ArrayList<>();
 
@@ -277,94 +263,6 @@ public class MavenProjectManager {
         return executables;
     }
 
-//    @Deprecated
-//    public Executables init(Action action, String actionInstanceId, Abstraction abstraction) throws IOException {
-//        //
-//        File abstractionRoot = workspace.createDirectory(abstraction);
-//
-//        // init other stuff
-//        Map<String, String> mvnOptions = new HashMap<>();
-//
-//        Mavenizer mavenizer = new Mavenizer(abstractionRoot, mvnOptions);
-//
-//        // implementation -> candidate
-//        Map<String, List<Executable>> executablesMap = new LinkedHashMap<>();
-//        List<CodeUnit> impls = abstraction.getImplementations();
-//
-//        List<Executable> execs = new ArrayList<>();
-//
-//        for (CodeUnit implementation : impls) {
-//            Candidate candidate = new Candidate();
-//            // set id
-//            candidate.setId(implementation.getId());
-//            // set candidate class
-//            CompilationUnit cunit = new CompilationUnit();
-//            cunit.setName(implementation.getName());
-//            cunit.setPkg(implementation.getPackagename());
-//            candidate.setCompilationUnit(cunit);
-//
-//            // artifact
-//            MavenArtifact artifact = new MavenArtifact();
-//            artifact.setGroupId(implementation.getGroupId());
-//            artifact.setArtifactId(implementation.getArtifactId());
-//            artifact.setVersion(implementation.getVersion());
-//            candidate.setArtifact(artifact);
-//
-//            try {
-//                // try to resolve missing dependencies
-//                DependencyAnalyzer dependencyAnalyzer = new DependencyAnalyzer();
-//                // sets resolved deps to
-//                List<Artifact> resolvedDependencies = dependencyAnalyzer.resolveMissingDependencies(implementation);
-//                if (CollectionUtils.isNotEmpty(resolvedDependencies)) {
-//                    candidate.setResolvedDependencies(resolvedDependencies);
-//                }
-//            } catch (Throwable e) {
-//                if (LOG.isWarnEnabled()) {
-//                    LOG.warn("Failed to resolve missing dependencies for " + candidate.getId(), e);
-//                }
-//            }
-//
-//            if (LOG.isDebugEnabled()) {
-//                LOG.debug("Initializing build for candidate " + candidate.getId());
-//            }
-//
-//            // mavenize, setup project
-//            MavenProject mavenProject = null;
-//            try {
-//                mavenProject = mavenizer.createMavenProject(actionInstanceId,
-//                        candidate);
-//            } catch (IOException e) {
-//                throw new IOException(String.format("Could not create maven project for %s", candidate.getId()), e);
-//            }
-//            // set repository
-//            mavenProject.setArtifactRepository(m2Repository);
-//
-//            Executable executable = new Executable(implementation, mavenProject);
-//            execs.add(executable);
-//        }
-//
-//
-//        // create aggregated pom
-//        MavenProject aggregatedMavenProject = mavenizer
-//                .createAggregatedMavenProject(actionInstanceId, new ExecGroup(execs));
-//
-//        // add lasso maven spy extension
-//        File mvnExtensions = new File(aggregatedMavenProject.getBaseDir(), ".mvn");
-//        if (!mvnExtensions.exists()) {
-//            mvnExtensions.mkdirs();
-//
-//            FileUtils.writeStringToFile(new File(mvnExtensions, "extensions.xml"),
-//                    getExtensionsTemplate(), "UTF-8");
-//        }
-//
-//        Executables executables = new Executables();
-//        executables.setAbstractionName(abstraction.getName());
-//        executables.setExecutables(execs);
-//        executables.setActionInstanceId(actionInstanceId);
-//
-//        return executables;
-//    }
-
     public MavenExecutionEnvironment runArgs(String actionInstanceId, Abstraction abstraction, Environment environment) {
         //
         File projectsRoot = workspace.getRoot(actionInstanceId, abstraction);
@@ -392,48 +290,6 @@ public class MavenProjectManager {
 
         return mavenExecutionEnvironment;
     }
-
-//    public void overrideModulesPom(LSLExecutionContext lslExecutionContext, Abstraction abstraction, Executables executables) throws IOException {
-//        // create aggregated pom and overwrite inline
-//        Workspace workspace = lslExecutionContext.getWorkspace();
-//        Mavenizer mavenizer = new Mavenizer(workspace.getRoot(abstraction), new HashMap<>());
-//        MavenProject aggregatedMavenProject = mavenizer
-//                .createAggregatedMavenProject(executables.getActionInstanceId(), new ExecGroup(executables.getExecutables()));
-//    }
-//
-//    public void overrideProjectPom(LSLExecutionContext lslExecutionContext, Abstraction abstraction,
-//                                   Executables executables, String pomTemplateSource, Map<String, String> mvnOptions) {
-//        Workspace workspace = lslExecutionContext.getWorkspace();
-//
-//        // FIXME better create new executables with new project in order to avoid inconsistencies with existing test cases etc.
-//
-//        // copy jacoco pom over
-//        executables.getExecutables().forEach(executable -> {
-//            // init other stuff
-//            Map<String, String> options = new HashMap<>();
-//            if (MapUtils.isNotEmpty(mvnOptions)) {
-//                options.putAll(mvnOptions);
-//            }
-//
-//            overrideProjectPom(abstraction, executable, pomTemplateSource, options);
-//        });
-//
-//        // TODO copy from perm-reports into LASSO_REPORTS_PATH
-//    }
-//
-//    public void overrideProjectPom(Abstraction abstraction, Executable executable, String pomTemplateSource,
-//                                   Map<String, String> mvnOptions) {
-//        //
-//        MavenProject mavenProject = executable.getProject();
-//
-//        Mavenizer mavenizer = new Mavenizer(workspace.getRoot(abstraction), mvnOptions);
-//        try {
-//            String pomSource = mavenizer.createPom(executable.getCandidate(), pomTemplateSource, new HashMap<>());
-//            FileUtils.writeStringToFile(new File(mavenProject.getBaseDir(), "pom.xml"), pomSource, false);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
 
     public LSLExecutionContext getLslExecutionContext() {
         return lslExecutionContext;

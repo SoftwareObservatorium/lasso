@@ -1,5 +1,6 @@
 package de.uni_mannheim.swt.lasso.engine.action.search;
 
+import de.uni_mannheim.swt.lasso.core.model.CodeUnit;
 import de.uni_mannheim.swt.lasso.lsl.spec.LassoSpec;
 
 import java.util.Collections;
@@ -17,6 +18,8 @@ public class CodeQuery extends LassoSpec {
     private String dataSource;
 
     private List<String> filters = Collections.emptyList();
+
+    private String lang = CodeUnit.JAVA;
 
     public String getQueryContent() {
         return queryContent;
@@ -48,5 +51,13 @@ public class CodeQuery extends LassoSpec {
 
     public void setFilters(List<String> filters) {
         this.filters = filters;
+    }
+
+    public String getLang() {
+        return lang;
+    }
+
+    public void setLang(String lang) {
+        this.lang = lang;
     }
 }

@@ -6,6 +6,7 @@ import de.uni_mannheim.swt.lasso.core.model.CodeUnit;
  *
  * @author Marcus Kessel
  */
+// FIXME rename to be PL agnostic
 public class JUnitCodeUnit extends Sheet {
 
     private final CodeUnit codeUnit;

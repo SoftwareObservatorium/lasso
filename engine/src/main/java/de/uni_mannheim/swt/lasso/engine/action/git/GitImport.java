@@ -50,6 +50,7 @@ import java.util.*;
 @LassoAction(desc = "Import Git repositories, build and index them")
 @Stable
 @Local // currently a local action that is not distributed
+// FIXME python, migrate to ProjectBuildManager
 public class GitImport extends DefaultAction {
 
     private static final Logger LOG = LoggerFactory

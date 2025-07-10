@@ -19,9 +19,6 @@
  */
 package de.uni_mannheim.swt.lasso.engine.action.gai;
 
-import com.github.javaparser.JavaParser;
-import com.github.javaparser.ParseResult;
-import com.github.javaparser.ast.CompilationUnit;
 import de.uni_mannheim.swt.lasso.core.model.*;
 import de.uni_mannheim.swt.lasso.engine.LSLExecutionContext;
 import de.uni_mannheim.swt.lasso.engine.action.DefaultAction;
@@ -92,38 +89,5 @@ public abstract class LangChainAction extends DefaultAction {
      */
     protected Iterator<String> getRoundRobinIterator(List<String> servers) {
         return IteratorUtils.loopingListIterator(servers);
-    }
-
-    protected CodeUnit parse(String code, String pkg) {
-        if (LOG.isInfoEnabled()) {
-            LOG.info("Parsing code\n{}", code);
-        }
-
-        try {
-            JavaParser javaParser = new JavaParser();
-            ParseResult<CompilationUnit> result = javaParser.parse(code);
-            if(!result.isSuccessful()) {
-                LOG.warn("Parser found the following problems: {}", result.getProblems());
-            }
-
-            com.github.javaparser.ast.CompilationUnit cu = result.getResult().get();
-
-            // parse name
-            CodeUnit unit = new CodeUnit();
-            unit.setId(UUID.randomUUID().toString());
-            unit.setName(cu.getType(0).getNameAsString());
-
-            // add package name
-            cu.setPackageDeclaration(pkg);
-
-            unit.setPackagename(pkg);
-            unit.setContent(cu.toString());
-            unit.setUnitType(CodeUnit.CodeUnitType.CLASS);
-
-            return unit;
-        } catch (Throwable e) {
-            LOG.warn("failed to parse code", e);
-            return null;
-        }
     }
 }

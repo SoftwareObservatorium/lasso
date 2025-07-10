@@ -24,9 +24,7 @@ import de.uni_mannheim.swt.lasso.core.model.System;
 import de.uni_mannheim.swt.lasso.core.model.*;
 import de.uni_mannheim.swt.lasso.core.model.query.QueryResult;
 import de.uni_mannheim.swt.lasso.corpus.Datasource;
-import de.uni_mannheim.swt.lasso.corpus.ExecutableCorpus;
 import de.uni_mannheim.swt.lasso.datasource.maven.MavenDataSource;
-import de.uni_mannheim.swt.lasso.datasource.maven.build.Candidate;
 import de.uni_mannheim.swt.lasso.datasource.maven.lsl.MavenQuery;
 import de.uni_mannheim.swt.lasso.engine.LSLExecutionContext;
 import de.uni_mannheim.swt.lasso.engine.LassoUtils;
@@ -34,24 +32,22 @@ import de.uni_mannheim.swt.lasso.engine.action.annotations.LassoAction;
 import de.uni_mannheim.swt.lasso.engine.action.annotations.LassoInput;
 import de.uni_mannheim.swt.lasso.engine.action.annotations.Local;
 import de.uni_mannheim.swt.lasso.engine.action.annotations.Stable;
-import de.uni_mannheim.swt.lasso.engine.action.maven.MavenAction;
-import de.uni_mannheim.swt.lasso.engine.action.maven.support.MavenProjectManager;
 import de.uni_mannheim.swt.lasso.engine.action.maven.support.Mavenizer;
-import de.uni_mannheim.swt.lasso.engine.environment.ExecutionEnvironmentManager;
-import de.uni_mannheim.swt.lasso.engine.environment.MavenExecutionEnvironment;
-import de.uni_mannheim.swt.lasso.engine.workspace.Workspace;
+import de.uni_mannheim.swt.lasso.engine.build.JavaProjectBuildManager;
+import de.uni_mannheim.swt.lasso.engine.build.ProjectBuildConfiguration;
+import de.uni_mannheim.swt.lasso.engine.build.ProjectBuildManager;
+import de.uni_mannheim.swt.lasso.engine.build.PythonProjectBuildManager;
+import de.uni_mannheim.swt.lasso.engine.langsupport.LangSupport;
 import de.uni_mannheim.swt.lasso.gai.openai.Prompt;
 import de.uni_mannheim.swt.lasso.gai.openai.util.ContentParser;
 import de.uni_mannheim.swt.lasso.lsl.LassoContext;
 import de.uni_mannheim.swt.lasso.lsl.SimpleLogger;
 import dev.langchain4j.model.ollama.OllamaChatModel;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -98,6 +94,9 @@ public class GenerateCodeOllama extends LangChainAction {
 
     @LassoInput(desc = "code model (LLM)", optional = true)
     public String model;
+
+    @LassoInput(desc = "Programming Language (java, python)", optional = true)
+    public String lang = CodeUnit.JAVA;
 
     @LassoInput(desc = "how many coding solutions to obtain", optional = true)
     public int samples = 1;
@@ -165,35 +164,55 @@ public class GenerateCodeOllama extends LangChainAction {
 
                         ContentParser contentParser = new ContentParser();
                         List<String> generatedCode = new LinkedList<>();
-                        List<String> codeMatches = contentParser.extractCode(response);
+                        List<String> codeMatches = contentParser.extractCode(response, lang); // PL specific
                         generatedCode.addAll(codeMatches);
 
                         // useful package names (human readable)
-                        String pkg = myPrompt.getModel().replaceAll("\\W", ""); //StringUtils.replaceEach(prompt.getModel(), new String[]{":", "-"}, new String[]{"_", "_"});
+                        String namespace = myPrompt.getModel().replaceAll("\\W", ""); //StringUtils.replaceEach(prompt.getModel(), new String[]{":", "-"}, new String[]{"_", "_"});
+
+                        ProjectBuildConfiguration buildConfiguration = new ProjectBuildConfiguration();
+                        buildConfiguration.setDataSource(ds);
+                        buildConfiguration.setDeploy(deploy);
+
+                        Map<String, String> meta = new HashMap<>();
+                        meta.put("executionId", context.getExecutionId());
+                        meta.put("action", getName());
+                        meta.put("model", myPrompt.getModel());
+                        meta.put("abstractionId", actionConfiguration.getAbstraction().getName());
+                        meta.put("sampleId", String.valueOf(myPrompt.getSampleId()));
+                        meta.put("promptId", myPrompt.getId());
+
+                        buildConfiguration.setMeta(meta);
+
+                        buildConfiguration.setId(UUID.randomUUID().toString());
+                        buildConfiguration.setRepoUrl(repoUrl);
+                        buildConfiguration.setRepoId(repoId);
+                        buildConfiguration.setGroupId(namespace);
+                        buildConfiguration.setArtifactId(buildConfiguration.getId() + "-gai" + "_" + myPrompt.getId());
+                        buildConfiguration.setVersion(String.valueOf(myPrompt.getSampleId()));
+
+                        // decide language
+                        final ProjectBuildManager projectBuildManager;
+                        if(LangSupport.isJava(lang)) {
+                            //
+                            buildConfiguration.setLangVersion(javaVersion);
+                            buildConfiguration.setProjectTemplate(POM_TEMPLATE);
+
+                            projectBuildManager = new JavaProjectBuildManager();
+                        } else if(LangSupport.isPython(lang)) {
+                            projectBuildManager = new PythonProjectBuildManager();
+                        } else {
+                            projectBuildManager = null;
+                        }
+
+                        Validate.notNull(projectBuildManager, "Unsupported language found");
 
                         // 2. parse code
                         LOG.info("Parsing code");
-                        List<CodeUnit> units = generatedCode.stream().map(c -> parse(c, pkg)).filter(Objects::nonNull).collect(Collectors.toList());
-                        // 3. store code in Maven project
-                        LOG.info("Creating Maven project");
-                        MavenProject mavenProject = createProject(context, abstraction, units, myPrompt, pkg);
+                        List<CodeUnit> units = generatedCode.stream().map(c -> projectBuildManager.parse(c, namespace)).filter(Objects::nonNull).collect(Collectors.toList());
 
-                        // 4. package and deploy
-                        LOG.info("Package and deploy code");
-                        // create manager
-                        MavenProjectManager manager = new MavenProjectManager(context);
-                        List<String> pkgArgs = doPackage(context, actionConfiguration, manager, mavenProject);
-
-                        // 5. index
-                        LOG.info("Index code");
-                        List<String> indexArgs = doAnalyzeAndStore(context, actionConfiguration, manager, myPrompt, mavenProject, ds);
-
-                        // run maven
-                        List<List<String>> allArgs = new ArrayList<>();
-                        allArgs.add(pkgArgs);
-                        allArgs.add(indexArgs);
-                        runMaven(context, actionConfiguration, manager, mavenProject, allArgs);
-
+                        // store in executable corpus
+                        projectBuildManager.store(this, context, actionConfiguration, abstraction, units, buildConfiguration);
                     } catch (Throwable e) {
                         LOG.warn("Generation failed {}", sampleId);
                         LOG.warn("Stack", e);
@@ -218,51 +237,6 @@ public class GenerateCodeOllama extends LangChainAction {
         setExecutables(Systems.fromAbstraction(abstraction, getName()));
     }
 
-    List<String> doPackage(LSLExecutionContext context, ActionConfiguration actionConfiguration, MavenProjectManager manager, MavenProject mavenProject) {
-        File projectRoot = mavenProject.getBaseDir();
-
-        // args passed
-        List<String> args = new ArrayList<>(MavenAction.MAVEN_DEFAULT_COMMAND); // FIXME log is overridden if called multiple times
-        // we need to change the deployment server to ours (foreign POMs may specify their own or none)
-        // see https://maven.apache.org/plugins/maven-deploy-plugin/deploy-mojo.html
-        String mojo = deploy ? "deploy" : "package";
-
-        if (StringUtils.isBlank(repoUrl)) {
-            ExecutableCorpus executableCorpus = context.getConfiguration().getExecutableCorpus();
-            repoUrl = executableCorpus.getArtifactRepository().getDeploymentUrl();
-            repoId = executableCorpus.getArtifactRepository().getId();
-        }
-
-        // FIXME make configurable
-        args.addAll(
-                Arrays.asList(
-                        "-DskipTests",
-                        "-Drat.skip=true", // not really necessary, just for this commons-lang example
-                        "-DaltDeploymentRepository=" + repoId + "::default::" + repoUrl,
-                        "-DaltReleaseDeploymentRepository=" + repoId + "::default::" + repoUrl,
-                        "-DaltSnapshotDeploymentRepository=" + repoId + "::default::" + repoUrl,
-                        "clean",
-                        // also make sure to deploy a source file! (see maven-source-plugin https://maven.apache.org/plugins/maven-source-plugin/usage.html)
-                        "source:jar",
-                        // "source:test-jar",
-                        mojo // also compiles everything
-                ));
-
-        if (LOG.isInfoEnabled()) {
-            LOG.info("Packaging '{}' with args '{}'", mavenProject.getBaseDir(), args);
-        }
-
-        return args;
-    }
-
-    void runMaven(LSLExecutionContext context, ActionConfiguration actionConfiguration, MavenProjectManager manager, MavenProject mavenProject, List<List<String>> args) {
-        File projectRoot = mavenProject.getBaseDir();
-        //
-        ExecutionEnvironmentManager executionEnvironmentManager = context.getExecutionEnvironmentManager();
-        MavenExecutionEnvironment mavenExecutionEnvironment = createMavenEnvironment(context, actionConfiguration, manager, projectRoot, args);
-        executionEnvironmentManager.run(mavenExecutionEnvironment);
-    }
-
     @Override
     public List<Abstraction> createAbstractions(LSLExecutionContext context, ActionConfiguration actionConfiguration) throws IOException {
         return null;
@@ -276,10 +250,18 @@ public class GenerateCodeOllama extends LangChainAction {
             LassoContext ctx = new LassoContext();
             ctx.setLogger(new SimpleLogger());
             mavenQuery.setLasso(ctx);
+
             mavenQuery.queryForClasses("*:*");
+
             mavenQuery.filter("executionId:\"" + context.getExecutionId() + "\"");
             mavenQuery.filter("action:\"" + getName() + "\"");
             mavenQuery.filter("abstractionId:\"" + actionConfiguration.getAbstraction().getName() + "\"");
+
+            if(LangSupport.isPython(lang)) { // special handling for python
+                mavenQuery.lang("python"); // set Python language
+                mavenQuery.unitType("module"); // Python Module
+            }
+
             mavenQuery.setDirectly(true);
             QueryResult queryResult = ds.query(mavenQuery);
 
@@ -289,157 +271,6 @@ public class GenerateCodeOllama extends LangChainAction {
 
             throw e;
         }
-    }
-
-    MavenProject createProject(LSLExecutionContext context, Abstraction abstraction, List<CodeUnit> units, Prompt prompt, String pkg) throws IOException {
-        if (LOG.isInfoEnabled()) {
-            LOG.info("Executing " + this.getClass());
-        }
-
-        Workspace workspace = context.getWorkspace();
-        File abstractionRoot = workspace.createDirectory(abstraction.getName());
-
-        // init other stuff
-        Map<String, String> mvnOptions = new HashMap<>();
-
-        Candidate candidate = new Candidate();
-        // set id
-        candidate.setId(UUID.randomUUID().toString());
-        // artifact
-        MavenArtifact artifact = new MavenArtifact();
-
-        artifact.setGroupId(pkg);
-        artifact.setArtifactId(candidate.getId() + "-gai" + "_" + prompt.getId());
-        artifact.setVersion(String.valueOf(prompt.getSampleId()));
-        candidate.setArtifact(artifact);
-
-        Mavenizer mavenizer = new Mavenizer(abstractionRoot, mvnOptions);
-
-        Map<String, Object> valueMap = new HashMap<>();
-        valueMap.put("javaVersion", javaVersion);
-
-        // add dependencies
-        resolveDependencies(candidate, abstraction, mavenizer, valueMap);
-
-        // mavenize, setup project
-        MavenProject mavenProject = null;
-        try {
-            mavenProject = mavenizer.createMavenProject(context, getInstanceId(),
-                    candidate, true, POM_TEMPLATE, valueMap);
-        } catch (IOException e) {
-            LOG.warn("Exception", e);
-        }
-
-        for (CodeUnit unit : units) {
-            LOG.info("Writing source code to target '{}'", mavenProject.getBaseDir());
-            try {
-                mavenProject.writeCompilationUnit(unit, false);
-            } catch (IOException e) {
-                LOG.warn("Writing source code failed", e);
-            }
-        }
-
-        return mavenProject;
-    }
-
-    void resolveDependencies(Candidate candidate, Abstraction abstraction, Mavenizer mavenizer, Map<String, Object> valueMap) {
-        // determine dependencies directly from abstraction and/or tests
-        if(CollectionUtils.isNotEmpty(abstraction.getSpecification().getDependencies())) {
-            //
-            List<Artifact> artifacts = abstraction.getSpecification().getDependencies().stream().map(coordinate -> {
-                String[] parts = StringUtils.split(coordinate, ":");
-
-                MavenArtifact dep = new MavenArtifact();
-                dep.setGroupId(parts[0]);
-                dep.setArtifactId(parts[1]);
-                dep.setVersion(parts[2]);
-
-                return (Artifact) dep;
-            }).toList();
-            candidate.setDependencies(artifacts);
-
-            List<String> pomDeps = artifacts.stream()
-                    .map(dep -> mavenizer.toSingleDependencyDeclaration(dep.asType(MavenArtifact.class)))
-                    .toList();
-
-            // write all dependencies to pom
-            valueMap.put("codeDependencies", String.join("\n", pomDeps));
-        } else {
-            // write all dependencies to pom
-            valueMap.put("codeDependencies", "");
-        }
-    }
-
-    MavenExecutionEnvironment createMavenEnvironment(LSLExecutionContext context, ActionConfiguration actionConfiguration, MavenProjectManager manager, File projectRoot, List<List<String>> args) {
-        //
-        ExecutionEnvironmentManager executionEnvironmentManager = context.getExecutionEnvironmentManager();
-
-        // set default commands
-        Environment environment = actionConfiguration.getProfile().getEnvironment().copy();
-
-        if (CollectionUtils.isEmpty(environment.getCommandArgsList())) {
-            environment.setCommandArgsList(new LinkedList<>());
-        }
-
-        MavenExecutionEnvironment mavenExecutionEnvironment =
-                (MavenExecutionEnvironment) executionEnvironmentManager.createExecutionEnvironment("maven");
-
-        // set image
-        mavenExecutionEnvironment.setImage(environment.getImage());
-
-        mavenExecutionEnvironment.setProjectRoot(context.getWorkspace(), projectRoot);
-        mavenExecutionEnvironment.setM2Home(context.getWorkspace(), manager.getM2Home());
-
-        List<String> commands = new LinkedList<>();
-        List<List<String>> commandArgsList = new LinkedList<>();
-        commandArgsList.addAll(args);
-        for (List<String> commandArgs : commandArgsList) {
-            String command = String.join(" ", commandArgs);
-            commands.add(command);
-        }
-
-        mavenExecutionEnvironment.setCommands(commands);
-
-        return mavenExecutionEnvironment;
-    }
-
-    List<String> doAnalyzeAndStore(LSLExecutionContext context, ActionConfiguration actionConfiguration, MavenProjectManager manager, Prompt prompt, MavenProject mavenProject, Datasource ds) {
-        // mvn indexer-maven-plugin:index
-        File projectRoot = mavenProject.getBaseDir();
-
-        // args passed
-        List<String> args = new ArrayList<>(MavenAction.MAVEN_DEFAULT_COMMAND);
-
-        // FIXME add more metadata
-        // metadata=key1,value1|key2,value2 etc.
-        String metadata = "\"executionId," + context.getExecutionId()
-                + "|" + "action," + getName()
-                + "|" + "model," + prompt.getModel()
-                + "|" + "abstractionId," + actionConfiguration.getAbstraction().getName()
-                + "|" + "sampleId," + prompt.getSampleId()
-                + "|" + "promptId," + prompt.getId()
-                + "\"";
-
-        String core = StringUtils.substringAfterLast(ds.getHost(), "/");
-        String url = StringUtils.substringBeforeLast(ds.getHost(), "/");
-
-        args.addAll(
-                Arrays.asList(
-                        "-DskipTests",
-                        "-Dindex.url=" + url,
-                        "-Dindex.user=" + ds.getUser(),
-                        "-Dindex.pass=" + ds.getPass(),
-                        "-Dindex.core=" + core,
-                        "-Dindex.owner=" + "lasso",
-                        "-Dindex.metadata=" + metadata,
-                        "de.uni-mannheim.swt.lasso:indexer-maven-plugin:1.0.0-SNAPSHOT:index"
-                ));
-
-        if (LOG.isInfoEnabled()) {
-            LOG.info("Indexing '{}' with args '{}'", mavenProject.getBaseDir(), args);
-        }
-
-        return args;
     }
 
     @Override

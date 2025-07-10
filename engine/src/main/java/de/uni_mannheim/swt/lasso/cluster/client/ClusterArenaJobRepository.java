@@ -19,8 +19,11 @@
  */
 package de.uni_mannheim.swt.lasso.cluster.client;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.uni_mannheim.swt.lasso.cluster.ClusterEngine;
 
+import org.apache.commons.lang3.EnumUtils;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.slf4j.Logger;
@@ -39,6 +42,10 @@ public class ClusterArenaJobRepository implements ArenaJobRepository {
     private final ClusterEngine clusterEngine;
 
     private IgniteCache<String, ArenaJob> jobsCache;
+    private IgniteCache<String, String> jobsCacheStatus;
+    private IgniteCache<String, String> jobsCacheJson;
+
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     public ClusterArenaJobRepository(ClusterEngine clusterEngine) {
         this.clusterEngine = clusterEngine;
@@ -49,23 +56,45 @@ public class ClusterArenaJobRepository implements ArenaJobRepository {
     protected void initCaches() {
         CacheConfiguration<String, ArenaJob> implCacheConfig =
                 new CacheConfiguration<>(ARENAJOBS);
-        implCacheConfig.setIndexedTypes(String.class, ArenaJob.class);
+        implCacheConfig.setIndexedTypes(String.class, String.class);
+        CacheConfiguration<String, String> implCacheConfigJson =
+                new CacheConfiguration<>(ARENAJOBS_JSON);
+        implCacheConfig.setIndexedTypes(String.class, String.class);
+        CacheConfiguration<String, String> implCacheConfigStatus =
+                new CacheConfiguration<>(ARENAJOBS_STATUS);
+        implCacheConfig.setIndexedTypes(String.class, String.class);
         //implCacheConfig.setGroupName("lassoModel");
 
         this.jobsCache = this.clusterEngine.getIgnite().getOrCreateCache(implCacheConfig);
-
+        this.jobsCacheJson = this.clusterEngine.getIgnite().getOrCreateCache(implCacheConfigJson);
+        this.jobsCacheStatus = this.clusterEngine.getIgnite().getOrCreateCache(implCacheConfigStatus);
     }
 
     @Override
     public void put(String id, ArenaJob job) {
         LOG.debug("Putting Job {}", id);
 
-        jobsCache.put(id, job);
+        this.jobsCache.put(id, job);
+        this.jobsCacheStatus.put(id, job.getStatus().name());
+
+        // alternative representation (i.e., Python support)
+        try {
+            String json = objectMapper.writeValueAsString(job);
+            jobsCacheJson.put(id, json);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public ArenaJob get(String id) {
-        return jobsCache.get(id);
+        String status = this.jobsCacheStatus.get(id);
+        JobStatus jobStatus = EnumUtils.getEnum(JobStatus.class, status);
+
+        ArenaJob job = jobsCache.get(id);
+        job.setStatus(jobStatus);
+
+        return job;
     }
 
     @Override

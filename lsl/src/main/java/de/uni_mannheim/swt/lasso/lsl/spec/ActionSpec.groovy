@@ -311,6 +311,7 @@ class ActionSpec extends LassoSpec {
 
         CodeUnit codeUnit = new CodeUnit()
         codeUnit.setUnitType(CodeUnit.CodeUnitType.CLASS)
+        codeUnit.setLang(CodeUnit.JAVA)
         codeUnit.setName(StringUtils.substringAfterLast(className, "."))
         codeUnit.setPackagename(StringUtils.substringBeforeLast(className, "."))
         codeUnit.setId(id)
@@ -339,6 +340,17 @@ class ActionSpec extends LassoSpec {
 
         System system = implementation(id, className, EXAMPLES_LASSO_EXAMPLES_1_0_0_SNAPSHOT)
         system.code.content = content
+
+        return system
+    }
+
+    System pyImplementationFromSource(String id, String className, String content) {
+        // FIXME use some placeholder artifact
+        String EXAMPLES_LASSO_EXAMPLES_1_0_0_SNAPSHOT = "commons-codec:commons-codec:1.15";
+
+        System system = implementation(id, className, EXAMPLES_LASSO_EXAMPLES_1_0_0_SNAPSHOT)
+        system.code.content = content
+        system.code.lang = CodeUnit.PYTHON
 
         return system
     }

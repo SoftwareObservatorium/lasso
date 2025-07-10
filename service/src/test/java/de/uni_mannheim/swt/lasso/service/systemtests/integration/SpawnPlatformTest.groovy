@@ -19,15 +19,11 @@
  */
 package de.uni_mannheim.swt.lasso.service.systemtests.integration
 
-import de.uni_mannheim.swt.lasso.benchmark.Benchmark
-import de.uni_mannheim.swt.lasso.benchmark.ClasspathBenchmarkLoader
 import de.uni_mannheim.swt.lasso.service.systemtests.util.LassoTestEngine
 
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
-
-import java.util.regex.Pattern
 
 /**
  * Just spawn a test platform for debugging purposes
@@ -42,16 +38,6 @@ class SpawnPlatformTest extends AbstractGroovySystemTest {
 
     @Test
     void spawn() throws Exception {
-        Pattern pattern = Pattern.compile(".*");
-        final Collection<String> list = ResourceList.getResources(pattern);
-        for(final String name : list){
-            if(name.endsWith(".json")) {
-                System.out.println(name);
-            }
-        }
-
-        ClasspathBenchmarkLoader loader = new ClasspathBenchmarkLoader();
-        Benchmark benchmark = loader.load("humaneval-java-reworded");
 
         // requires external interrupt
         while(true) {

@@ -37,7 +37,7 @@ public class SheetGeneration {
         String chatResponse = ollamaChatModel.generate(prompt);
 
         ContentParser contentParser = new ContentParser();
-        List<String> generatedCode = contentParser.extractCode(chatResponse);
+        List<String> generatedCode = contentParser.extractCode(chatResponse, "java");
 
         String jsonl = StringUtils.trim(generatedCode.get(0));
 

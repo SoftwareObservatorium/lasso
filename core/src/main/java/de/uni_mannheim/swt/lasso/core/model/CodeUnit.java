@@ -32,6 +32,9 @@ import java.util.*;
  */
 public class CodeUnit implements Serializable {
 
+    public static final String JAVA = "java";
+    public static final String PYTHON = "python";
+
     public boolean hasKeyword(String keyword) {
         if(unitType == CodeUnitType.METHOD) {
             if(CollectionUtils.isEmpty(getMethodSignatureParamsOrderedKeywordsFq())) {
@@ -79,6 +82,22 @@ public class CodeUnit implements Serializable {
         this.lql = lql;
     }
 
+    public boolean isJava() {
+        return StringUtils.equals(getLang(), JAVA);
+    }
+
+    public boolean isPython() {
+        return StringUtils.equals(getLang(), PYTHON);
+    }
+
+    public String getLang() {
+        return lang;
+    }
+
+    public void setLang(String lang) {
+        this.lang = lang;
+    }
+
     /**
      * Code unit.
      *
@@ -86,13 +105,15 @@ public class CodeUnit implements Serializable {
      */
     public enum CodeUnitType {
         CLASS,
-        METHOD,
-        //MODULE // a coherent system of classes (e.g., project)
+        METHOD, // METHOD OR FUNCTION
+        MODULE // Python Module
     }
 
     private String workerNodeId;
 
     private String id;
+
+    private String lang;
 
     private String dataSource;
 
