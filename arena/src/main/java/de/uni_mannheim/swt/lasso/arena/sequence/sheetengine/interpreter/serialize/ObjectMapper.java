@@ -14,6 +14,7 @@ import java.io.IOException;
 public interface ObjectMapper {
 
     String writeOutput(ExecutedInvocation executedInvocation) throws IOException;
+    String writeOracleOutput(ExecutedInvocation executedInvocation) throws IOException;
     String writeInput(ExecutedInvocation executedInvocation, int p) throws IOException;
     String writeTarget(ExecutedInvocation executedInvocation) throws IOException;
     String writeOp(ExecutedInvocation executedInvocation) throws IOException;

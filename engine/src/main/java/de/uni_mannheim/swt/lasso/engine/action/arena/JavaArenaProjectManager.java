@@ -88,7 +88,7 @@ public class JavaArenaProjectManager implements ArenaProjectManager {
     }
 
     @Override
-    public ExecutionEnvironment createExecutionEnvironment(DefaultAction action, ActionConfiguration actionConfiguration, ArenaJob job, ExecutableCorpus corpus, String task, List<String> features, long containerTimeout) {
+    public ExecutionEnvironment createExecutionEnvironment(DefaultAction action, ActionConfiguration actionConfiguration, ArenaJob job, ExecutableCorpus corpus, String task, List<String> features, long containerTimeout, long implementationTimeout, int threads) {
         // args passed to arena
         List<String> args = new ArrayList<>(Arrays.asList(
                 "java",
@@ -133,6 +133,8 @@ public class JavaArenaProjectManager implements ArenaProjectManager {
                 "--input", ArenaContainer.WD_DEFAULT,
                 "--output", ArenaContainer.WD_DEFAULT,
                 "--repository-url", corpus.getArtifactRepository().getUrl(),
+                "--timeout", String.valueOf((long) implementationTimeout / 1000L),
+                "--threads", String.valueOf(threads),
                 "&>" + ARENA_LOG_TXT
         ));
 

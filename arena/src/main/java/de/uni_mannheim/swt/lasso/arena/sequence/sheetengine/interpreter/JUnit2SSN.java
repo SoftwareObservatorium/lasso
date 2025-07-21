@@ -7,6 +7,7 @@ import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
 import de.uni_mannheim.swt.lasso.arena.search.InterfaceSpecification;
 import de.uni_mannheim.swt.lasso.arena.sequence.*;
 import de.uni_mannheim.swt.lasso.arena.sequence.parser.unit.JUnitSequenceSpecificationParser;
+import de.uni_mannheim.swt.lasso.arena.sequence.parser.unit.transformer.JUnitToSsnTransformer;
 import de.uni_mannheim.swt.lasso.core.dto.srm.Sheet;
 import de.uni_mannheim.swt.lasso.engine.LassoUtils;
 import de.uni_mannheim.swt.lasso.ssn.SheetResolver;
@@ -15,11 +16,24 @@ import java.io.IOException;
 import java.util.*;
 
 /**
+ * Utilities for transforming JUnit test classes/methods to stimulus sheets
  *
  * @author Marcus Kessel
  */
 public class JUnit2SSN {
 
+    /**
+     *
+     * @deprecated use #newJunit2Sheets
+     * @param testClass
+     * @param classUnderTest
+     * @param interfaceSpecification
+     * @param adaptedImplementation
+     * @param testPrefix
+     * @return
+     * @throws IOException
+     */
+    @Deprecated
     public static List<Sheet> junit2Sheets(String testClass, ClassUnderTest classUnderTest, InterfaceSpecification interfaceSpecification, AdaptedImplementation adaptedImplementation, String testPrefix) throws IOException {
         JUnitSequenceSpecificationParser importJUnitClass = new JUnitSequenceSpecificationParser();
         //importJUnitClass.setResolvePseudoOperations(true);
@@ -43,6 +57,18 @@ public class JUnit2SSN {
         }
 
         return stimulusSheets;
+    }
+
+    public static List<Sheet> newJunit2Sheets(String testClass, ClassUnderTest classUnderTest, InterfaceSpecification interfaceSpecification, AdaptedImplementation adaptedImplementation, String testPrefix) throws IOException {
+        JUnitToSsnTransformer transformer = new JUnitToSsnTransformer();
+
+        try {
+            return transformer.transform(transformer.create(testClass, classUnderTest), interfaceSpecification.toLQL(), testPrefix);
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+
+        return new LinkedList<>();
     }
 
     public static Sheet sequences2SheetsJSONL(SequenceSpecification sequenceSpecification, InterfaceSpecification interfaceSpecification) throws IOException {

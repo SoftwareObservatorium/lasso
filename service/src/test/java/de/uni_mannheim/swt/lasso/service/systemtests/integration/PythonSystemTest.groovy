@@ -257,6 +257,7 @@ study(name: 'Python') {
     /* filter candidates by two tests (test-driven code filtering) */
     action(name: 'filter', type: 'Arena') { // filter by tests
         maxAdaptations = 1 // how many adaptations to try
+        //adapterStrategy = 'SingleFunctionAdaptationStrategy'
         
         features = ['cc'] // enable code coverage measurement
 

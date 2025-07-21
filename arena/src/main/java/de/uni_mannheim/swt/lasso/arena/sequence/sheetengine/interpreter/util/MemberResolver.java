@@ -73,12 +73,21 @@ public abstract class MemberResolver {
         List<Method> methods = getMethods(targetClass);
         LOG.debug("methods {}", methods.size());
 
+        Method vargs = null;
+
         for (int i = 0; i < methods.size(); i++) {
             if (!isIgnoreMethodName() && !methods.get(i).getName().equals(methodName)) {
                 continue;
             }
 
             Class parameterTypes[] = methods.get(i).getParameterTypes();
+
+            // varargs parameter: single Object[].class
+            if(parameterTypes.length == 1 && parameterTypes[0] == Object[].class) {
+                LOG.debug("Potential VARGS parameter for " + methodName);
+                vargs = methods.get(i);
+            }
+
             if (parameterTypes.length != argumentClasses.length) {
                 continue;
             }
@@ -96,8 +105,14 @@ public abstract class MemberResolver {
                 method = methods.get(i);
             }
         }
+
+        if(vargs != null) {
+            // return var args parameter
+            return vargs;
+        }
+
         if (method == null) {
-            throw new NoSuchMethodException("No matching method");
+            throw new NoSuchMethodException("No matching method " + methodName);
         }
 
         return method;

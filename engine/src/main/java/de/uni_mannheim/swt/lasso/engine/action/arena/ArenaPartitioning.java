@@ -117,6 +117,12 @@ public class ArenaPartitioning extends DefaultAction {
     @LassoInput(desc = "Arena Container timeout in millis", optional = true)
     public long containerTimeout = 30 * 60 * 1000L; // half an hour
 
+    @LassoInput(desc = "Timeout for each implementation in millis", optional = true)
+    public long implementationTimeout = 30 * 1000L; // 30 seconds
+
+    @LassoInput(desc = "How many implementations to run in parallel in the arena (default 1)", optional = true)
+    public int threads = 1;
+
 //    @LassoInput(desc = "Maven Repository URL", optional = true)
 //    public String mavenRepository;
 
@@ -218,7 +224,7 @@ public class ArenaPartitioning extends DefaultAction {
         // executable corpus
         ExecutableCorpus corpus = context.getConfiguration().getExecutableCorpus();
 
-        ExecutionEnvironment executionEnvironment = arenaProjectManager.createExecutionEnvironment(this, actionConfiguration, job, corpus, task, features, containerTimeout);
+        ExecutionEnvironment executionEnvironment = arenaProjectManager.createExecutionEnvironment(this, actionConfiguration, job, corpus, task, features, containerTimeout, implementationTimeout, threads);
 
         ExecutionEnvironmentManager executionEnvironmentManager = context.getExecutionEnvironmentManager();
         executionEnvironmentManager.run(executionEnvironment);

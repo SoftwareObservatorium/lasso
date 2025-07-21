@@ -145,6 +145,10 @@ public class SSNInterpreter {
                 // create invocation
                 LOG.debug("create invocation = {} for class = {}", operationName, clazz);
 
+                if(StringUtils.contains(clazz, "<")) {
+                    clazz = StringUtils.substringBefore(clazz, "<");
+                }
+
                 String className = clazz;
                 // create instance
                 invocation = instanceInvocation(eval, invocations, className, inputArgs);
@@ -408,22 +412,53 @@ public class SSNInterpreter {
         String clazz = clazzCell.getNodeValue().textValue();
         LOG.debug("this {}", clazz);
 
-        // resolve
-        Validate.isTrue(clazzCell.isValueReference(), "input cell must be object");
-        //ParsedCell resolvedThis = parsedSheet.resolve(clazzCell.getKey());
-        // [row,col]
-        int[] coordinate = SheetResolver.resolveCellReference(clazz);
+        int[] coordinate = null;
+        Class targetClass = null;
+        if(clazzCell.isValueReference()) {
+            // first input parameter: Cell Reference
 
-        LOG.debug("resolved coordinate {} for {}", Arrays.toString(coordinate), clazz);
+            // resolve
+            Validate.isTrue(clazzCell.isValueReference(), "input cell must be object");
+            //ParsedCell resolvedThis = parsedSheet.resolve(clazzCell.getKey());
+            // [row,col]
+            coordinate = SheetResolver.resolveCellReference(clazz);
 
-        Invocation instanceInvocation = invocations.getInvocation(coordinate[0]);
-        Class targetClass = instanceInvocation.getTargetClass();
-        String className = targetClass.getCanonicalName();
+            LOG.debug("resolved coordinate {} for {}", Arrays.toString(coordinate), clazz);
+
+            // FIXME cell reference can either be a "create" invocation or a static call
+            Invocation instanceInvocation = invocations.getInvocation(coordinate[0]);
+            LOG.debug("TYPE {}", instanceInvocation.getClass());
+            if(instanceInvocation instanceof InstanceInvocation) {
+                targetClass = instanceInvocation.getTargetClass();
+            } else if(instanceInvocation instanceof MethodInvocation) {
+                // FIXME STATIC CALL
+                MethodInvocation m = (MethodInvocation) instanceInvocation;
+                targetClass = m.getMethod().getReturnType();
+
+                LOG.debug("RESOLVED RETURN TYPE {}", targetClass.getCanonicalName());
+            }
+        } else if(clazzCell.isString()) {
+            // first input parameter: static call: FQ name expected
+            try {
+                // FIXME double-check if static call
+                targetClass = eval.resolveClass(clazzCell.getNodeValue().textValue());
+                // FIXME now we need to resolve method and then its owner
+
+
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            // FIXME unknown
+            Validate.isTrue(clazzCell.isValueReference() || clazzCell.isValueReference(), "input cell must be object, but was " + clazzCell.getNodeValue());
+        }
+
+        String className = targetClass.getName();//.getCanonicalName(); //FIXME is this correct?
 
         try {
             // resolve method
             Class resolvedClass = eval.resolveClass(className);
-            LOG.debug("resolved class for method:\n {}", resolvedClass);
+            LOG.debug("resolved class for method {}:\n {}", methodName, resolvedClass);
 
             MethodInvocation invocation = invocations.createMethodInvocation();
             invocation.setTargetClass(resolvedClass);
@@ -443,7 +478,7 @@ public class SSNInterpreter {
 
             // resolve "constructor" (here just a declared placeholder)
             // FIXME isAssignable (i.e., String->Object) - use more sophisticated matching here.
-            Method method = MemberResolutionUtils.resolveDeclaredMethod(resolvedClass, methodName, types, false);
+            Method method = MemberResolutionUtils.resolveDeclaredMethod(resolvedClass, methodName, types, true);
 
             invocation.setMember(method);
 
@@ -523,7 +558,20 @@ public class SSNInterpreter {
             int[] coordinate = SheetResolver.resolveCellReference(arg.getNodeValue().textValue());
             Invocation invocation = invocations.getInvocation(coordinate[0]);
 
-            return new Parameter(coordinate, invocation.getTargetClass(), arg.getNodeValue().textValue(), null);
+            if(invocation instanceof MethodInvocation) {
+                LOG.debug("resolveParameterType Method invocation");
+
+                // FIXME STATIC CALL
+                MethodInvocation m = (MethodInvocation) invocation;
+                Class targetClass = m.getMethod().getReturnType();
+                return new Parameter(coordinate, targetClass, arg.getNodeValue().textValue(), null);
+            } else if(invocation instanceof InstanceInvocation) {
+                LOG.debug("resolveParameterType InstanceInvocation");
+
+                return new Parameter(coordinate, invocation.getTargetClass(), arg.getNodeValue().textValue(), null);
+            } else {
+                throw new IllegalArgumentException("unknown");
+            }
         }
 
         // resolve sheet (test) parameter

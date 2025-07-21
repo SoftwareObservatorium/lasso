@@ -137,7 +137,7 @@ public class PythonArenaProjectManager implements ArenaProjectManager {
     }
 
     @Override
-    public ExecutionEnvironment createExecutionEnvironment(DefaultAction action, ActionConfiguration actionConfiguration, ArenaJob job, ExecutableCorpus corpus, String task, List<String> features, long containerTimeout) {
+    public ExecutionEnvironment createExecutionEnvironment(DefaultAction action, ActionConfiguration actionConfiguration, ArenaJob job, ExecutableCorpus corpus, String task, List<String> features, long containerTimeout, long implementationTimeout, int threads) {
         // args passed to arena
         List<String> args = new ArrayList<>(Arrays.asList(
                 "--mode", "distributed",

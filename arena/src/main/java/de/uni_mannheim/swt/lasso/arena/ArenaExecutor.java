@@ -21,6 +21,7 @@ package de.uni_mannheim.swt.lasso.arena;
 
 import de.uni_mannheim.swt.lasso.arena.repository.DependencyResolver;
 import de.uni_mannheim.swt.lasso.arena.repository.NexusInstance;
+import de.uni_mannheim.swt.lasso.arena.runner.ParallelArenaChildProcessRunner;
 import de.uni_mannheim.swt.lasso.arena.task.SSNExecute;
 import de.uni_mannheim.swt.lasso.cluster.LassoClusterClient;
 import de.uni_mannheim.swt.lasso.cluster.client.ArenaJob;
@@ -29,6 +30,7 @@ import de.uni_mannheim.swt.lasso.cluster.client.JobStatus;
 
 import org.apache.commons.cli.*;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 
 
 import java.io.File;
@@ -128,16 +130,49 @@ public class ArenaExecutor {
                     System.out.println(String.format("Task activated '%s'", task));
 
                     if (StringUtils.equals(SSNExecute.class.getSimpleName(), task)) {
-                        try {
-                            SSNExecute.execute(cmd, resolver, arenaJob, clusterClient);
-                            arenaJob.setStatus(JobStatus.FINISHED);
-                        } catch (Throwable e) {
-                            e.printStackTrace();
+                        String implId = cmd.getOptionValue("impl");
 
-                            arenaJob.setStatus(JobStatus.FAILED);
+                        if(StringUtils.isEmpty(implId)) {
+                            // spawn child processes
+                            // get timeout
+                            String timeout = cmd.getOptionValue("timeout", "30");
+                            int timeoutInSecs = NumberUtils.toInt(timeout, 30);
+                            String threadsStr = cmd.getOptionValue("threads", "1");
+                            int threads = NumberUtils.toInt(threadsStr, 1);
+
+                            System.out.println(String.format("Spawning subprocesses for '%s' implementations", arenaJob.getImplementations().size()));
+                            System.out.println(String.format("Using timeout '%s' for implementations", timeoutInSecs));
+                            try {
+                                //ArenaChildProcessRunner arenaRunner = new ArenaChildProcessRunner();
+                                ParallelArenaChildProcessRunner arenaRunner = new ParallelArenaChildProcessRunner();
+                                arenaRunner.setTimeoutInSecs(timeoutInSecs);
+                                arenaRunner.setThreads(threads);
+                                // run
+                                arenaRunner.run(arenaJob, args);
+
+                                arenaJob.setStatus(JobStatus.FINISHED);
+                            } catch (Throwable e) {
+                                e.printStackTrace();
+
+                                arenaJob.setStatus(JobStatus.FAILED);
+                            } finally {
+                                jobRepository.put(arenaJob.getId(), arenaJob);
+                            }
+                        } else {
+                            // limit candidates to given impl id
+                            System.out.println(String.format("Running arena for implementation '%s'", implId));
+                            // filter to singleton list
+                            arenaJob.setImplementations(arenaJob.getImplementations().stream().filter(impl -> StringUtils.equals(implId, impl.getId())).toList());
+
+                            try {
+                                SSNExecute.execute(cmd, resolver, arenaJob, clusterClient);
+                                //arenaJob.setStatus(JobStatus.FINISHED);
+                            } catch (Throwable e) {
+                                e.printStackTrace();
+
+                                //arenaJob.setStatus(JobStatus.FAILED);
+                            }
                         }
-
-                        jobRepository.put(arenaJob.getId(), arenaJob);
 
 //                        //
 //                        return;
@@ -162,6 +197,8 @@ public class ArenaExecutor {
     private static Options createOptions() {
         Options options = new Options();
 
+        // FIXME clean options ...
+
         options.addOption("h", "help", false, "print this message");
         options.addOption("m", "mode", true, "Arena mode, either 'local' or 'distributed'. default is 'local'");
         options.addOption("t", "task", true, "Task (optional)");
@@ -169,6 +206,10 @@ public class ArenaExecutor {
         options.addOption("w", "work-dir", true, "Arena work directory");
         options.addOption("r", "repository-url", true, "Maven repository URL. default '" + mavenRepoUrl + "'");
         options.addOption("t", "threads", true, "Number of parallel executions (i.e threads). Default number of available 'cores' T/2");
+
+        // new
+        options.addOption("im", "impl", true, "Run the following implementation");
+        options.addOption("to", "timeout", true, "Timeout per implementation");
 
         // distributed mode only
         options.addOption("la", "lasso-addresses", true, "if mode is set to 'distributed', at least one LASSO cluster address must be given. default is '127.0.0.1:10800'");

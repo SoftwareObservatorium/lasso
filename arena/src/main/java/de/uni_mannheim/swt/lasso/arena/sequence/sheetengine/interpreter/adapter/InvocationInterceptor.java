@@ -170,6 +170,10 @@ public class InvocationInterceptor implements MethodInterceptor {
     }
 
     public static boolean isProxy(Object obj) {
+        if(obj == null) {
+            return false;
+        }
+
         return ClassUtils.isCglibProxy(obj);
     }
 

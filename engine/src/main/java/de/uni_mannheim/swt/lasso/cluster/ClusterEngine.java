@@ -41,10 +41,7 @@ import org.apache.ignite.cache.QueryEntity;
 import org.apache.ignite.cluster.ClusterGroup;
 import org.apache.ignite.cluster.ClusterNode;
 import org.apache.ignite.compute.ComputeTaskFuture;
-import org.apache.ignite.configuration.CacheConfiguration;
-import org.apache.ignite.configuration.ClientConnectorConfiguration;
-import org.apache.ignite.configuration.DataStorageConfiguration;
-import org.apache.ignite.configuration.IgniteConfiguration;
+import org.apache.ignite.configuration.*;
 import org.apache.ignite.events.EventType;
 import org.apache.ignite.lang.IgniteBiPredicate;
 import org.apache.ignite.spi.collision.fifoqueue.FifoQueueCollisionSpi;
@@ -264,6 +261,11 @@ public class ClusterEngine {
             DataStorageConfiguration storageCfg = new DataStorageConfiguration();
             // Enabling the persistence.
             storageCfg.getDefaultDataRegionConfiguration().setPersistenceEnabled(true);
+
+            // FIXME application.properties WAL configuration
+            storageCfg.setWalMode(WALMode.BACKGROUND);
+            storageCfg.setWalSegmentSize(512 * 1024 * 1024); // 512MB
+
             // Applying settings.
             cfg.setDataStorageConfiguration(storageCfg);
         }

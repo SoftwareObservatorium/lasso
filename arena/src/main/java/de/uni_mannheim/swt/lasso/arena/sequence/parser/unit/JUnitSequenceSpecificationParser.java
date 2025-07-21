@@ -66,6 +66,7 @@ import java.util.stream.Collectors;
  *
  * @author Marcus Kessel
  */
+@Deprecated
 public class JUnitSequenceSpecificationParser {
 
     private static final Logger LOG = LoggerFactory

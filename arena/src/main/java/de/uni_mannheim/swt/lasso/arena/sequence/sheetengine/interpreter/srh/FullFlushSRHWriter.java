@@ -16,20 +16,24 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
+ * Collect all records (gets rid of redundant records) and flush them to in-memory store.
  *
  * @author Marcus Kessel
  */
-public class SRHWriter {
+public class FullFlushSRHWriter {
 
     private final LassoClusterClient lassoClusterClient;
 
-    public SRHWriter(LassoClusterClient lassoClusterClient) {
+    private final Map<CellId, CellValue> buffer = new ConcurrentHashMap<>();
+
+    public FullFlushSRHWriter(LassoClusterClient lassoClusterClient) {
         this.lassoClusterClient = lassoClusterClient;
     }
 
-    // FIXME store stimulus sheets
+    // store stimulus sheets
     public void storeActuationSheet(ArenaJob arenaJob, String arenaId, AdaptedImplementation adaptedImplementation, Test test, TestInvocation testInvocation, de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> sheet) {
         Map<CellId, CellValue> cells = new LinkedHashMap<>();
 
@@ -60,7 +64,7 @@ public class SRHWriter {
             }
 
             // store
-            store(cells, arenaJob, arenaId);
+            storeInMemory(cells, arenaJob, arenaId);
         } catch (RuntimeException e) {
             throw new RuntimeException(e);
         }
@@ -96,7 +100,7 @@ public class SRHWriter {
             }
 
             // store
-            store(cells, arenaJob, arenaId);
+            storeInMemory(cells, arenaJob, arenaId);
         } catch (RuntimeException e) {
             throw new RuntimeException(e);
         }
@@ -155,7 +159,7 @@ public class SRHWriter {
 
         try {
             // store
-            store(cells, arenaJob, arenaId);
+            storeInMemory(cells, arenaJob, arenaId);
         } catch (RuntimeException e) {
             throw new RuntimeException(e);
         }
@@ -180,7 +184,7 @@ public class SRHWriter {
             }
 
             // store
-            store(cells, arenaJob, arenaId);
+            storeInMemory(cells, arenaJob, arenaId);
         } catch (RuntimeException e) {
             throw new RuntimeException(e);
         }
@@ -213,7 +217,7 @@ public class SRHWriter {
                 cells.put(cellId, cellValue);
 
                 // store
-                store(cells, arenaJob, arenaId);
+                storeInMemory(cells, arenaJob, arenaId);
             } catch (RuntimeException e) {
                 throw new RuntimeException(e);
             }
@@ -257,7 +261,7 @@ public class SRHWriter {
                         cells.put(cellId, cellValue);
 
                         // store
-                        store(cells, arenaJob, arenaId);
+                        storeInMemory(cells, arenaJob, arenaId);
                     } catch (RuntimeException e) {
                         throw new RuntimeException(e);
                     }
@@ -313,13 +317,20 @@ public class SRHWriter {
             cells.put(cellId, cellValue);
 
             // store
-            store(cells, arenaJob, arenaId);
+            storeInMemory(cells, arenaJob, arenaId);
         } catch (RuntimeException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void store(Map<CellId, CellValue> cells, ArenaJob arenaJob, String arenaId) {
+    /**
+     * Store in memory first to avoid duplicate handling in Ignite
+     *
+     * @param cells
+     * @param arenaJob
+     * @param arenaId
+     */
+    private void storeInMemory(Map<CellId, CellValue> cells, ArenaJob arenaJob, String arenaId) {
         if (MapUtils.isNotEmpty(cells)) {
             cells.keySet().forEach(id -> {
                 id.setExecutionId(arenaJob.getExecutionId());
@@ -329,7 +340,18 @@ public class SRHWriter {
             });
 
             // store all cells
-            lassoClusterClient.getSrmRepository().putAll(cells);
+            //lassoClusterClient.getSrmRepository().putAll(cells);
+
+            // avoids duplicates written to Ignite! (lots of WAL overhead etc.)
+            buffer.putAll(cells);
         }
+    }
+
+    /**
+     * Finally store all records in Ignite!
+     */
+    public void store() {
+        // store all cells
+        lassoClusterClient.getSrmRepository().putAll(buffer);
     }
 }

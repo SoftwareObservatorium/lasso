@@ -35,7 +35,7 @@ class Prompt extends LassoSpec {
 
     // model parameters
     int n = 1
-    double temperature = 0.7
+    double temperature = 0.8
     int max_tokens = 2048
     double top_p = 1.0
 

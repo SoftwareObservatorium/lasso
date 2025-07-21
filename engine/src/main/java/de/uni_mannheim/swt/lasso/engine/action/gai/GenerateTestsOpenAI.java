@@ -9,6 +9,8 @@ import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.time.Duration;
 //import dev.langchain4j.model.openai.OpenAiChatRequestParameters;
 
 /**
@@ -29,16 +31,25 @@ public class GenerateTestsOpenAI extends GenerateTestsOllama {
     @LassoInput(desc = "OpenAI API key", optional = true)
     public String apiKey = "demo"; // see https://docs.langchain4j.dev/integrations/language-models/open-ai/
 
+    @LassoInput(desc = "OpenAI Base URL", optional = true)
+    public String baseUrl = "https://api.openai.com/v1";
+
+    // XXX for "thinking" models, we may run into timeouts
+    @LassoInput(desc = "Timeout (in seconds)", optional = true)
+    public long timeout = 60L;
+
     @Override
     protected String generate(Prompt prompt, String endpoint) {
         ChatLanguageModel chatModel = OpenAiChatModel.builder()
                 .apiKey(apiKey)
+                .baseUrl(baseUrl)
 //                .defaultRequestParameters(ChatRequestParameters.builder()
 //                        .modelName("gpt-4o-mini")
 //                        .temperature(0.7)
 //                        .build())
                 .modelName(prompt.getModel())
-                //.temperature(0.7) // FIXME
+                .temperature(prompt.getTemperature())
+                .timeout(Duration.ofSeconds(timeout))
 
                 .build();
 

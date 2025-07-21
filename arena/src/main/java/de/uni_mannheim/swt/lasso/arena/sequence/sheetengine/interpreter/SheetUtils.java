@@ -184,7 +184,7 @@ public class SheetUtils {
             ExecutedInvocation executedInvocation = executedInvocations.getExecutedSequence().get(index);
             // collect in existing objects or directly stream out?
             try {
-                String serializedValue = objectMapper.writeOutput(executedInvocations.getExecutedInvocation(index));
+                String serializedValue = objectMapper.writeOracleOutput(executedInvocations.getExecutedInvocation(index));
 
                 LOG.debug("serialized output value => {}", serializedValue);
 

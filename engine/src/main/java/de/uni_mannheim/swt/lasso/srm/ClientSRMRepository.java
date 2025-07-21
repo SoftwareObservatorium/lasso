@@ -63,11 +63,11 @@ public class ClientSRMRepository implements SRMRepository {
                     // rough estimate of bytes (in UTF-16, each char is 2 bytes) > 1MB
                     if (value.getRawValue().length() * 2L > MB) {
                         value.setRawValue("_TOOLONG_");
-                    }
 
-                    if (LOG.isWarnEnabled()) {
-                        LOG.warn("shortened SRM record 'raw value' for '{}'",
-                                ToStringBuilder.reflectionToString(key));
+                        if (LOG.isWarnEnabled()) {
+                            LOG.warn("shortened SRM record 'raw value' for '{}'",
+                                    ToStringBuilder.reflectionToString(key));
+                        }
                     }
                 }
                 // both together
@@ -75,11 +75,11 @@ public class ClientSRMRepository implements SRMRepository {
                     // rough estimate of bytes (in UTF-16, each char is 2 bytes) > 1MB
                     if (value.getValue().length() * 2L > MB) {
                         value.setValue("_TOOLONG_");
-                    }
 
-                    if (LOG.isWarnEnabled()) {
-                        LOG.warn("shortened SRM record 'value' for '{}'",
-                                ToStringBuilder.reflectionToString(key));
+                        if (LOG.isWarnEnabled()) {
+                            LOG.warn("shortened SRM record 'value' for '{}'",
+                                    ToStringBuilder.reflectionToString(key));
+                        }
                     }
                 }
             });

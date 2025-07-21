@@ -406,6 +406,38 @@ public class JUnit2SSNTest {
 
         List<Sheet> stimulusSheets = JUnit2SSN.junit2Sheets(testClass, pseudo, specification, null, "evo");
 
+        for (Sheet stimulusSheet : stimulusSheets) {
+            System.out.println(stimulusSheet.getSignature());
+            System.out.println(stimulusSheet.getBody());
+            System.out.println("----");
+        }
+    }
+
+    @Test
+    public void testToSequenceSpecification_sumSquares__PSEUDO_2() throws IOException {
+        String lql = "Problem {\n" +
+                "  sumSquares(java.util.ArrayList<java.lang.Float>)->long\n" +
+                "}";
+
+        // CREATE PSEUDO CUT
+        //ClassUnderTest pseudo = TestSupport.createPseudoImplementation("GCD");
+        ClassUnderTest pseudo = CutUtils.createExample("SumSquares");
+        pseudo.setPseudo(true);
+
+        CandidatePool pool = new CandidatePool(mavenRepository(), Arrays.asList(pseudo));
+        pool.initProjects();
+
+        String testClass = FileUtils.readFileToString(new File("sheets/sumsquares.java"), StandardCharsets.UTF_8);
+
+        List<InterfaceSpecification> parseResults = LQLUtils.lqlToList(lql);
+        InterfaceSpecification specification = parseResults.get(0);
+
+//        AdaptationStrategy adaptationStrategy = new PassThroughAdaptationStrategy();
+//        List<AdaptedImplementation> adaptedImplementations = adaptationStrategy.adapt(specification, pseudo, 1);
+//        AdaptedImplementation adaptedImplementation = adaptedImplementations.get(0);
+
+        List<Sheet> stimulusSheets = JUnit2SSN.junit2Sheets(testClass, pseudo, specification, null, "evo");
+
         for(Sheet stimulusSheet : stimulusSheets) {
             System.out.println(stimulusSheet.getSignature());
             System.out.println(stimulusSheet.getBody());

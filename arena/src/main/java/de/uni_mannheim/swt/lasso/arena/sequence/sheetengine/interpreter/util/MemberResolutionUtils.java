@@ -50,6 +50,4 @@ public class MemberResolutionUtils {
 
         return resolver.resolveConstructor();
     }
-
-
 }

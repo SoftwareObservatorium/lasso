@@ -34,7 +34,7 @@ import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.event.Ja
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.Test;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.model.TestInvocation;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize.GsonMapper;
-import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.srh.SRHWriter;
+import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.srh.FullFlushSRHWriter;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.CutUtils;
 import de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.util.LQLUtils;
 import de.uni_mannheim.swt.lasso.arena.task.load.DefaultSheetProvider;
@@ -267,7 +267,7 @@ public class SSNExecute extends Task {
                     }
                 }
 
-                List<Sheet> stimulusSheets = JUnit2SSN.junit2Sheets(testClassSource, classUnderTest, interfaceSpecification, null, jUnitCodeUnit.getTestPrefix());
+                List<Sheet> stimulusSheets = JUnit2SSN.newJunit2Sheets(testClassSource, classUnderTest, interfaceSpecification, null, jUnitCodeUnit.getTestPrefix());
 
                 if(CollectionUtils.isNotEmpty(stimulusSheets)) {
                     for(Sheet stimulusSheet : stimulusSheets) {
@@ -327,7 +327,7 @@ public class SSNExecute extends Task {
                 // use from FA spec
                 InterfaceSpecification interfaceSpecification = LQLUtils.lqlToList(arenaJob.getSpecification()).get(0);
 
-                List<Sheet> stimulusSheets = JUnit2SSN.junit2Sheets(testClassSource, classUnderTest, interfaceSpecification, null, "evo");
+                List<Sheet> stimulusSheets = JUnit2SSN.newJunit2Sheets(testClassSource, classUnderTest, interfaceSpecification, null, "evo");
 
                 if(CollectionUtils.isNotEmpty(stimulusSheets)) {
                     for(Sheet stimulusSheet : stimulusSheets) {
@@ -424,89 +424,84 @@ public class SSNExecute extends Task {
         }
 
         //
-        SRHWriter writer = new SRHWriter(clusterClient);
-
-        // all tests
-//        for (Test test : stimulusResponseMatrix.getRows()) {
-//            // something to do here?
-//        }
-
-        // all implementations
-        for (AdaptedImplementation adaptedImplementation : stimulusResponseMatrix.getColumns()) {
-            // add oracle?s
-        }
-
+        FullFlushSRHWriter writer = new FullFlushSRHWriter(clusterClient);
         // FIXME make configurable
         GsonMapper gsonMapper = new GsonMapper();
 
-        // write
-        for (Test test : stimulusResponseMatrix.getRows()) {
-            boolean stimulusStored = false;
+        try {
+            // write
+            for (Test test : stimulusResponseMatrix.getRows()) {
+                boolean stimulusStored = false;
 
-            // for each test
-            de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> oracleSheet = null;
+                // for each test
+                de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> oracleSheet = null;
 
-            for (AdaptedImplementation adaptedImplementation : stimulusResponseMatrix.getColumns()) {
-                ExecutedInvocations executedInvocations = stimulusResponseMatrix.get(test, adaptedImplementation);
-                LOG.debug("executed invocations\n{}", executedInvocations);
+                for (AdaptedImplementation adaptedImplementation : stimulusResponseMatrix.getColumns()) {
+                    ExecutedInvocations executedInvocations = stimulusResponseMatrix.get(test, adaptedImplementation);
+                    LOG.debug("executed invocations\n{}", executedInvocations);
 
-                TestInvocation testInvocation = stimulusMatrix.get(test, adaptedImplementation.getAdaptee());
+                    TestInvocation testInvocation = stimulusMatrix.get(test, adaptedImplementation.getAdaptee());
 
-                if(!stimulusStored) {
-                    try {
-                        // write stimulus sheet and interface
-                        writer.storeStimulusSheet(arenaJob, arenaId, test, testInvocation);
-                        stimulusStored = true;
-                    } catch (RuntimeException e) {
-                        throw new RuntimeException(e);
+                    if(!stimulusStored) {
+                        try {
+                            LOG.debug("Storing stimulus sheets in SRH");
+
+                            // write stimulus sheet and interface
+                            writer.storeStimulusSheet(arenaJob, arenaId, test, testInvocation);
+                            stimulusStored = true;
+                        } catch (RuntimeException e) {
+                            //throw new RuntimeException(e);
+                            LOG.warn("Writing stimulus sheet failed. Continuing", e);
+
+                            continue;
+                        }
                     }
-                }
 
-                if(isMeasurePIT()) {
-                    try {
-                        LOG.info("Storing mutant details in SRH");
+                    if(isMeasurePIT()) {
+                        try {
+                            LOG.debug("Storing mutant details in SRH");
 
-                        // store mutation details
-                        writer.storeMutationActuationSheet(arenaJob, arenaId, adaptedImplementation, Pitest.REPORT_ID);
-                    } catch (Throwable e) {
-                        LOG.warn("storing mutation details failed", e);
+                            // store mutation details
+                            writer.storeMutationActuationSheet(arenaJob, arenaId, adaptedImplementation, Pitest.REPORT_ID);
+                        } catch (Throwable e) {
+                            LOG.warn("storing mutation details failed", e);
+                        }
                     }
-                }
 
-                if(isStoreStaticMetrics()) {
-                    // add to SRH
-                    try {
-                        LOG.info("Storing static metric sheet in SRH");
+                    if(isStoreStaticMetrics()) {
+                        // add to SRH
+                        try {
+                            LOG.debug("Storing static metric sheet in SRH");
 
-                        // store
-                        writer.storeStaticMetricsSheet(arenaJob, arenaId, adaptedImplementation, "indexmeasures");
-                    } catch (Throwable e) {
-                        LOG.warn("Storing static metric sheet in SRH failed", e);
+                            // store
+                            writer.storeStaticMetricsSheet(arenaJob, arenaId, adaptedImplementation, "indexmeasures");
+                        } catch (Throwable e) {
+                            LOG.warn("Storing static metric sheet in SRH failed", e);
+                        }
                     }
-                }
 
-                if(oracleSheet == null) {
-                    try {
-                        //ExecutedInvocations oracleInvocations = SheetUtils.toOracle(executedInvocations.getInvocations());
-                        ExecutedInvocations oracleInvocations = SheetUtils.toOracle(executedInvocations);
-                        oracleSheet = SheetUtils.toOracleSheet(oracleInvocations, gsonMapper);
+                    if(oracleSheet == null) {
+                        try {
+                            //ExecutedInvocations oracleInvocations = SheetUtils.toOracle(executedInvocations.getInvocations());
+                            ExecutedInvocations oracleInvocations = SheetUtils.toOracle(executedInvocations);
+                            oracleSheet = SheetUtils.toOracleSheet(oracleInvocations, gsonMapper);
 
-                        //oracleSheet.debug();
+                            //oracleSheet.debug();
 
-                        LOG.info("Storing oracle sheet in SRH");
+                            LOG.debug("Storing oracle sheet in SRH");
 
-                        // store actuation sheet
-                        writer.storeOracleActuationSheet(arenaJob, arenaId, test, testInvocation, oracleSheet);
-                    } catch (Throwable e) {
-                        LOG.warn("Oracle sheet failed", e);
+                            // store actuation sheet
+                            writer.storeOracleActuationSheet(arenaJob, arenaId, test, testInvocation, oracleSheet);
+                        } catch (Throwable e) {
+                            LOG.warn("Oracle sheet failed", e);
+                        }
                     }
-                }
 
-                try {
-                    List<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String>> sheets = SheetUtils.toSheets(adaptedImplementation, executedInvocations, gsonMapper);
+                    try {
+                        List<de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String>> sheets = SheetUtils.toSheets(adaptedImplementation, executedInvocations, gsonMapper);
 
-                    //de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> actuationSheetData = sheets.get(0);
-                    de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> adaptedActuationSheetData = sheets.get(1);
+                        //de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> actuationSheetData = sheets.get(0);
+                        de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, String> adaptedActuationSheetData = sheets.get(1);
 
 //                    actuationSheetData.debug();
 //                    adaptedActuationSheetData.debug();
@@ -514,64 +509,73 @@ public class SSNExecute extends Task {
 //                    LOG.debug("JSON actuationSheet\n{}", actuationSheetData.toJsonl());
 //                    LOG.debug("JSON adaptedActuationSheet\n{}", adaptedActuationSheetData.toJsonl());
 
+                        try {
+                            LOG.debug("Storing actuation sheet in SRH for 'codeUnit {} adapter {} variant {}'", adaptedImplementation.getAdaptee().getId(), adaptedImplementation.getAdapterId(), adaptedImplementation.getAdaptee().getVariantId());
+
+                            // store actuation sheet
+                            writer.storeActuationSheet(arenaJob, arenaId, adaptedImplementation, test, testInvocation, adaptedActuationSheetData);
+                        } catch (Throwable e) {
+                            LOG.warn("Storing actuation sheet in SRH failed", e);
+                        }
+                    } catch (Throwable e) {
+                        LOG.warn("execution failed", e);
+
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+
+            boolean measureRuntimeMetrics = true;
+            if(measureRuntimeMetrics) {
+                for (AdaptedImplementation adaptedImplementation : stimulusResponseMatrix.getColumns()) {
+                    long executionTime = 0;
+                    for(Test test : stimulusResponseMatrix.getRows()) {
+                        ExecutedInvocations executedInvocations = stimulusResponseMatrix.get(test, adaptedImplementation);
+                        executionTime += executedInvocations.getExecutionTime();
+                    }
+
                     try {
-                        LOG.info("Storing actuation sheet in SRH for 'codeUnit {} adapter {} variant {}'", adaptedImplementation.getAdaptee().getId(), adaptedImplementation.getAdapterId(), adaptedImplementation.getAdaptee().getVariantId());
+                        LOG.debug("Storing executionTime in SRH for 'codeUnit {} adapter {} variant {}'", adaptedImplementation.getAdaptee().getId(), adaptedImplementation.getAdapterId(), adaptedImplementation.getAdaptee().getVariantId());
 
                         // store actuation sheet
-                        writer.storeActuationSheet(arenaJob, arenaId, adaptedImplementation, test, testInvocation, adaptedActuationSheetData);
+                        writer.storeRuntimeMetric(arenaJob, arenaId, adaptedImplementation, "executionTimeNanos", executionTime);
                     } catch (Throwable e) {
-                        LOG.warn("Storing actuation sheet in SRH failed", e);
-                    }
-                } catch (Throwable e) {
-                    LOG.warn("execution failed", e);
-
-                    throw new RuntimeException(e);
-                }
-            }
-        }
-
-        boolean measureRuntimeMetrics = true;
-        if(measureRuntimeMetrics) {
-            for (AdaptedImplementation adaptedImplementation : stimulusResponseMatrix.getColumns()) {
-                long executionTime = 0;
-                for(Test test : stimulusResponseMatrix.getRows()) {
-                    ExecutedInvocations executedInvocations = stimulusResponseMatrix.get(test, adaptedImplementation);
-                    executionTime += executedInvocations.getExecutionTime();
-                }
-
-                try {
-                    LOG.info("Storing executionTime in SRH for 'codeUnit {} adapter {} variant {}'", adaptedImplementation.getAdaptee().getId(), adaptedImplementation.getAdapterId(), adaptedImplementation.getAdaptee().getVariantId());
-
-                    // store actuation sheet
-                    writer.storeRuntimeMetric(arenaJob, arenaId, adaptedImplementation, "executionTimeNanos", executionTime);
-                } catch (Throwable e) {
-                    LOG.warn("Storing runtime metrics in SRH failed", e);
-                }
-            }
-        }
-
-        if(isMeasureJaCoCo()) {
-            // metrics
-            for (AdaptedImplementation adaptedImplementation : stimulusResponseMatrix.getColumns()) {
-                StimulusResponseMatrix<String, AdaptedImplementation, de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, Object>> jacocoSrm = jaCoCoListener.getStimulusResponseMatrix();
-                Set<String> metricIds = jacocoSrm.getRows();
-
-                //int cols = aggregatedMetricSrm.getNumberOfColumns();
-                // assume same order
-                for (String metricId : metricIds) {
-                    de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, Object> metricSheet = jacocoSrm.get(metricId, adaptedImplementation);
-                    //metricSheet.debug();
-
-                    // add to SRH
-                    try {
-                        LOG.info("Storing metric sheet in SRH");
-
-                        // store
-                        writer.storeMetricActuationSheet(arenaJob, arenaId, adaptedImplementation, "jacoco", metricSheet);
-                    } catch (Throwable e) {
-                        LOG.warn("Storing metric sheet in SRH failed", e);
+                        LOG.warn("Storing runtime metrics in SRH failed", e);
                     }
                 }
+            }
+
+            if(isMeasureJaCoCo()) {
+                // metrics
+                for (AdaptedImplementation adaptedImplementation : stimulusResponseMatrix.getColumns()) {
+                    StimulusResponseMatrix<String, AdaptedImplementation, de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, Object>> jacocoSrm = jaCoCoListener.getStimulusResponseMatrix();
+                    Set<String> metricIds = jacocoSrm.getRows();
+
+                    //int cols = aggregatedMetricSrm.getNumberOfColumns();
+                    // assume same order
+                    for (String metricId : metricIds) {
+                        de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.Sheet<Integer, Integer, Object> metricSheet = jacocoSrm.get(metricId, adaptedImplementation);
+                        //metricSheet.debug();
+
+                        // add to SRH
+                        try {
+                            LOG.debug("Storing metric sheet in SRH");
+
+                            // store
+                            writer.storeMetricActuationSheet(arenaJob, arenaId, adaptedImplementation, "jacoco", metricSheet);
+                        } catch (Throwable e) {
+                            LOG.warn("Storing metric sheet in SRH failed", e);
+                        }
+                    }
+                }
+            }
+        } finally {
+            // flush all records as a batch to Ignite ...
+            try {
+                LOG.info("Flushing all records");
+                writer.store();
+            } catch (Throwable e) {
+                LOG.error("Flushing all records failed", e);
             }
         }
     }

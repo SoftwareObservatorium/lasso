@@ -22,7 +22,7 @@ public interface ArenaProjectManager extends ProjectManager {
 
     Systems initNew(DefaultAction action, String actionInstanceId, Abstraction abstraction, String pomTemplate, ProjectManager.ProjectSettingsHandler mavenProjectPomHandler, ProjectManager.ExecutableFilter executableFilter) throws IOException;
 
-    ExecutionEnvironment createExecutionEnvironment(DefaultAction action, ActionConfiguration actionConfiguration, ArenaJob job, ExecutableCorpus corpus, String task, List<String> features, long containerTimeout);
+    ExecutionEnvironment createExecutionEnvironment(DefaultAction action, ActionConfiguration actionConfiguration, ArenaJob job, ExecutableCorpus corpus, String task, List<String> features, long containerTimeout, long implementationTimeout, int threads);
 
     LSLExecutionContext getLslExecutionContext();
 

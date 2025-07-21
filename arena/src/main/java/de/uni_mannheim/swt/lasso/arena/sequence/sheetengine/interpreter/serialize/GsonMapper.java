@@ -1,6 +1,7 @@
 package de.uni_mannheim.swt.lasso.arena.sequence.sheetengine.interpreter.serialize;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedImplementation;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedInitializer;
 import de.uni_mannheim.swt.lasso.arena.adaptation.AdaptedMethod;
@@ -26,7 +27,7 @@ public class GsonMapper implements ObjectMapper {
     private Gson gson;
 
     public GsonMapper() {
-        this(new Gson());
+        this(new GsonBuilder().serializeSpecialFloatingPointValues().create());
     }
 
     public GsonMapper(Gson gson) {
@@ -50,6 +51,25 @@ public class GsonMapper implements ObjectMapper {
     }
 
     @Override
+    public String writeOracleOutput(ExecutedInvocation executedInvocation) throws IOException {
+        Obj output = executedInvocation.getOutput();
+
+        try {
+            // check if we need to resolve oracle value reference
+            if(executedInvocation.getInvocation().getExpectedOutput().isReference()) {
+                ExecutedInvocation ref = executedInvocation.getExecutedInvocations().getExecutedInvocation(executedInvocation.getInvocation().getExpectedOutput().getReference()[0]);
+                output = ref.getOutput();
+            }
+        } catch (Throwable e) {
+            //throw new RuntimeException(e);
+        }
+
+        String serializedStr = toString(output);
+
+        return serializedStr;
+    }
+
+    @Override
     public String writeInput(ExecutedInvocation executedInvocation, int p) throws IOException {
         Obj input = executedInvocation.getInputs().get(p);
         String serializedStr = toString(input);
@@ -60,8 +80,14 @@ public class GsonMapper implements ObjectMapper {
     @Override
     public String writeTarget(ExecutedInvocation executedInvocation) throws IOException {
         if(executedInvocation.getInvocation().isMethodInvocation()) {
-            Obj targetInstance = executedInvocation.resolveTargetInstance();
-            String serializedStr = toString(targetInstance);
+            String serializedStr = null;
+            try {
+                Obj targetInstance = executedInvocation.resolveTargetInstance();
+                serializedStr = toString(targetInstance);
+            } catch (Throwable e) {
+                // FIXME STATIC
+                serializedStr = executedInvocation.getInvocation().getTarget().getExpression();
+            }
 
             return serializedStr;
         } else if(executedInvocation.getInvocation().isInstanceInvocation()) {

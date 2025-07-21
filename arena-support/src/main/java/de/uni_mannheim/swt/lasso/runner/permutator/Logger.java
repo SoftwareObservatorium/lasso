@@ -25,7 +25,7 @@ package de.uni_mannheim.swt.lasso.runner.permutator;
  */
 public class Logger {
 
-    public static boolean DEBUG = true;
+    public static boolean DEBUG = false;
     public static boolean INFO = true;
     public static boolean WARN = true;
     public static boolean ERROR = true;
